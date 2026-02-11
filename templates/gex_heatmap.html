@@ -113,33 +113,33 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 /* ─── Heatmap ─── */
 .hm-wrap{display:flex;gap:2px;padding:12px 24px;overflow-x:auto;min-height:calc(100vh - 340px)}
 .panel{flex:1;min-width:320px;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
-.panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px 6px;border-bottom:1px solid var(--border)}
-.panel-sym{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright)}
-.panel-price{font-size:14px;font-weight:600;color:var(--bright)}
-.panel-sub{display:flex;justify-content:space-between;padding:3px 14px 5px;border-bottom:1px solid var(--border)}
-.panel-sub span{font-size:9px;color:var(--dim)}
-.panel-gp{padding:4px 14px;border-bottom:1px solid var(--border);font-size:10px;display:flex;justify-content:space-between;align-items:center}
-.gbadge{padding:2px 6px;border-radius:3px;font-size:8px;font-weight:600}
+.panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
+.panel-sym{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--bright)}
+.panel-price{font-size:18px;font-weight:600;color:var(--bright)}
+.panel-sub{display:flex;justify-content:space-between;padding:4px 14px 5px;border-bottom:1px solid var(--border)}
+.panel-sub span{font-size:11px;color:var(--dim)}
+.panel-gp{padding:5px 14px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.gbadge{padding:3px 8px;border-radius:3px;font-size:10px;font-weight:600}
 .gbadge.pos{background:rgba(251,191,36,.12);color:var(--yellow)}.gbadge.neg{background:rgba(168,85,247,.12);color:var(--purple)}.gbadge.neu{background:rgba(34,197,94,.12);color:var(--green)}
-.klevels{display:flex;gap:5px;padding:4px 14px 5px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-.klev{font-size:7px;padding:2px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
+.klevels{display:flex;gap:6px;padding:5px 14px 6px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.klev{font-size:9px;padding:3px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
 .klev.gw{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
 .klev.pw{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .klev.kn{background:rgba(245,158,11,.12);color:var(--king);border:1px solid rgba(245,158,11,.2)}
 .klev.sp{background:rgba(255,255,255,.05);color:var(--bright);border:1px solid rgba(255,255,255,.1)}
 .strikes{flex:1;overflow-y:auto;padding:2px 0}
-.sr{display:flex;align-items:center;height:28px;padding:0 3px;position:relative;cursor:default;transition:background .1s}
+.sr{display:flex;align-items:center;height:32px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
 .sr:hover{outline:1px solid rgba(255,255,255,.15);z-index:1}
 .sr.spot{outline:2px solid #fff;z-index:2}
 .sr.king{outline:2px solid var(--king);z-index:3}
-.sr-bg{position:absolute;inset:0;opacity:.75;transition:opacity .15s}
-.sr:hover .sr-bg{opacity:.9}
-.sr-lbl{width:72px;font-size:10px;font-weight:500;text-align:right;padding-right:8px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
+.sr-bg{position:absolute;inset:0;transition:opacity .15s}
+.sr:hover .sr-bg{opacity:.85}
+.sr-lbl{width:80px;font-size:13px;font-weight:500;text-align:right;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
 .sr.spot .sr-lbl{color:#fff;font-weight:700}
 .sr.spot .sr-lbl::after{content:" ▸"}
 .sr.king .sr-lbl::before{content:"★ ";color:var(--king)}
 .gbar-c{flex:1;height:100%;position:relative;display:flex;align-items:center;justify-content:flex-end}
-.gval{font-size:10px;font-weight:600;position:relative;z-index:1;padding:0 8px;white-space:nowrap;min-width:60px;text-align:right}
+.gval{font-size:13px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:70px;text-align:right}
 
 .tip{display:none;position:fixed;background:#14142a;border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:11px;z-index:100;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:240px}
 .tip.vis{display:block}
@@ -169,7 +169,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 <div class="ctrl">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load JSON</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
   <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy ▾</button></div>
-  <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px">IWM: ON</button></div>
+  <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px;opacity:0.5">IWM: OFF</button></div>
   <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
     <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
   </div>
@@ -233,22 +233,37 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 <script>
 let D=null;
 
-// ═══ COLOR — matches reference: yellow(+GEX) purple(-GEX) king(orange) ═══
+// ═══ COLOR — solid saturated like reference tool ═══
 function gc(n,m,k){
-  if(k)return{r:245,g:158,b:11,a:.8};
+  if(k)return{r:210,g:170,b:30}; // bright gold king
   const r=n/m,a=Math.min(Math.abs(r),1);
-  // Very small values — subtle teal
-  if(a<.015)return{r:34,g:140,b:110,a:.15+a*8};
-  // Positive GEX → yellow/gold gradient (dealers short = mean reversion)
+  if(a<.01)return{r:30,g:60,b:55}; // near-zero: dark teal
   if(r>0){
-    const t=Math.pow(a,0.7); // curve for more visible gradient
-    return{r:Math.round(50+(251-50)*t),g:Math.round(140+(191-140)*t),b:Math.round(80+(36-80)*t),a:.2+t*.6};
+    // Positive GEX → teal to bright yellow-green
+    // Low: muted teal-green, High: bright yellow
+    const t=Math.pow(a,0.5);
+    return{
+      r:Math.round(30+190*t),   // 30 → 220
+      g:Math.round(80+100*t),   // 80 → 180
+      b:Math.round(55-35*t),    // 55 → 20
+    };
   }
-  // Negative GEX → blue/purple gradient (dealers long = momentum)
-  const t=Math.pow(a,0.7);
-  return{r:Math.round(30+(120-30)*t),g:Math.round(100+(50-100)*t),b:Math.round(140+(220-140)*t),a:.2+t*.6};
+  // Negative GEX → dark blue to bright purple
+  const t=Math.pow(a,0.5);
+  return{
+    r:Math.round(25+70*t),    // 25 → 95
+    g:Math.round(50+10*t),    // 50 → 60
+    b:Math.round(70+110*t),   // 70 → 180
+  };
 }
-function tc(n,m,k){if(k)return'#fde68a';const r=n/m;if(Math.abs(r)<.015)return'#86efac';return r>0?'#fde68a':'#d8b4fe'}
+function tc(n,m,k){
+  if(k)return'#fff';
+  const r=n/m,a=Math.abs(r);
+  if(a<.01)return'#556';
+  // White text for readability on solid backgrounds
+  if(a>.3)return'#fff';
+  return r>0?'#e8e8d0':'#d0d0e8';
+}
 function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
 function bh(c,k){if(k)return'<strong>★ King</strong> — Max Gamma · Price Magnet';if(c==='positive')return'<strong>+Gamma</strong> — Dealers Short · Mean Reversion';if(c==='negative')return'<strong>−Gamma</strong> — Dealers Long · Momentum';return'<strong>Neutral</strong> — Choppy'}
 function fg(v){const a=Math.abs(v);const s=v<0?'-':'';if(a>=1e9)return s+'$'+(a/1e9).toFixed(1)+'B';if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';if(a>=1e3)return s+'$'+(a/1e3).toFixed(1)+'K';return s+'$'+a.toFixed(0)}
@@ -645,10 +660,9 @@ function renderPanel(d){
   vis.forEach(s=>{
     const iS=s.strike===ss,iK=s.strike===ks,iV=surgeStrikes.has(s.strike);
     const co=gc(s.net_gex,mx,iK);const tco=tc(s.net_gex,mx,iK);
-    const bgA=0.15+Math.min(1,Math.abs(s.net_gex)/mx)*0.6;
     const row=document.createElement('div');row.className='sr'+(iS?' spot':'')+(iK?' king':'');
     if(iV) row.style.borderRight='3px solid var(--cyan)';
-    row.innerHTML=`<div class="sr-bg" style="background:rgba(${co.r},${co.g},${co.b},${bgA})"></div><span class="sr-lbl">${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' ★':''}${iV?' 📈':''}</span></div>`;
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b})"></div><span class="sr-lbl">${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' ★':''}${iV?' 📈':''}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
   });
@@ -660,7 +674,7 @@ function moveTip(e){const t=document.getElementById('tip');const x=e.clientX+16,
 function hideTip(){document.getElementById('tip').classList.remove('vis')}
 
 // ═══ IWM TOGGLE ═══
-let showIWM = true;
+let showIWM = false;
 function toggleIWM(){
   showIWM = !showIWM;
   document.getElementById('iwmBtn').textContent = showIWM ? 'IWM: ON' : 'IWM: OFF';
@@ -677,12 +691,12 @@ function rerender(){if(!D)return;renderRecs();if(stratVisible)renderStrats();con
   getVisibleSyms().forEach(s=>c.appendChild(renderPanel(D[s])));updateTimestamp()}
 
 function updateTimestamp(){
-  const ts=D?.[Object.keys(D)[0]]?.timestamp;
-  if(ts){
-    const d=new Date(ts);
-    const et=d.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
-    document.getElementById('st').textContent=`Updated ${et} ET`;
-  }
+  // Use current browser time (when data was received), not server timestamp
+  // Server timestamp has timezone ambiguity (UTC without suffix parsed as local)
+  const now=new Date();
+  const et=now.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+  const pt=now.toLocaleTimeString('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit',hour12:true});
+  document.getElementById('st').textContent=`${et} ET · ${pt} PT`;
 }
 
 // ═══ AUTO-RELOAD ═══
