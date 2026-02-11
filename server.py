@@ -7,7 +7,8 @@ Deploy to Railway with env vars:
 """
 import os, json, threading, time, base64
 from datetime import datetime
-from flask import Flask, send_file, jsonify
+from flask import Flask, send_file, jsonify, Response, render_template
+
 
 app = Flask(__name__)
 
@@ -78,7 +79,7 @@ def fetch_loop():
 
 @app.route("/")
 def index():
-    return send_file("gex_heatmap.html")
+    return render_template("gex_heatmap.html")
 
 
 @app.route("/api/gex")
