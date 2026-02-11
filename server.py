@@ -34,15 +34,26 @@ TOKEN_PATH = os.environ.get("SCHWAB_TOKEN_PATH", "schwab_token.json")
 FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "300"))  # 5 min default
 SYMBOLS = os.environ.get("SYMBOLS", "SPX,SPY,QQQ,IWM").split(",")
 
-# ─── Decode token from env if needed ───
+# ─── Decode token from env EVERY startup (Railway filesystem is ephemeral) ───
 TOKEN_B64 = os.environ.get("SCHWAB_TOKEN_B64", "")
-if TOKEN_B64 and not os.path.exists(TOKEN_PATH):
+if TOKEN_B64:
     try:
+        token_bytes = base64.b64decode(TOKEN_B64)
         with open(TOKEN_PATH, "wb") as f:
-            f.write(base64.b64decode(TOKEN_B64))
-        print("✅ Token decoded from SCHWAB_TOKEN_B64")
+            f.write(token_bytes)
+        print(f"✅ Token decoded from SCHWAB_TOKEN_B64 ({len(token_bytes)} bytes)")
     except Exception as e:
-        print(f"⚠️ Token decode failed: {e}")
+        print(f"❌ Token decode failed: {e}")
+else:
+    print("⚠️ SCHWAB_TOKEN_B64 not set — token must already exist on disk")
+
+if os.path.exists(TOKEN_PATH):
+    print(f"✅ Token file exists: {TOKEN_PATH}")
+else:
+    print(f"❌ No token file at {TOKEN_PATH} — fetcher will not work!")
+    print(f"   To fix: run locally, authenticate, then:")
+    print(f"   cat schwab_token.json | base64 | tr -d '\\n'")
+    print(f"   Paste result as SCHWAB_TOKEN_B64 env var in Railway")
 
 
 def fetch_loop():
@@ -57,11 +68,17 @@ def fetch_loop():
         try:
             if client is None:
                 from schwab import auth
-                client = auth.easy_client(
-                    api_key=APP_KEY, app_secret=APP_SECRET,
-                    callback_url=CALLBACK_URL, token_path=TOKEN_PATH
+                if not os.path.exists(TOKEN_PATH):
+                    print("❌ No token file — cannot authenticate. Set SCHWAB_TOKEN_B64 env var.")
+                    time.sleep(60)
+                    continue
+                # Use client_from_token_file — NEVER opens a browser
+                client = auth.client_from_token_file(
+                    token_path=TOKEN_PATH,
+                    api_key=APP_KEY,
+                    app_secret=APP_SECRET,
                 )
-                print("✅ Schwab client ready")
+                print("✅ Schwab client ready (from token file)")
 
             data = {}
             for sym in SYMBOLS:
