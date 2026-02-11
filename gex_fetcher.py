@@ -19,7 +19,7 @@ CALLBACK_URL = os.environ.get("SCHWAB_CALLBACK_URL", "https://127.0.0.1:8182/")
 TOKEN_PATH = os.environ.get("SCHWAB_TOKEN_PATH", "schwab_token.json")
 CONTRACT_MULTIPLIER = 100
 
-DTE_WEIGHTS = {0: 1.0, 1: 0.15}
+DTE_WEIGHTS = {0: 1.0}
 DTE_DEFAULT_WEIGHT = 0.0
 
 HISTORY_FILE = "gex_history_intraday.json"
@@ -153,6 +153,7 @@ def calculate_gex(chain, spot):
 
     for exp_key, smap in chain.get("callExpDateMap", {}).items():
         weight, dte = get_dte_weight(exp_key)
+        if weight == 0: continue
         for sk, contracts in smap.items():
             strike = float(sk)
             for c in contracts:
@@ -160,14 +161,10 @@ def calculate_gex(chain, spot):
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
-                # Standard GEX: OI-based
+                # GEX = OI * gamma * spot^2 * 0.01 * multiplier
                 gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
-                # Volume-weighted gamma for king: blends OI + intraday volume
-                # For 0DTE, volume represents new positions that shift dealer hedging
-                vol_gex = vol * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
-                strikes[strike]["total_gamma"] += abs(gex) + abs(vol_gex) * 0.5
                 strikes[strike]["call_oi"] += oi
                 strikes[strike]["call_volume"] += vol
                 if dte <= 0:
@@ -178,6 +175,7 @@ def calculate_gex(chain, spot):
 
     for exp_key, smap in chain.get("putExpDateMap", {}).items():
         weight, dte = get_dte_weight(exp_key)
+        if weight == 0: continue
         for sk, contracts in smap.items():
             strike = float(sk)
             for c in contracts:
@@ -186,10 +184,8 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
                 gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
-                vol_gex = vol * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
-                strikes[strike]["total_gamma"] += abs(gex) + abs(vol_gex) * 0.5
                 strikes[strike]["put_oi"] += oi
                 strikes[strike]["put_volume"] += vol
                 if dte <= 0:
@@ -197,6 +193,10 @@ def calculate_gex(chain, spot):
                     strikes[strike]["put_delta"] = float(c.get("delta", 0) or 0)
                     strikes[strike]["put_bid"] = float(c.get("bid", 0) or 0)
                     strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
+
+    # total_gamma = abs(net_gex) — king is the strike with highest absolute net GEX
+    for s in strikes.values():
+        s["total_gamma"] = abs(s["net_gex"])
 
     return strikes
 
