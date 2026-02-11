@@ -159,9 +159,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   </div>
 </div>
 <div class="ctrl">
-  <div class="ctrl-g"><button onclick="document.getElementById(&#39;fi&#39;).click()">📂 Load JSON</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
-  <div class="ctrl-g"><button onclick="loadSample()">🧪 Sample</button></div>
-  <div class="ctrl-g"><button onclick="autoInterval?stopAutoReload():startAutoReload()" id="arBtn">🔄 Auto-reload</button></div>
+  <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load JSON</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
+  <div class="ctrl-g localOnly" style="display:none"><button onclick="loadSample()">🧪 Sample</button></div>
   <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy ▾</button></div>
   <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
     <select id="ns" onchange="rerender()"><option value="15">15</option><option value="25" selected="">25</option><option value="40">40</option><option value="60">60</option></select>
@@ -210,8 +209,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 <!-- Recs -->
 <div class="rec-wrap" id="rw"></div>
 
-<!-- King History + Volume Surges bar (shown in-line) -->
-<div id="trackbar" style="display:none;padding:6px 24px;border-bottom:1px solid var(--border);font-size:9px;color:var(--dim);background:var(--panel)"></div>
+<!-- King/volume tracking is now inside each panel -->
 
 <!-- Strategy (hidden by default) -->
 <div class="strat-wrap" id="sw"></div>
@@ -441,52 +439,36 @@ function generateStrategy(d) {
   return strategies;
 }
 
-// ═══ KING HISTORY + VOLUME SURGE TRACKING BAR ═══
-function renderTrackbar() {
-  const tb = document.getElementById('trackbar');
-  if (!D) { tb.style.display='none'; return; }
-
+// ═══ KING HISTORY + VOLUME SURGE — per-panel (not global bar) ═══
+function getTrackingHtml(sym) {
+  if (!D || !D[sym]) return '';
+  const d = D[sym];
   let html = '';
-  const syms = Object.keys(D).sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0);
 
-  syms.forEach(sym => {
-    const d = D[sym];
-    // King history
-    const kh = d.king_history || [];
-    if (kh.length >= 2) {
-      const first = kh[0], last = kh[kh.length-1];
-      const t0 = new Date(first.timestamp);
-      const tN = new Date(last.timestamp);
-      const mins = Math.round((tN-t0)/60000);
-      const hrs = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins}m`;
-      const dir = last.strike > first.strike ? '↑' : last.strike < first.strike ? '↓' : '→';
-      const delta = last.strike - first.strike;
-      html += `<span style="color:var(--king);margin-right:12px"><strong>★ ${sym}</strong> King: ${fp(first.strike)} → ${fp(last.strike)} (${delta>0?'+':''}${delta.toFixed(0)}pts ${dir}) over ${hrs}`;
-      if (kh.length > 2) {
-        html += ` · Path: ${kh.map(k=>fp(k.strike)).join(' → ')}`;
-      }
-      html += `</span>`;
-    } else if (kh.length === 1) {
-      html += `<span style="color:var(--king);margin-right:12px"><strong>★ ${sym}</strong> King: ${fp(kh[0].strike)} (first reading)</span>`;
-    }
-
-    // Volume surges
-    const vs = d.volume_surges || [];
-    if (vs.length > 0) {
-      html += `<span style="color:var(--cyan);margin-right:12px">📈 ${sym} Vol surge: `;
-      html += vs.slice(0,3).map(v =>
-        `<strong>${fp(v.strike)}</strong> +${v.delta.toLocaleString()} (${v.pct>0?'+':''}${v.pct}%)`
-      ).join(', ');
-      html += `</span>`;
-    }
-  });
-
-  if (html) {
-    tb.innerHTML = html;
-    tb.style.display = 'block';
-  } else {
-    tb.style.display = 'none';
+  // King history
+  const kh = d.king_history || [];
+  if (kh.length >= 2) {
+    const first = kh[0], last = kh[kh.length-1];
+    const mins = Math.round((new Date(last.timestamp)-new Date(first.timestamp))/60000);
+    const hrs = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins}m`;
+    const delta = last.strike - first.strike;
+    const dir = delta>0?'↑':delta<0?'↓':'→';
+    html += `<div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">★ King: ${fp(first.strike)} → ${fp(last.strike)} (${delta>0?'+':''}${delta.toFixed(0)}pts ${dir}) ${hrs}`;
+    if (kh.length > 2) html += ` · ${kh.map(k=>fp(k.strike)).join('→')}`;
+    html += `</div>`;
   }
+
+  // Volume surges
+  const vs = d.volume_surges || [];
+  if (vs.length > 0) {
+    html += `<div style="padding:2px 14px;font-size:8px;color:var(--cyan);border-bottom:1px solid var(--border)">📈 `;
+    html += vs.slice(0,3).map(v=>
+      `${fp(v.strike)} +${v.delta.toLocaleString()} (${v.pct>0?'+':''}${v.pct}%)`
+    ).join(' · ');
+    html += `</div>`;
+  }
+
+  return html;
 }
 
 // ═══ STRATEGY TOGGLE ═══
@@ -581,7 +563,8 @@ function renderPanel(d){
   const kingD=ks-spot,kingP=((kingD/spot)*100).toFixed(2);
 
   const p=document.createElement('div');p.className='panel';
-  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}</span></div><div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div><div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:9px;color:var(--dim)">${pd}</span></div><div class="klevels"><span class="klev kn">★ ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div><div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div><div class="strikes" id="s-${symbol}"></div>`;
+  const trackHtml = getTrackingHtml(symbol);
+  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}</span></div><div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div><div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:9px;color:var(--dim)">${pd}</span></div><div class="klevels"><span class="klev kn">★ ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div><div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div>${trackHtml}<div class="strikes" id="s-${symbol}"></div>`;
   const cont=p.querySelector(`#s-${symbol}`);
 
   // Volume surge strikes to highlight
@@ -604,7 +587,7 @@ function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');cons
 function moveTip(e){const t=document.getElementById('tip');const x=e.clientX+16,y=e.clientY-10;t.style.left=(x+t.offsetWidth>window.innerWidth?e.clientX-t.offsetWidth-16:x)+'px';t.style.top=(y+t.offsetHeight>window.innerHeight?window.innerHeight-t.offsetHeight-8:y)+'px'}
 function hideTip(){document.getElementById('tip').classList.remove('vis')}
 
-function rerender(){if(!D)return;renderRecs();renderTrackbar();if(stratVisible)renderStrats();const c=document.getElementById('hc');c.innerHTML='';
+function rerender(){if(!D)return;renderRecs();if(stratVisible)renderStrats();const c=document.getElementById('hc');c.innerHTML='';
   Object.keys(D).sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0).forEach(s=>c.appendChild(renderPanel(D[s])));updateTimestamp()}
 
 function updateTimestamp(){const ts=D?.[Object.keys(D)[0]]?.timestamp;if(ts)document.getElementById('st').textContent=`Updated ${new Date(ts).toLocaleTimeString()}`}
@@ -654,51 +637,43 @@ function loadSample(){
   });
   document.getElementById('sb').classList.add('vis');document.getElementById('sd').className='status-dot live';document.getElementById('st').textContent='Sample (0DTE)';rerender()
 }
-  // ═══ AUTO-FETCH FROM SERVER (for deployed mode) ═══
-function startServerFetch() {
-  // Try SSE stream first
-  if (window.EventSource) {
-    const es = new EventSource('/api/stream');
-    es.onmessage = function(e) {
-      try {
-        const newD = JSON.parse(e.data);
-        if (Object.keys(newD).length > 0) {
-          D = newD;
-          document.getElementById('sb').classList.remove('vis');
-          document.getElementById('sd').className = 'status-dot live';
-          rerender();
-        }
-      } catch(err) { console.error('SSE parse error', err); }
-    };
-    es.onerror = function() {
-      console.log('SSE disconnected, falling back to polling');
-      es.close();
-      startPolling();
-    };
-    document.getElementById('st').textContent = 'Live (SSE)';
-  } else {
-    startPolling();
-  }
-}
-
-function startPolling() {
-  setInterval(async () => {
-    try {
-      const resp = await fetch('/api/gex');
-      const newD = await resp.json();
-      if (Object.keys(newD).length > 0) {
+// ═══ SERVER AUTO-FETCH (every 5 min) ═══
+let serverInterval = null;
+async function fetchFromServer() {
+  try {
+    const resp = await fetch('/api/gex');
+    if (!resp.ok) return;
+    const newD = await resp.json();
+    if (newD && Object.keys(newD).length > 0) {
+      const newTs = newD[Object.keys(newD)[0]]?.timestamp;
+      const oldTs = D?.[Object.keys(D||{})[0]]?.timestamp;
+      if (newTs !== oldTs || !D) {
         D = newD;
+        document.getElementById('sb').classList.remove('vis');
         document.getElementById('sd').className = 'status-dot live';
         rerender();
+        console.log('Server data updated:', new Date().toLocaleTimeString());
       }
-    } catch(e) { console.log('Poll error:', e); }
-  }, 30000);
-  document.getElementById('st').textContent = 'Live (polling 30s)';
+    }
+  } catch(e) { /* server not available, silent */ }
 }
 
-// Auto-start server fetch if we're served from a server (not file://)
+function startServerFetch() {
+  fetchFromServer(); // immediate first fetch
+  if (serverInterval) clearInterval(serverInterval);
+  serverInterval = setInterval(fetchFromServer, 5 * 60 * 1000); // every 5 min
+  document.getElementById('st').textContent = 'Live (auto 5m)';
+}
+
+// ═══ MODE DETECTION ═══
+// If served from a server (not file://), auto-fetch and hide local-only buttons
+// If opened as a local file, show Load JSON and Sample buttons
 if (window.location.protocol !== 'file:') {
-  setTimeout(startServerFetch, 1000);
+  // Server mode — auto-fetch from /api/gex
+  startServerFetch();
+} else {
+  // Local mode — show file buttons
+  document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
 }
 </script>
 </body></html>
