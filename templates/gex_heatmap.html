@@ -112,7 +112,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 
 /* ─── Heatmap ─── */
 .hm-wrap{display:flex;gap:2px;padding:12px 24px;overflow-x:auto;min-height:calc(100vh - 340px)}
-.panel{flex:1;min-width:300px;max-width:500px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.panel{flex:1;min-width:320px;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
 .panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px 6px;border-bottom:1px solid var(--border)}
 .panel-sym{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright)}
 .panel-price{font-size:14px;font-weight:600;color:var(--bright)}
@@ -162,16 +162,16 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 <div class="hdr">
   <h1><em>GEX</em> Heatmap + Strategy</h1>
   <div class="hdr-r">
-    <a href="file:///Users/kevin/Downloads/gex_history_dashboard.html">📈 History</a>
-    <div class="status-dot live" id="sd"></div><span class="status-text" id="st">Updated 11:23:37 AM</span>
+    <div class="status-dot live" id="sd"></div><span class="status-text" id="st">Connecting...</span>
   </div>
 </div>
 <div class="ctrl">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load JSON</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
   <div class="ctrl-g"><button onclick="loadSample()">🧪 Sample</button></div>
   <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy ▾</button></div>
+  <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px">IWM: ON</button></div>
   <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
-    <select id="ns" onchange="rerender()"><option value="15">15</option><option value="25" selected="">25</option><option value="40">40</option><option value="60">60</option></select>
+    <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
   </div>
 </div>
 <div class="legend">
@@ -546,7 +546,7 @@ function genRec(d){
 function renderRecs(){
   const rw=document.getElementById('rw');if(!D){rw.classList.remove('vis');return}
   rw.innerHTML='';rw.classList.add('vis');
-  Object.keys(D).sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0).forEach(sym=>{
+  getVisibleSyms().forEach(sym=>{
     const d=D[sym],r=d.recommendation||genRec(d);
     const spot=d.spot, strikes=d.strikes||[];
     const sorted=[...strikes].sort((a,b)=>a.strike-b.strike);
@@ -652,8 +652,22 @@ function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');cons
 function moveTip(e){const t=document.getElementById('tip');const x=e.clientX+16,y=e.clientY-10;t.style.left=(x+t.offsetWidth>window.innerWidth?e.clientX-t.offsetWidth-16:x)+'px';t.style.top=(y+t.offsetHeight>window.innerHeight?window.innerHeight-t.offsetHeight-8:y)+'px'}
 function hideTip(){document.getElementById('tip').classList.remove('vis')}
 
+// ═══ IWM TOGGLE ═══
+let showIWM = true;
+function toggleIWM(){
+  showIWM = !showIWM;
+  document.getElementById('iwmBtn').textContent = showIWM ? 'IWM: ON' : 'IWM: OFF';
+  document.getElementById('iwmBtn').style.opacity = showIWM ? '1' : '0.5';
+  rerender();
+}
+
+function getVisibleSyms(){
+  if(!D) return [];
+  return Object.keys(D).filter(s=> showIWM || s!=='IWM').sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0);
+}
+
 function rerender(){if(!D)return;renderRecs();if(stratVisible)renderStrats();const c=document.getElementById('hc');c.innerHTML='';
-  Object.keys(D).sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0).forEach(s=>c.appendChild(renderPanel(D[s])));updateTimestamp()}
+  getVisibleSyms().forEach(s=>c.appendChild(renderPanel(D[s])));updateTimestamp()}
 
 function updateTimestamp(){const ts=D?.[Object.keys(D)[0]]?.timestamp;if(ts)document.getElementById('st').textContent=`Updated ${new Date(ts).toLocaleTimeString()}`}
 
