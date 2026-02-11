@@ -654,5 +654,51 @@ function loadSample(){
   });
   document.getElementById('sb').classList.add('vis');document.getElementById('sd').className='status-dot live';document.getElementById('st').textContent='Sample (0DTE)';rerender()
 }
+  // ═══ AUTO-FETCH FROM SERVER (for deployed mode) ═══
+function startServerFetch() {
+  // Try SSE stream first
+  if (window.EventSource) {
+    const es = new EventSource('/api/stream');
+    es.onmessage = function(e) {
+      try {
+        const newD = JSON.parse(e.data);
+        if (Object.keys(newD).length > 0) {
+          D = newD;
+          document.getElementById('sb').classList.remove('vis');
+          document.getElementById('sd').className = 'status-dot live';
+          rerender();
+        }
+      } catch(err) { console.error('SSE parse error', err); }
+    };
+    es.onerror = function() {
+      console.log('SSE disconnected, falling back to polling');
+      es.close();
+      startPolling();
+    };
+    document.getElementById('st').textContent = 'Live (SSE)';
+  } else {
+    startPolling();
+  }
+}
+
+function startPolling() {
+  setInterval(async () => {
+    try {
+      const resp = await fetch('/api/gex');
+      const newD = await resp.json();
+      if (Object.keys(newD).length > 0) {
+        D = newD;
+        document.getElementById('sd').className = 'status-dot live';
+        rerender();
+      }
+    } catch(e) { console.log('Poll error:', e); }
+  }, 30000);
+  document.getElementById('st').textContent = 'Live (polling 30s)';
+}
+
+// Auto-start server fetch if we're served from a server (not file://)
+if (window.location.protocol !== 'file:') {
+  setTimeout(startServerFetch, 1000);
+}
 </script>
 </body></html>
