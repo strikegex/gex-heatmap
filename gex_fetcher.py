@@ -19,7 +19,7 @@ CALLBACK_URL = os.environ.get("SCHWAB_CALLBACK_URL", "https://127.0.0.1:8182/")
 TOKEN_PATH = os.environ.get("SCHWAB_TOKEN_PATH", "schwab_token.json")
 CONTRACT_MULTIPLIER = 100
 
-DTE_WEIGHTS = {0: 10.0, 1: 2.0}
+DTE_WEIGHTS = {0: 1.0, 1: 0.15}
 DTE_DEFAULT_WEIGHT = 0.0
 
 HISTORY_FILE = "gex_history_intraday.json"
@@ -157,13 +157,17 @@ def calculate_gex(chain, spot):
             strike = float(sk)
             for c in contracts:
                 oi = int(c.get("openInterest", 0))
-                gamma = float(c.get("gamma", 0) or 0)
                 vol = int(c.get("totalVolume", 0))
+                gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
-                gex = oi * gamma * spot**2 * 0.01 * CONTRACT_MULTIPLIER * weight
+                # Standard GEX: OI-based
+                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
+                # Volume-weighted gamma for king: blends OI + intraday volume
+                # For 0DTE, volume represents new positions that shift dealer hedging
+                vol_gex = vol * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
-                strikes[strike]["total_gamma"] += abs(gex)
+                strikes[strike]["total_gamma"] += abs(gex) + abs(vol_gex) * 0.5
                 strikes[strike]["call_oi"] += oi
                 strikes[strike]["call_volume"] += vol
                 if dte <= 0:
@@ -178,13 +182,14 @@ def calculate_gex(chain, spot):
             strike = float(sk)
             for c in contracts:
                 oi = int(c.get("openInterest", 0))
-                gamma = float(c.get("gamma", 0) or 0)
                 vol = int(c.get("totalVolume", 0))
+                gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
-                gex = oi * gamma * spot**2 * 0.01 * CONTRACT_MULTIPLIER * weight
+                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
+                vol_gex = vol * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
-                strikes[strike]["total_gamma"] += abs(gex)
+                strikes[strike]["total_gamma"] += abs(gex) + abs(vol_gex) * 0.5
                 strikes[strike]["put_oi"] += oi
                 strikes[strike]["put_volume"] += vol
                 if dte <= 0:
