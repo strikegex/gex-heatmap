@@ -44,18 +44,26 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .rec-wrap.vis{display:flex}
 .rec{flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px 14px;position:relative;overflow:hidden}
 .rec::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.rec.range::before{background:var(--yellow)}.rec.trend::before{background:var(--purple)}.rec.chop::before{background:var(--green)}
-.rec-sym{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rec.range::before{background:var(--yellow)}.rec.trend::before{background:var(--purple)}.rec.chop::before{background:var(--green)}.rec.bullish::before{background:var(--green)}.rec.bearish::before{background:var(--red)}
+.rec-sym{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .rec-badge{font-size:8px;padding:2px 6px;border-radius:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .rec-badge.range{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
 .rec-badge.trend{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .rec-badge.chop{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
-.rec-sum{font-size:10px;color:var(--bright);line-height:1.6;margin-bottom:8px;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:4px;border-left:3px solid var(--accent)}
+.rec-badge.bullish{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.rec-badge.bearish{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.rec-sum{font-size:11px;color:var(--bright);font-weight:600;line-height:1.5;margin-bottom:6px}
+.rec-gamma{font-size:9px;padding:6px 8px;border-radius:4px;margin-bottom:8px;line-height:1.6}
+.rec-gamma.neg{background:rgba(168,85,247,.06);border-left:3px solid var(--purple);color:var(--text)}
+.rec-gamma.pos{background:rgba(251,191,36,.06);border-left:3px solid var(--yellow);color:var(--text)}
+.rec-gamma.neu{background:rgba(34,197,94,.06);border-left:3px solid var(--green);color:var(--text)}
+.rec-gamma strong{color:var(--bright)}.rec-gamma .hl{color:var(--king);font-weight:600}
 .rec-act{font-size:9px;padding:2px 0;display:flex;align-items:baseline;gap:5px;color:var(--text)}
-.rec-lvls{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.rec-lvls{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .rec-lv{font-size:8px;padding:2px 6px;border-radius:3px}
 .rec-lv.king{background:rgba(245,158,11,.12);color:var(--king);border:1px solid rgba(245,158,11,.25)}
 .rec-lv.rng{background:rgba(99,102,241,.08);color:var(--accent);border:1px solid rgba(99,102,241,.2)}
+.rec-lv.gp{background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 
 /* ═══ STRATEGY PANEL ═══ */
 .strat-wrap{display:none;padding:12px 24px;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
@@ -126,12 +134,12 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr.king{outline:2px solid var(--king);z-index:3}
 .sr-bg{position:absolute;inset:0;opacity:.75;transition:opacity .15s}
 .sr:hover .sr-bg{opacity:.9}
-.sr-lbl{width:66px;font-size:10px;font-weight:500;text-align:left;padding-left:5px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
+.sr-lbl{width:72px;font-size:10px;font-weight:500;text-align:right;padding-right:8px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
 .sr.spot .sr-lbl{color:#fff;font-weight:700}
 .sr.spot .sr-lbl::after{content:" ▸"}
 .sr.king .sr-lbl::before{content:"★ ";color:var(--king)}
 .gbar-c{flex:1;height:100%;position:relative;display:flex;align-items:center;justify-content:flex-end}
-.gval{font-size:10px;font-weight:600;position:relative;z-index:1;padding:0 8px;white-space:nowrap}
+.gval{font-size:10px;font-weight:600;position:relative;z-index:1;padding:0 8px;white-space:nowrap;min-width:60px;text-align:right}
 
 .tip{display:none;position:fixed;background:#14142a;border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:11px;z-index:100;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:240px}
 .tip.vis{display:block}
@@ -160,7 +168,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 </div>
 <div class="ctrl">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load JSON</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
-  <div class="ctrl-g localOnly" style="display:none"><button onclick="loadSample()">🧪 Sample</button></div>
+  <div class="ctrl-g"><button onclick="loadSample()">🧪 Sample</button></div>
   <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy ▾</button></div>
   <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
     <select id="ns" onchange="rerender()"><option value="15">15</option><option value="25" selected="">25</option><option value="40">40</option><option value="60">60</option></select>
@@ -538,10 +546,67 @@ function genRec(d){
 function renderRecs(){
   const rw=document.getElementById('rw');if(!D){rw.classList.remove('vis');return}
   rw.innerHTML='';rw.classList.add('vis');
-  Object.keys(D).forEach(sym=>{
+  Object.keys(D).sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0).forEach(sym=>{
     const d=D[sym],r=d.recommendation||genRec(d);
-    const c=document.createElement('div');c.className=`rec ${r.bias||'chop'}`;
-    c.innerHTML=`<div class="rec-sym">${sym} $${fp(d.spot)} <span class="rec-badge ${r.bias}">${(r.bias||'?').toUpperCase()}</span></div><div class="rec-sum">${r.summary||''}</div><div>${(r.action_items||[]).map(i=>`<div class="rec-act"><span>${i.includes('↑')?'🟣':i.includes('↓')?'🟣':i.includes('SUPPORT')?'🟡':i.includes('RESIST')?'🟡':'★'}</span>${i}</div>`).join('')}</div><div class="rec-lvls"><span class="rec-lv king">★ King: ${fp(r.king_node?.strike||0)}</span>${r.expected_range?`<span class="rec-lv rng">Range: ${fp(r.expected_range.low)}–${fp(r.expected_range.high)}</span>`:''}</div>`;
+    const spot=d.spot, strikes=d.strikes||[];
+    const sorted=[...strikes].sort((a,b)=>a.strike-b.strike);
+    const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
+    const king=strikes.reduce((b,s)=>(s.total_gamma||Math.abs(s.net_gex))>(b.total_gamma||Math.abs(b.net_gex))?s:b,strikes[0]);
+    const kingD=king?king.strike-spot:0;
+    const kingPct=spot?((kingD/spot)*100).toFixed(2):0;
+    const gw=d.gamma_wall||0, pw=d.put_wall||0;
+    const net=d.total_net_gex||0;
+
+    // Gamma profile
+    const isNeg=net<-mx*.05, isPos=net>mx*.05;
+    const gpClass=isNeg?'neg':isPos?'pos':'neu';
+    const gpLabel=isNeg?'−Gamma (Momentum)':isPos?'+Gamma (Mean Revert)':'Neutral (Choppy)';
+
+    // Bias
+    const bias=r.bias||'chop';
+
+    // Build rich commentary
+    let commentary='';
+    if(isNeg && kingD>0){
+      commentary=`<strong>−Gamma + King above</strong> = dealers amplify upward moves. Expect <span class="hl">bullish momentum toward ${fp(king.strike)}</span>. Buy dips, don't fade. Debit call spreads favored.`;
+    } else if(isNeg && kingD<0){
+      commentary=`<strong>−Gamma + King below</strong> = dealers amplify downward moves. Expect <span class="hl">bearish momentum toward ${fp(king.strike)}</span>. Sell rips, buy put spreads. Do NOT sell premium here.`;
+    } else if(isNeg && Math.abs(kingD)<spot*.001){
+      commentary=`<strong>−Gamma + King at spot</strong> = explosive either direction. <span class="hl">Wait for break</span>, then ride momentum. Straddles or strangles if IV is low.`;
+    } else if(isPos && Math.abs(kingD)<spot*.002){
+      commentary=`<strong>+Gamma + King at spot</strong> = <span class="hl">pin & chop</span>. Dealers suppress moves both ways. Sell premium: iron condors, butterflies centered on ${fp(king.strike)}.`;
+    } else if(isPos && kingD>0){
+      commentary=`<strong>+Gamma + King above</strong> = slow grind up toward <span class="hl">${fp(king.strike)}</span>. Dealers dampen selloffs. Sell put spreads below, or drift-to-king butterflies.`;
+    } else if(isPos && kingD<0){
+      commentary=`<strong>+Gamma + King below</strong> = slow grind down toward <span class="hl">${fp(king.strike)}</span>. Dealers dampen rallies. Sell call spreads above, or drift-to-king butterflies.`;
+    } else {
+      commentary=`<strong>Mixed gamma</strong> — no strong dealer bias. <span class="hl">Reduce size</span>, wait for clearer setup. King at ${fp(king?king.strike:0)}.`;
+    }
+
+    // Directional line
+    const dirLine = kingD>0 
+      ? `★ King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--green)">above</span> spot (${kingPct}%). Drift target ↑`
+      : kingD<0
+      ? `★ King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--red)">below</span> spot (${kingPct}%). Drift target ↓`
+      : `★ King ${fp(king.strike)} — AT spot. Pin expected.`;
+
+    // Support/resistance
+    const posAbove=sorted.filter(s=>s.strike>spot&&s.net_gex>mx*.12).slice(0,1);
+    const posBelow=sorted.filter(s=>s.strike<spot&&s.net_gex>mx*.12).reverse().slice(0,1);
+    const resist=posAbove.length?fp(posAbove[0].strike):(gw?fp(gw):'—');
+    const support=posBelow.length?fp(posBelow[0].strike):(pw?fp(pw):'—');
+
+    const c=document.createElement('div');c.className=`rec ${bias}`;
+    c.innerHTML=`<div class="rec-sym">${sym} $${fp(spot)} <span class="rec-badge ${bias}">${bias.toUpperCase()}</span></div>`+
+      `<div class="rec-sum">${r.summary||''}</div>`+
+      `<div class="rec-gamma ${gpClass}">${commentary}<br><span style="font-size:8px;color:var(--dim);margin-top:2px;display:inline-block">${dirLine}</span></div>`+
+      `<div>${(r.action_items||[]).map(i=>`<div class="rec-act"><span>${i.includes('↑')?'🟣':i.includes('↓')?'🟣':i.includes('SUPPORT')?'🟡':i.includes('RESIST')?'🟡':'★'}</span>${i}</div>`).join('')}</div>`+
+      `<div class="rec-lvls">`+
+        `<span class="rec-lv king">★ King: ${fp(king?king.strike:0)}</span>`+
+        `<span class="rec-lv gp">${gpLabel}</span>`+
+        `${r.expected_range?`<span class="rec-lv rng">Range: ${fp(r.expected_range.low)}–${fp(r.expected_range.high)}</span>`:''}`+
+      `</div>`+
+      `<div style="display:flex;gap:10px;margin-top:6px;font-size:8px;color:var(--dim)"><span>🟡 Support: ${support}</span><span>🟠 Resist: ${resist}</span></div>`;
     rw.appendChild(c);
   });
 }
@@ -639,10 +704,15 @@ function loadSample(){
 }
 // ═══ SERVER AUTO-FETCH (every 5 min) ═══
 let serverInterval = null;
+let fetchAttempts = 0;
 async function fetchFromServer() {
   try {
     const resp = await fetch('/api/gex');
-    if (!resp.ok) return;
+    if (!resp.ok) {
+      fetchAttempts++;
+      if (fetchAttempts <= 2) document.getElementById('st').textContent = `Server error (${resp.status}) — retrying...`;
+      return;
+    }
     const newD = await resp.json();
     if (newD && Object.keys(newD).length > 0) {
       const newTs = newD[Object.keys(newD)[0]]?.timestamp;
@@ -652,27 +722,36 @@ async function fetchFromServer() {
         document.getElementById('sb').classList.remove('vis');
         document.getElementById('sd').className = 'status-dot live';
         rerender();
-        console.log('Server data updated:', new Date().toLocaleTimeString());
+        document.getElementById('st').textContent = `Live · Updated ${new Date(newTs).toLocaleTimeString()}`;
+        fetchAttempts = 0;
+      }
+    } else {
+      fetchAttempts++;
+      if (!D) {
+        document.getElementById('st').textContent = 'Waiting for data (market may be closed)';
+        document.getElementById('hc').innerHTML = '<div class="empty"><h2>Waiting for Market Data</h2><p>The fetcher is running but market may be closed. Data will appear automatically when available.</p><p style="margin-top:8px;font-size:11px;color:var(--dim)">Or click <code>🧪 Sample</code> to preview with demo data.</p></div>';
       }
     }
-  } catch(e) { /* server not available, silent */ }
+  } catch(e) {
+    fetchAttempts++;
+    if (fetchAttempts <= 2) document.getElementById('st').textContent = 'Connecting to server...';
+    else document.getElementById('st').textContent = 'Server unreachable — use 📂 Load JSON';
+    // Show Load JSON button as fallback after repeated failures
+    if (fetchAttempts >= 3) document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
+  }
 }
 
 function startServerFetch() {
-  fetchFromServer(); // immediate first fetch
+  fetchFromServer();
   if (serverInterval) clearInterval(serverInterval);
-  serverInterval = setInterval(fetchFromServer, 5 * 60 * 1000); // every 5 min
-  document.getElementById('st').textContent = 'Live (auto 5m)';
+  serverInterval = setInterval(fetchFromServer, 5 * 60 * 1000);
+  document.getElementById('st').textContent = 'Connecting...';
 }
 
 // ═══ MODE DETECTION ═══
-// If served from a server (not file://), auto-fetch and hide local-only buttons
-// If opened as a local file, show Load JSON and Sample buttons
 if (window.location.protocol !== 'file:') {
-  // Server mode — auto-fetch from /api/gex
   startServerFetch();
 } else {
-  // Local mode — show file buttons
   document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
 }
 </script>
