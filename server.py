@@ -3,7 +3,7 @@ Flask server: serves gex_heatmap.html and runs gex_fetcher on a schedule.
 """
 import os, json, threading, time
 from datetime import datetime, date, timedelta
-from flask import Flask, send_file, jsonify, Response
+from flask import Flask, send_file, jsonify, Response, render_template
 
 app = Flask(__name__)
 
