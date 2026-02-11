@@ -79,7 +79,7 @@ def fetch_loop():
 @app.route("/")
 def index():
     """Serve the heatmap HTML."""
-    return send_file("gex_heatmap.html")
+    return render_template("gex_heatmap.html")
 
 
 @app.route("/api/gex")
