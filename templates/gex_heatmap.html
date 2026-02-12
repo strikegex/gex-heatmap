@@ -7,33 +7,42 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#08080d;--panel:#0e0e16;--card:#12121c;--border:#1a1a2a;--text:#b8b8cc;--dim:#555570;--bright:#e8e8f4;--yellow:#fbbf24;--purple:#a855f7;--green:#22c55e;--king:#f59e0b;--accent:#6366f1;--red:#ef4444;--cyan:#06b6d4}
+:root{--bg:#08080d;--panel:#0e0e16;--card:#12121c;--border:#1a1a2a;--text:#b8b8cc;--dim:#555570;--bright:#e8e8f4;--yellow:#fbbf24;--purple:#a855f7;--green:#22c55e;--king:#ef4444;--accent:#6366f1;--red:#ef4444;--cyan:#06b6d4}
 body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh}
 
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--panel)}
-.hdr h1{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--bright);letter-spacing:-.5px}
-.hdr h1 em{font-style:normal;color:var(--accent)}
-.hdr-r{display:flex;gap:10px;align-items:center}
-.hdr-r a{font-size:10px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:4px}
-.hdr-r a:hover{background:var(--accent);color:#fff}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--red)}
+/* ═══ TOP BAR ═══ */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--bright);letter-spacing:-.5px;white-space:nowrap}
+.topbar-title em{font-style:normal;color:var(--accent)}
+.market-session{font-size:10px;padding:4px 10px;border-radius:4px;font-weight:600;white-space:nowrap}
+.market-session.pre{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.market-session.open{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.market-session.power{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.market-session.closed{background:rgba(85,85,112,.1);color:var(--dim);border:1px solid rgba(85,85,112,.2)}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.topbar-right .disc{font-size:7px;color:var(--dim);opacity:.6;max-width:160px;line-height:1.3}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0}
 .status-dot.live{background:var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.status-text{font-size:10px;color:var(--dim)}
+.status-text{font-size:10px;color:var(--dim);white-space:nowrap}
+.countdown{font-size:9px;color:var(--accent);font-weight:600;white-space:nowrap}
 
-.ctrl{display:flex;gap:10px;padding:10px 24px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
+/* ═══ CONTROLS — single compact row ═══ */
+.ctrl{display:flex;gap:8px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
 button,select{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--card);color:var(--text);border:1px solid var(--border);padding:5px 10px;border-radius:4px;cursor:pointer;transition:all .15s}
 button:hover{background:var(--border);color:var(--bright);border-color:var(--accent)}
 .ctrl label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
 .ctrl-g{display:flex;align-items:center;gap:6px}
 
-.legend{display:flex;gap:14px;padding:5px 24px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
+/* ═══ LEGEND — compact inline ═══ */
+.legend{display:flex;gap:12px;padding:4px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
 .legend-t{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
 .legend-i{display:flex;align-items:center;gap:4px;font-size:9px}
 .lsw{width:11px;height:11px;border-radius:2px;flex-shrink:0}
-.lsw.y{background:var(--yellow)}.lsw.p{background:var(--purple)}.lsw.g{background:var(--green)}
-.lsw.k{background:linear-gradient(135deg,var(--king),#fde68a);position:relative}
-.lsw.k::after{content:"★";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px;color:#000}
+.lsw.y{background:#8ab030}.lsw.p{background:#4040b0}.lsw.g{background:#1e4040}
+.lsw.k{background:var(--king);position:relative}
+.lsw.k::after{content:"👑";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px}
 .legend-d{color:var(--dim);font-size:8px}
 
 .sample-banner{display:none;padding:5px 24px;background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.15);font-size:10px;color:var(--yellow);text-align:center}
@@ -111,7 +120,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .strat-disclaimer{font-size:8px;color:var(--dim);padding:8px 16px;border-top:1px solid var(--border);text-align:center;letter-spacing:.3px}
 
 /* ─── Heatmap ─── */
-.hm-wrap{display:flex;gap:2px;padding:12px 24px;overflow-x:auto;min-height:calc(100vh - 340px)}
+.hm-wrap{display:flex;gap:2px;padding:12px 20px;overflow-x:auto;min-height:calc(100vh - 300px)}
 .panel{flex:1;min-width:320px;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
 .panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
 .panel-sym{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--bright)}
@@ -125,7 +134,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .klev{font-size:9px;padding:3px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
 .klev.gw{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
 .klev.pw{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
-.klev.kn{background:rgba(245,158,11,.12);color:var(--king);border:1px solid rgba(245,158,11,.2)}
+.klev.kn{background:rgba(239,68,68,.12);color:var(--king);border:1px solid rgba(239,68,68,.2)}
 .klev.sp{background:rgba(255,255,255,.05);color:var(--bright);border:1px solid rgba(255,255,255,.1)}
 .strikes{flex:1;overflow-y:auto;padding:2px 0}
 .sr{display:flex;align-items:center;height:32px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
@@ -137,9 +146,38 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr-lbl{width:80px;font-size:13px;font-weight:500;text-align:right;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
 .sr.spot .sr-lbl{color:#fff;font-weight:700}
 .sr.spot .sr-lbl::after{content:" ▸"}
-.sr.king .sr-lbl::before{content:"★ ";color:var(--king)}
+.sr.king .sr-lbl::before{content:"👑 ";font-size:11px}
 .gbar-c{flex:1;height:100%;position:relative;display:flex;align-items:center;justify-content:flex-end}
 .gval{font-size:13px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:70px;text-align:right}
+
+/* ═══ MOBILE RESPONSIVE ═══ */
+@media(max-width:900px){
+  .topbar{padding:8px 12px}
+  .topbar-title{font-size:14px}
+  .topbar-right .disc{display:none}
+  .ctrl{padding:6px 12px;gap:6px}
+  .legend{padding:3px 12px;gap:8px}
+  .hm-wrap{flex-direction:column;padding:8px 8px;gap:8px;overflow-x:hidden}
+  .panel{min-width:100%;max-width:100%}
+  .rec-wrap{padding:8px 8px;gap:6px}
+  .rec{min-width:100%}
+  .strat-wrap{padding:8px 8px}
+  .strat-card{min-width:100%}
+  .panel-sym{font-size:16px}.panel-price{font-size:16px}
+  .sr{height:36px}
+  .sr-lbl{font-size:14px;width:85px}
+  .gval{font-size:14px}
+}
+@media(max-width:480px){
+  .topbar-left{gap:6px}
+  .topbar-title{font-size:12px}
+  .market-session{font-size:8px;padding:3px 6px}
+  .ctrl{padding:4px 8px}
+  button,select{font-size:10px;padding:4px 8px}
+  .legend{display:none}
+  .sr-lbl{width:70px;font-size:12px}
+  .gval{font-size:12px;min-width:60px}
+}
 
 .tip{display:none;position:fixed;background:#14142a;border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:11px;z-index:100;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:240px}
 .tip.vis{display:block}
@@ -159,56 +197,47 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 </style>
 </head>
 <body>
-<div class="hdr">
-  <h1><em>GEX</em> Heatmap + Strategy</h1>
-  <div class="hdr-r">
-    <span style="font-size:8px;color:var(--dim);opacity:.7">For educational purposes only. Not financial advice.</span>
-    <div class="status-dot live" id="sd"></div><span class="status-text" id="st">Connecting...</span>
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title"><em>GEX</em> Heatmap</span>
+    <span class="market-session closed" id="mktSession">CLOSED</span>
+  </div>
+  <div class="topbar-right">
+    <span class="disc">Educational only · Not financial advice</span>
+    <span class="countdown" id="countdown"></span>
+    <div class="status-dot" id="sd"></div>
+    <span class="status-text" id="st">Connecting...</span>
   </div>
 </div>
 <div class="ctrl">
-  <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load JSON</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
-  <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy ▾</button></div>
+  <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
+  <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy</button></div>
   <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px;opacity:0.5">IWM: OFF</button></div>
+  <div class="ctrl-g"><button onclick="toggleColorGuide()" id="cgBtn" style="font-size:9px;padding:3px 8px">? Guide</button></div>
   <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
     <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
   </div>
 </div>
 <div class="legend">
-  <span class="legend-t">Heatmap Legend:</span>
-  <div class="legend-i"><div class="lsw y"></div><span style="color:var(--yellow)">Yellow (+Gamma)</span></div>
-  <div class="legend-i"><div class="lsw p"></div><span style="color:var(--purple)">Purple (−Gamma)</span></div>
-  <div class="legend-i"><div class="lsw g"></div><span style="color:var(--green)">Green (Neutral)</span></div>
-  <div class="legend-i"><div class="lsw k"></div><span style="color:var(--king)">★ King Node</span></div>
-  <button onclick="document.getElementById(&#39;legend-detail&#39;).style.display=document.getElementById(&#39;legend-detail&#39;).style.display===&#39;none&#39;?&#39;block&#39;:&#39;none&#39;" style="margin-left:auto;font-size:9px;padding:3px 8px">? Color Guide</button>
+  <span class="legend-t">Legend:</span>
+  <div class="legend-i"><div class="lsw y"></div><span style="color:var(--yellow)">+Gamma</span></div>
+  <div class="legend-i"><div class="lsw p"></div><span style="color:var(--purple)">−Gamma</span></div>
+  <div class="legend-i"><div class="lsw g"></div><span style="color:var(--dim)">Neutral</span></div>
+  <div class="legend-i"><div class="lsw k"></div><span style="color:var(--king)">👑 King</span></div>
 </div>
-<div id="legend-detail" style="display:none;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--panel);font-size:10px;line-height:1.8">
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
-    <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:6px;padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:6px">🟡 Yellow — Positive Gamma (+GEX)</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> Dealers are NET SHORT options at this strike. They sold options to customers.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>How dealers hedge:</strong> They hedge AGAINST the move. If price rises toward this strike, they sell. If price falls, they buy. This creates <em>mean reversion</em> — price snaps back.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Price is "sticky" here. Acts as support (below spot) or resistance (above spot). Volatility dampens. Range-bound action.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy implication:</strong> ✅ SELL premium here. Iron condors, credit spreads, butterflies. This is where you want your short strikes — dealers defend your position.</div>
+<div id="legend-detail" style="display:none;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--panel);font-size:10px;line-height:1.8">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+    <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:6px;padding:10px 12px">
+      <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:4px">🟡 +Gamma (Yellow/Green)</div>
+      <div style="color:var(--text)">Dealers SHORT → hedge AGAINST moves → <em>Mean reversion</em>. Price sticky. ✅ Sell premium here.</div>
     </div>
-    <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:6px;padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">🟣 Purple — Negative Gamma (−GEX)</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> Dealers are NET LONG options at this strike. Customers sold options to dealers.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>How dealers hedge:</strong> They hedge WITH the move. If price rises, they buy more. If price falls, they sell more. This creates <em>momentum</em> — moves accelerate.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Price is "slippery" here. Breakouts/breakdowns carry through. Volatility expands. Trending/momentum action.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy implication:</strong> ⚠️ DO NOT sell premium here. Dealers amplify against you. Instead: buy debit spreads, ride momentum, or stay away. Never place short strikes in purple zones.</div>
+    <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:6px;padding:10px 12px">
+      <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:4px">🟣 −Gamma (Purple/Blue)</div>
+      <div style="color:var(--text)">Dealers LONG → hedge WITH moves → <em>Momentum</em>. Price slippery. ⚠ Don't sell premium.</div>
     </div>
-    <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:6px;padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px">🟢 Green — Neutral / Mixed Gamma</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> Dealer positioning is roughly balanced at this strike. No strong directional bias from hedging flows.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Choppy, indecisive price action. No strong pull in either direction. Low conviction zone.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy implication:</strong> ⚪ Reduce size. Wait for a clearer setup. If trading, use iron butterflies at king node with smaller position. Can flip +/− without warning.</div>
-    </div>
-    <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:6px;padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">★ King Node — Max Absolute Gamma</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> The strike with the LARGEST absolute gamma exposure. Where dealers have the most hedging activity.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Acts as a <em>price magnet</em>. Spot drifts toward king throughout the session, especially during 0DTE expiration. Think of it as gravity — price wants to pin here.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy implication:</strong> ★ This is your TARGET. Center butterflies here. If king is above spot → bullish drift expected. Below → bearish drift. At spot → pin/chop, perfect for iron condors.</div>
+    <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;padding:10px 12px">
+      <div style="font-size:12px;font-weight:700;color:var(--king);margin-bottom:4px">👑 King Node (Red)</div>
+      <div style="color:var(--text)">Max absolute gamma. Price magnet — spot drifts here. Center butterflies/ICs on king.</div>
     </div>
   </div>
 </div>
@@ -235,7 +264,7 @@ let D=null;
 
 // ═══ COLOR — solid saturated like reference tool ═══
 function gc(n,m,k){
-  if(k)return{r:210,g:170,b:30}; // bright gold king
+  if(k)return{r:200,g:30,b:30}; // RED king — never blends with yellow
   const r=n/m,a=Math.min(Math.abs(r),1);
   if(a<.01)return{r:30,g:60,b:55}; // near-zero: dark teal
   if(r>0){
@@ -265,7 +294,7 @@ function tc(n,m,k){
   return r>0?'#e8e8d0':'#d0d0e8';
 }
 function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
-function bh(c,k){if(k)return'<strong>★ King</strong> — Max Gamma · Price Magnet';if(c==='positive')return'<strong>+Gamma</strong> — Dealers Short · Mean Reversion';if(c==='negative')return'<strong>−Gamma</strong> — Dealers Long · Momentum';return'<strong>Neutral</strong> — Choppy'}
+function bh(c,k){if(k)return'<strong>👑 King</strong> — Max Gamma · Price Magnet';if(c==='positive')return'<strong>+Gamma</strong> — Dealers Short · Mean Reversion';if(c==='negative')return'<strong>−Gamma</strong> — Dealers Long · Momentum';return'<strong>Neutral</strong> — Choppy'}
 function fg(v){const a=Math.abs(v);const s=v<0?'-':'';if(a>=1e9)return s+'$'+(a/1e9).toFixed(1)+'B';if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';if(a>=1e3)return s+'$'+(a/1e3).toFixed(1)+'K';return s+'$'+a.toFixed(0)}
 function fp(p){return p>=1000?p.toFixed(0):p.toFixed(2)}
 
@@ -311,7 +340,7 @@ function generateStrategy(d) {
       if(cands.length){adj=cands[0].strike;tag='+Gamma (shifted)';tagCls='gw';conf='HIGH (adj)'}
       else{tag='⚠ −Gamma';tagCls='pw';conf='LOW'}
     }else{tag=`~${(Math.abs(strike-spot)/spot*100).toFixed(2)}% OTM`}
-    if(Math.abs(adj-king.strike)<=step){tag+=' (★ King)';tagCls='kn'}
+    if(Math.abs(adj-king.strike)<=step){tag+=' (👑 King)';tagCls='kn'}
     return{strike:adj,tag,tagCls,conf,orig:strike};
   }
 
@@ -326,7 +355,7 @@ function generateStrategy(d) {
 
   function driftComm() {
     const dist=Math.abs(kd).toFixed(1),dir=kd>0?'above':'below',pct=Math.abs(kdPct).toFixed(2);
-    let c=`<strong>★ King ${fp(king.strike)}</strong> — ${dist}pts ${dir} (${pct}%). `;
+    let c=`<strong>👑 King ${fp(king.strike)}</strong> — ${dist}pts ${dir} (${pct}%). `;
     if(Math.abs(kdPct)<.05) c+=`ON the king. <em>Strong pin.</em> Ideal for ICs.`;
     else if(Math.abs(kdPct)<.15) c+=kd>0?`Slight upward pull. <em>Buy dips, sell at king.</em>`:`Slight downward pull. <em>Sell rips, cover at king.</em>`;
     else c+=kd>0?`Strong upward gravity. <em>Bullish — buy calls targeting king.</em>`:`Strong downward gravity. <em>Bearish — buy puts targeting king.</em>`;
@@ -406,7 +435,7 @@ function generateStrategy(d) {
         rationale:`King near spot + +gamma = pin probability. Lottery ticket after 2pm.`,
         legs:[
           {action:'BUY',type:'CALL',strike:ctr-WING,tag:'Lower',tagCls:'sp'},
-          {action:'SELL',type:'CALL',strike:ctr,tag:'★ King',tagCls:'kn',qty:2},
+          {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn',qty:2},
           {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Upper',tagCls:'sp'},
         ],
         expectedPremium:'~$1-$3 debit',maxProfit:`$${WING*100} minus debit`,maxRisk:'Debit paid',target:`Pin ${fp(ctr)}`,
@@ -457,8 +486,8 @@ function generateStrategy(d) {
       rationale:`Neutral. King at ${fp(ctr)} weak magnet. Half size, tight stops.`,
       legs:[
         {action:'BUY',type:'PUT',strike:ctr-WING,tag:'Put wing',tagCls:'sp'},
-        {action:'SELL',type:'PUT',strike:ctr,tag:'★ King',tagCls:'kn'},
-        {action:'SELL',type:'CALL',strike:ctr,tag:'★ King',tagCls:'kn'},
+        {action:'SELL',type:'PUT',strike:ctr,tag:'👑 King',tagCls:'kn'},
+        {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn'},
         {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Call wing',tagCls:'sp'},
       ],
       expectedPremium:'Check chain (ATM)',maxProfit:'Credit',maxRisk:`$${WING*100} minus credit`,target:`Pin ${fp(ctr)}`,
@@ -483,7 +512,7 @@ function getTrackingHtml(sym) {
     const hrs = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins}m`;
     const delta = last.strike - first.strike;
     const dir = delta>0?'↑':delta<0?'↓':'→';
-    html += `<div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">★ King: ${fp(first.strike)} → ${fp(last.strike)} (${delta>0?'+':''}${delta.toFixed(0)}pts ${dir}) ${hrs}`;
+    html += `<div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">👑 King: ${fp(first.strike)} → ${fp(last.strike)} (${delta>0?'+':''}${delta.toFixed(0)}pts ${dir}) ${hrs}`;
     if (kh.length > 2) html += ` · ${kh.map(k=>fp(k.strike)).join('→')}`;
     html += `</div>`;
   }
@@ -607,10 +636,10 @@ function renderRecs(){
 
     // Directional line
     const dirLine = kingD>0 
-      ? `★ King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--green)">above</span> spot (${kingPct}%). Drift target ↑`
+      ? `👑 King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--green)">above</span> spot (${kingPct}%). Drift target ↑`
       : kingD<0
-      ? `★ King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--red)">below</span> spot (${kingPct}%). Drift target ↓`
-      : `★ King ${fp(king.strike)} — AT spot. Pin expected.`;
+      ? `👑 King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--red)">below</span> spot (${kingPct}%). Drift target ↓`
+      : `👑 King ${fp(king.strike)} — AT spot. Pin expected.`;
 
     // Support/resistance
     const posAbove=sorted.filter(s=>s.strike>spot&&s.net_gex>mx*.12).slice(0,1);
@@ -624,7 +653,7 @@ function renderRecs(){
       `<div class="rec-gamma ${gpClass}">${commentary}<br><span style="font-size:8px;color:var(--dim);margin-top:2px;display:inline-block">${dirLine}</span></div>`+
       `<div>${(r.action_items||[]).map(i=>`<div class="rec-act"><span>${i.includes('↑')?'🟣':i.includes('↓')?'🟣':i.includes('SUPPORT')?'🟡':i.includes('RESIST')?'🟡':'★'}</span>${i}</div>`).join('')}</div>`+
       `<div class="rec-lvls">`+
-        `<span class="rec-lv king">★ King: ${fp(king?king.strike:0)}</span>`+
+        `<span class="rec-lv king">👑 King: ${fp(king?king.strike:0)}</span>`+
         `<span class="rec-lv gp">${gpLabel}</span>`+
         `${r.expected_range?`<span class="rec-lv rng">Range: ${fp(r.expected_range.low)}–${fp(r.expected_range.high)}</span>`:''}`+
       `</div>`+
@@ -651,7 +680,7 @@ function renderPanel(d){
 
   const p=document.createElement('div');p.className='panel';
   const trackHtml = getTrackingHtml(symbol);
-  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}</span></div><div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div><div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:9px;color:var(--dim)">${pd}</span></div><div class="klevels"><span class="klev kn">★ ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div><div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div>${trackHtml}<div class="strikes" id="s-${symbol}"></div>`;
+  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}</span></div><div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div><div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:9px;color:var(--dim)">${pd}</span></div><div class="klevels"><span class="klev kn">👑 ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div><div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div>${trackHtml}<div class="strikes" id="s-${symbol}"></div>`;
   const cont=p.querySelector(`#s-${symbol}`);
 
   // Volume surge strikes to highlight
@@ -662,14 +691,14 @@ function renderPanel(d){
     const co=gc(s.net_gex,mx,iK);const tco=tc(s.net_gex,mx,iK);
     const row=document.createElement('div');row.className='sr'+(iS?' spot':'')+(iK?' king':'');
     if(iV) row.style.borderRight='3px solid var(--cyan)';
-    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b})"></div><span class="sr-lbl">${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' ★':''}${iV?' 📈':''}</span></div>`;
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b})"></div><span class="sr-lbl">${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
   });
   return p;
 }
 
-function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');const d=s.strike-spot,c=ct(s.net_gex,mx);document.getElementById('tt').textContent=(iK?'★ ':'')+sym+' — $'+fp(s.strike);document.getElementById('tb').innerHTML=`<div class="tip-r"><span class="tip-l">Net GEX</span><span class="tip-v">${fg(s.net_gex)}</span></div><div class="tip-r"><span class="tip-l">Call GEX</span><span class="tip-v" style="color:#fde68a">${fg(s.call_gex)}</span></div><div class="tip-r"><span class="tip-l">Put GEX</span><span class="tip-v" style="color:#d8b4fe">${fg(s.put_gex)}</span></div><div class="tip-d"></div><div class="tip-r"><span class="tip-l">Call OI</span><span class="tip-v">${(s.call_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put OI</span><span class="tip-v">${(s.put_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Call Vol</span><span class="tip-v">${(s.call_volume||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put Vol</span><span class="tip-v">${(s.put_volume||0).toLocaleString()}</span></div>${s.call_bid?`<div class="tip-r"><span class="tip-l">Call Bid/Ask</span><span class="tip-v">$${s.call_bid.toFixed(2)}/$${s.call_ask.toFixed(2)}</span></div>`:''}${s.put_bid?`<div class="tip-r"><span class="tip-l">Put Bid/Ask</span><span class="tip-v">$${s.put_bid.toFixed(2)}/$${s.put_ask.toFixed(2)}</span></div>`:''}<div class="tip-r"><span class="tip-l">From Spot</span><span class="tip-v">${d>=0?'+':''}${d.toFixed(1)} (${((d/spot)*100).toFixed(2)}%)</span></div><div class="tip-d"></div><div class="tip-b">${bh(c,iK)}</div>`;t.classList.add('vis');moveTip(e)}
+function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');const d=s.strike-spot,c=ct(s.net_gex,mx);document.getElementById('tt').textContent=(iK?'👑 ':'')+sym+' — $'+fp(s.strike);document.getElementById('tb').innerHTML=`<div class="tip-r"><span class="tip-l">Net GEX</span><span class="tip-v">${fg(s.net_gex)}</span></div><div class="tip-r"><span class="tip-l">Call GEX</span><span class="tip-v" style="color:#fde68a">${fg(s.call_gex)}</span></div><div class="tip-r"><span class="tip-l">Put GEX</span><span class="tip-v" style="color:#d8b4fe">${fg(s.put_gex)}</span></div><div class="tip-d"></div><div class="tip-r"><span class="tip-l">Call OI</span><span class="tip-v">${(s.call_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put OI</span><span class="tip-v">${(s.put_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Call Vol</span><span class="tip-v">${(s.call_volume||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put Vol</span><span class="tip-v">${(s.put_volume||0).toLocaleString()}</span></div>${s.call_bid?`<div class="tip-r"><span class="tip-l">Call Bid/Ask</span><span class="tip-v">$${s.call_bid.toFixed(2)}/$${s.call_ask.toFixed(2)}</span></div>`:''}${s.put_bid?`<div class="tip-r"><span class="tip-l">Put Bid/Ask</span><span class="tip-v">$${s.put_bid.toFixed(2)}/$${s.put_ask.toFixed(2)}</span></div>`:''}<div class="tip-r"><span class="tip-l">From Spot</span><span class="tip-v">${d>=0?'+':''}${d.toFixed(1)} (${((d/spot)*100).toFixed(2)}%)</span></div><div class="tip-d"></div><div class="tip-b">${bh(c,iK)}</div>`;t.classList.add('vis');moveTip(e)}
 function moveTip(e){const t=document.getElementById('tip');const x=e.clientX+16,y=e.clientY-10;t.style.left=(x+t.offsetWidth>window.innerWidth?e.clientX-t.offsetWidth-16:x)+'px';t.style.top=(y+t.offsetHeight>window.innerHeight?window.innerHeight-t.offsetHeight-8:y)+'px'}
 function hideTip(){document.getElementById('tip').classList.remove('vis')}
 
@@ -691,12 +720,52 @@ function rerender(){if(!D)return;renderRecs();if(stratVisible)renderStrats();con
   getVisibleSyms().forEach(s=>c.appendChild(renderPanel(D[s])));updateTimestamp()}
 
 function updateTimestamp(){
-  // Use current browser time (when data was received), not server timestamp
-  // Server timestamp has timezone ambiguity (UTC without suffix parsed as local)
   const now=new Date();
   const et=now.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
   const pt=now.toLocaleTimeString('en-US',{timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit',hour12:true});
   document.getElementById('st').textContent=`${et} ET · ${pt} PT`;
+  updateMarketSession();
+}
+
+// ═══ MARKET SESSION INDICATOR ═══
+function updateMarketSession(){
+  const now=new Date();
+  const etStr=now.toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'numeric',hour12:false});
+  const [h,m]=etStr.split(':').map(Number);
+  const mins=h*60+m;
+  const el=document.getElementById('mktSession');
+  const dow=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'})).getDay();
+  if(dow===0||dow===6){el.textContent='WEEKEND';el.className='market-session closed';return}
+  if(mins>=240&&mins<570){el.textContent='PRE-MARKET';el.className='market-session pre'}
+  else if(mins>=570&&mins<600){el.textContent='🔔 OPENING';el.className='market-session open'}
+  else if(mins>=600&&mins<900){el.textContent='MARKET OPEN';el.className='market-session open'}
+  else if(mins>=900&&mins<960){el.textContent='⚡ POWER HOUR';el.className='market-session power'}
+  else if(mins>=960&&mins<1200){el.textContent='AFTER HOURS';el.className='market-session closed'}
+  else{el.textContent='CLOSED';el.className='market-session closed'}
+}
+
+// ═══ COUNTDOWN TIMER ═══
+const FETCH_INTERVAL_MS = 5*60*1000;
+let lastFetchTime = null;
+let countdownInterval = null;
+function startCountdown(){
+  if(countdownInterval)clearInterval(countdownInterval);
+  lastFetchTime=Date.now();
+  countdownInterval=setInterval(()=>{
+    const elapsed=Date.now()-lastFetchTime;
+    const remaining=Math.max(0,FETCH_INTERVAL_MS-elapsed);
+    const secs=Math.ceil(remaining/1000);
+    const mm=Math.floor(secs/60),ss=secs%60;
+    const el=document.getElementById('countdown');
+    if(remaining<=0){el.textContent='Updating...'}
+    else{el.textContent=`Next: ${mm}:${ss.toString().padStart(2,'0')}`}
+  },1000);
+}
+
+// ═══ COLOR GUIDE TOGGLE ═══
+function toggleColorGuide(){
+  const d=document.getElementById('legend-detail');
+  d.style.display=d.style.display==='none'?'block':'none';
 }
 
 // ═══ AUTO-RELOAD ═══
@@ -764,7 +833,7 @@ async function fetchFromServer() {
         document.getElementById('sb').classList.remove('vis');
         document.getElementById('sd').className = 'status-dot live';
         rerender();
-        document.getElementById('st').textContent = `Live · Updated ${new Date(newTs).toLocaleTimeString()}`;
+        startCountdown();
         fetchAttempts = 0;
       }
     } else {
@@ -791,6 +860,8 @@ function startServerFetch() {
 }
 
 // ═══ MODE DETECTION ═══
+updateMarketSession();
+setInterval(updateMarketSession, 60000); // update session every minute
 if (window.location.protocol !== 'file:') {
   startServerFetch();
 } else {
