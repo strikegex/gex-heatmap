@@ -56,6 +56,16 @@ else:
     print(f"   Paste result as SCHWAB_TOKEN_B64 env var in Railway")
 
 
+def is_market_hours():
+    """Check if US market is open (9:30am-4:00pm ET, weekdays)."""
+    from datetime import timezone, timedelta
+    et = datetime.now(timezone(timedelta(hours=-5)))
+    if et.weekday() >= 5:  # Weekend
+        return False
+    t = et.hour * 60 + et.minute
+    return 570 <= t < 960  # 9:30am = 570min, 4:00pm = 960min
+
+
 def fetch_loop():
     """Background: fetch GEX from Schwab every FETCH_INTERVAL seconds."""
     global gex_data, last_fetch
@@ -66,6 +76,11 @@ def fetch_loop():
 
     while True:
         try:
+            if not is_market_hours():
+                print(f"  💤 Market closed — skipping fetch ({datetime.now().strftime('%H:%M:%S')} UTC)")
+                time.sleep(FETCH_INTERVAL)
+                continue
+
             if client is None:
                 from schwab import auth
                 if not os.path.exists(TOKEN_PATH):
