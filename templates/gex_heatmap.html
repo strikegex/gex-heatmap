@@ -60,25 +60,25 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 /* ─── Rec Cards ─── */
 .rec-wrap{display:none;padding:12px 24px;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
 .rec-wrap.vis{display:flex}
-.rec{flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:12px 14px;position:relative;overflow:hidden}
+.rec{flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden}
 .rec::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .rec.range::before{background:var(--yellow)}.rec.trend::before{background:var(--purple)}.rec.chop::before{background:var(--green)}.rec.bullish::before{background:var(--green)}.rec.bearish::before{background:var(--red)}
-.rec-sym{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.rec-badge{font-size:8px;padding:2px 6px;border-radius:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.rec-sym{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--bright);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rec-badge{font-size:11px;padding:3px 10px;border-radius:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .rec-badge.range{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
 .rec-badge.trend{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .rec-badge.chop{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
 .rec-badge.bullish{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
 .rec-badge.bearish{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
-.rec-sum{font-size:11px;color:var(--bright);font-weight:600;line-height:1.5;margin-bottom:6px}
-.rec-gamma{font-size:9px;padding:6px 8px;border-radius:4px;margin-bottom:8px;line-height:1.6}
+.rec-sum{font-size:15px;color:var(--bright);font-weight:600;line-height:1.5;margin-bottom:8px}
+.rec-gamma{font-size:13px;padding:10px 12px;border-radius:4px;margin-bottom:10px;line-height:1.7}
 .rec-gamma.neg{background:rgba(168,85,247,.06);border-left:3px solid var(--purple);color:var(--text)}
 .rec-gamma.pos{background:rgba(251,191,36,.06);border-left:3px solid var(--yellow);color:var(--text)}
 .rec-gamma.neu{background:rgba(34,197,94,.06);border-left:3px solid var(--green);color:var(--text)}
 .rec-gamma strong{color:var(--bright)}.rec-gamma .hl{color:var(--king);font-weight:600}
 .rec-act{font-size:9px;padding:2px 0;display:flex;align-items:baseline;gap:5px;color:var(--text)}
 .rec-lvls{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.rec-lv{font-size:8px;padding:2px 6px;border-radius:3px}
+.rec-lv{font-size:10px;padding:3px 8px;border-radius:3px}
 .rec-lv.king{background:rgba(245,158,11,.12);color:var(--king);border:1px solid rgba(245,158,11,.25)}
 .rec-lv.rng{background:rgba(99,102,241,.08);color:var(--accent);border:1px solid rgba(99,102,241,.2)}
 .rec-lv.gp{background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
@@ -131,16 +131,16 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 /* ─── Heatmap ─── */
 .hm-wrap{display:flex;gap:2px;padding:12px 20px;overflow-x:auto;min-height:calc(100vh - 300px)}
 .panel{flex:1;min-width:320px;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
-.panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:14px 14px 10px;border-bottom:1px solid var(--border)}
+.panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
 .panel-sym{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--bright)}
 .panel-price{font-size:20px;font-weight:600;color:var(--bright)}
-.panel-sub{display:flex;justify-content:space-between;padding:5px 14px 6px;border-bottom:1px solid var(--border)}
+.panel-sub{display:flex;justify-content:space-between;padding:4px 14px 5px;border-bottom:1px solid var(--border)}
 .panel-sub span{font-size:13px;color:var(--dim)}
 .panel-gp{padding:6px 14px;border-bottom:1px solid var(--border);font-size:14px;display:flex;justify-content:space-between;align-items:center}
-.gbadge{padding:4px 10px;border-radius:3px;font-size:12px;font-weight:600}
+.gbadge{padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600}
 .gbadge.pos{background:rgba(251,191,36,.12);color:var(--yellow)}.gbadge.neg{background:rgba(168,85,247,.12);color:var(--purple)}.gbadge.neu{background:rgba(34,197,94,.12);color:var(--green)}
-.klevels{display:flex;gap:6px;padding:5px 14px 6px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-.klev{font-size:11px;padding:3px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
+.klevels{display:flex;gap:6px;padding:6px 14px 7px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.klev{font-size:11px;padding:4px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
 .klev.gw{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
 .klev.pw{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .klev.kn{background:rgba(239,68,68,.12);color:var(--king);border:1px solid rgba(239,68,68,.2)}
@@ -149,7 +149,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr{display:flex;align-items:center;height:36px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
 .sr:hover{outline:1px solid rgba(255,255,255,.15);z-index:1}
 .sr.spot{outline:2px solid #fff;z-index:2}
-.sr.king{outline:none;z-index:5;border:3px solid #ff2222;box-shadow:0 0 12px rgba(255,30,30,.4);border-radius:3px}
+.sr.king{outline:none;z-index:5;border:4px solid #ff0000;box-shadow:0 0 16px rgba(255,0,0,.5),inset 0 0 8px rgba(255,0,0,.15);border-radius:4px;margin:2px 0}
 .sr-bg{position:absolute;top:0;bottom:0;transition:opacity .15s}
 .sr:hover .sr-bg{opacity:.85}
 .sr-lbl{width:90px;font-size:15px;font-weight:500;text-align:right;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
@@ -204,9 +204,43 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .empty code{background:var(--card);padding:2px 6px;border-radius:3px;font-size:10px;color:var(--accent)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ═══ FOOTER ═══ */
+.footer{padding:16px 24px;border-top:1px solid var(--border);background:var(--panel);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.footer-left{display:flex;align-items:center;gap:16px}
+.footer-social a{color:var(--dim);text-decoration:none;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:color .15s}
+.footer-social a:hover{color:var(--bright)}
+.footer-copy{font-size:10px;color:var(--dim)}
+
+/* ═══ LOGIN OVERLAY ═══ */
+.login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+.login-overlay.hidden{display:none}
+.login-box{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:40px 36px;width:340px;max-width:90vw;text-align:center}
+.login-box h2{font-family:'Space Grotesk',sans-serif;font-size:20px;color:var(--bright);margin-bottom:6px}
+.login-box h2 em{font-style:normal;color:var(--accent)}
+.login-box p{font-size:11px;color:var(--dim);margin-bottom:24px}
+.login-box input{width:100%;padding:10px 14px;margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--card);color:var(--bright);border:1px solid var(--border);border-radius:6px;outline:none}
+.login-box input:focus{border-color:var(--accent)}
+.login-box .login-btn{width:100%;padding:10px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;transition:opacity .15s}
+.login-box .login-btn:hover{opacity:.85}
+.login-box .login-err{font-size:11px;color:var(--red);margin-top:8px;display:none}
 </style>
 </head>
 <body>
+<!-- ═══ LOGIN OVERLAY ═══ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2><em>GEX</em> Heatmap</h2>
+    <p>Restricted access. Enter your credentials.</p>
+    <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="loginErr">Invalid username or password</div>
+  </div>
+</div>
+
+<!-- ═══ APP (hidden until authenticated) ═══ -->
+<div id="appWrap" style="display:none">
 <div class="topbar">
   <div class="topbar-left">
     <span class="topbar-title"><em>GEX</em> Heatmap</span>
@@ -294,9 +328,54 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="empty"><h2>Load GEX Data</h2><p>Click <code>📂 Load JSON</code> or <code>🧪 Sample</code></p></div>
 </div>
 
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-left">
+    <div class="footer-social">
+      <a href="https://x.com" target="_blank" rel="noopener">𝕏 Follow on X</a>
+      <a href="https://discord.gg" target="_blank" rel="noopener" style="margin-left:12px">💬 Discord</a>
+    </div>
+  </div>
+  <span class="footer-copy">© 2025 StrikeGEX. All rights reserved.</span>
+</div>
+</div><!-- end appWrap -->
+
 <script>
 let D=null;
 let openingGEX={}; // Store first fetch of day as baseline
+
+// ═══ AUTH SYSTEM ═══
+function doLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginErr');
+  err.style.display='none';
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){
+        sessionStorage.setItem('gex_auth','1');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('appWrap').style.display='';
+        startServerFetch();
+      }else{err.textContent=d.error||'Invalid credentials';err.style.display='block'}
+    }).catch(()=>{
+      // Fallback for local/file mode
+      if(user==='admin'&&pass==='strikegex'){
+        sessionStorage.setItem('gex_auth','1');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('appWrap').style.display='';
+      }else{err.textContent='Invalid credentials';err.style.display='block'}
+    });
+}
+// Enter key submits login
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPass').focus()});
+
+// Check session on load
+if(sessionStorage.getItem('gex_auth')==='1'){
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('appWrap').style.display='';
+}
 
 // ═══ COLOR — solid saturated like reference tool ═══
 function gc(n,m,k){
@@ -342,8 +421,10 @@ function generateStrategy(d) {
   const step = sorted.length>=2 ? sorted[1].strike-sorted[0].strike : 5;
   const rnd = v => Math.round(v/step)*step;
 
-  // 0DTE WINGS: $25 for SPX, $5 for ETFs (proportional to underlying)
-  const WING = symbol==='SPX' ? 25 : 5;
+  // 0DTE WINGS: Tight for 0DTE - $15 SPX, $3 ETFs
+  const WING = symbol==='SPX' ? 15 : 3;
+  // Spread width for debit spreads: $5 SPX, $2 ETF
+  const SPREAD_WIDTH = symbol==='SPX' ? 5 : 2;
 
   // 0DTE DELTA: 10Δ shorts (conservative, 5-15Δ range)
   // SPX 10Δ ~= 30-40pts OTM, ETFs 10Δ ~= 0.6-0.8% OTM
@@ -393,8 +474,7 @@ function generateStrategy(d) {
   const etMins = etH*60+etM;
   const lateSession = etMins >= 720; // 12:00 PM ET = 9:00 AM PST
 
-  // Spread width: $10 SPX, $3 ETF (tighter for 0DTE)
-  const SPREAD_WIDTH = symbol==='SPX' ? 10 : 3;
+  // Spread width for debit spreads already set above
 
   let strategies = [];
 
@@ -705,9 +785,8 @@ function renderRecs(){
       `<div class="rec-lvls">`+
         `<span class="rec-lv king">👑 King: ${fp(king?king.strike:0)}</span>`+
         `<span class="rec-lv gp">${gpLabel}</span>`+
-        `<span class="rec-lv" style="background:rgba(251,191,36,.08);color:var(--yellow);border:1px solid rgba(251,191,36,.15)">Support: ${support}</span>`+
-        `<span class="rec-lv" style="background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.15)">Resist: ${resist}</span>`+
-        `${r.expected_range?`<span class="rec-lv rng">Range: ${fp(r.expected_range.low)}–${fp(r.expected_range.high)}</span>`:''}`+
+        `<span class="rec-lv" style="background:rgba(251,191,36,.08);color:var(--yellow);border:1px solid rgba(251,191,36,.15)">Sup: ${support}</span>`+
+        `<span class="rec-lv" style="background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.15)">Res: ${resist}</span>`+
       `</div>`;
     rw.appendChild(c);
   });
@@ -736,20 +815,19 @@ function renderPanel(d){
     const dayChg=((spot-openSnap._openSpot)/openSnap._openSpot*100);
     const sign=dayChg>=0?'+':'';
     const clr=dayChg>=0?'var(--green)':'var(--red)';
-    dayChgHtml=`<span style="font-size:12px;color:${clr};margin-left:6px">${sign}${dayChg.toFixed(2)}%</span>`;
+    dayChgHtml=`<span style="font-size:14px;color:${clr};margin-left:8px;font-weight:600">${sign}${dayChg.toFixed(2)}%</span>`;
   }
 
   const trackHtml = getTrackingHtml(symbol);
 
   const p=document.createElement('div');p.className='panel';
-  // Item 4: Move king distance and tracking info into the symbol box header area (after badges, before strikes)
   p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}${dayChgHtml}</span></div>`+
     `<div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div>`+
-    `<div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:10px;color:var(--dim)">${pd}</span></div>`+
+    `<div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:11px;color:var(--dim)">${pd}</span></div>`+
     `<div class="klevels"><span class="klev kn">👑 ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div>`+
-    `<div style="padding:3px 14px;font-size:10px;color:var(--king);border-bottom:1px solid var(--border)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div>`+
-    `${trackHtml}`+
-    `<div class="strikes" id="s-${symbol}"></div>`;
+    `<div class="strikes" id="s-${symbol}"></div>`+
+    `<div style="padding:4px 14px;font-size:11px;color:var(--king);border-top:1px solid var(--border);background:rgba(239,68,68,.03)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div>`+
+    `${trackHtml}`;
   const cont=p.querySelector(`#s-${symbol}`);
 
   // Volume surge strikes to highlight
@@ -767,20 +845,19 @@ function renderPanel(d){
         if(Math.abs(pctChg)>=25){
           const sign=pctChg>0?'+':'';
           const clr=pctChg>0?'#4ade80':'#f87171';
-          chgTag=`<span style="font-size:9px;color:${clr};margin-left:2px">${sign}${pctChg.toFixed(0)}%</span>`;
+          chgTag=` <span style="font-size:10px;color:${clr};font-weight:700">${sign}${pctChg.toFixed(0)}%</span>`;
         }
       }
     }
-    // Item 10: bar width proportional to GEX magnitude
-    const barPct=Math.min(100,Math.round(Math.abs(s.net_gex)/mx*100));
-    const barDir=s.net_gex>=0?'left':'right';
+    // Item 10: bar width proportional to GEX magnitude, always from left
+    const barPct=Math.max(5,Math.min(100,Math.round(Math.abs(s.net_gex)/mx*100)));
 
     // Item 11: King row styled via CSS .sr.king
     const row=document.createElement('div');
     row.className='sr'+(iS?' spot':'')+(iK?' king':'');
     if(iV) row.style.borderRight='3px solid var(--cyan)';
 
-    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;${barDir==='right'?'right:0;left:auto':'left:0'}"></div><span class="sr-lbl">${fp(s.strike)}${chgTag}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;left:0"></div><span class="sr-lbl">${fp(s.strike)}${chgTag}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
   });
@@ -956,9 +1033,10 @@ function startServerFetch() {
 
 // ═══ MODE DETECTION ═══
 updateMarketSession();
-setInterval(updateMarketSession, 60000); // update session every minute
+setInterval(updateMarketSession, 60000);
 if (window.location.protocol !== 'file:') {
-  startServerFetch();
+  // Only auto-fetch if already authenticated (session restored)
+  if(sessionStorage.getItem('gex_auth')==='1') startServerFetch();
 } else {
   document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
 }
