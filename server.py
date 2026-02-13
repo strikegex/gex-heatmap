@@ -57,9 +57,13 @@ else:
 
 
 def is_market_hours():
-    """Check if US market is open (9:30am-4:00pm ET, weekdays)."""
-    from datetime import timezone, timedelta
-    et = datetime.now(timezone(timedelta(hours=-5)))
+    """Check if US market is open (9:30am-4:00pm ET, weekdays). DST-aware."""
+    try:
+        from zoneinfo import ZoneInfo
+        et = datetime.now(ZoneInfo("America/New_York"))
+    except ImportError:
+        from datetime import timezone, timedelta
+        et = datetime.now(timezone(timedelta(hours=-5)))
     if et.weekday() >= 5:  # Weekend
         return False
     t = et.hour * 60 + et.minute
