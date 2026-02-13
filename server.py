@@ -67,7 +67,7 @@ def is_market_hours():
     if et.weekday() >= 5:  # Weekend
         return False
     t = et.hour * 60 + et.minute
-    return 570 <= t < 960  # 9:30am = 570min, 4:00pm = 960min
+    return 565 <= t < 965  # 9:25am-4:05pm ET (5min buffer both sides)
 
 
 def fetch_loop():
@@ -125,6 +125,31 @@ def fetch_loop():
 @app.route("/")
 def index():
     return send_from_directory("templates", "gex_heatmap.html")
+
+
+# ─── User database (in production, use a real DB) ───
+USERS = {
+    "admin": "strikegex",
+}
+# Load additional users from env: USERS=user1:pass1,user2:pass2
+extra_users = os.environ.get("GEX_USERS", "")
+if extra_users:
+    for pair in extra_users.split(","):
+        if ":" in pair:
+            u, p = pair.split(":", 1)
+            USERS[u.strip()] = p.strip()
+    print(f"✅ Loaded {len(USERS)} users ({', '.join(USERS.keys())})")
+
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    from flask import request
+    data = request.get_json() or {}
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+    if username in USERS and USERS[username] == password:
+        return jsonify({"ok": True, "user": username})
+    return jsonify({"ok": False, "error": "Invalid username or password"}), 401
 
 
 @app.route("/api/gex")
