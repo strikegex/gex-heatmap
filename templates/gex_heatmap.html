@@ -8,7 +8,7 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#08080d;--panel:#0e0e16;--card:#12121c;--border:#1a1a2a;--text:#b8b8cc;--dim:#555570;--bright:#e8e8f4;--yellow:#fbbf24;--purple:#a855f7;--green:#22c55e;--king:#ef4444;--accent:#6366f1;--red:#ef4444;--cyan:#06b6d4}
-body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;font-size:13px}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;font-size:14px}
 
 /* ═══ TOP BAR ═══ */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;gap:8px}
@@ -27,6 +27,15 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .status-text{font-size:12px;color:var(--dim);white-space:nowrap}
 .countdown{font-size:11px;color:var(--accent);font-weight:600;white-space:nowrap}
+
+/* ═══ ACCOUNT MENU ═══ */
+.acct-menu{position:relative}
+.acct-btn{font-size:11px;padding:5px 10px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer}
+.acct-btn:hover{background:var(--border);color:var(--bright)}
+.acct-drop{display:none;position:absolute;top:100%;right:0;margin-top:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;min-width:160px;padding:6px 0;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.acct-drop.vis{display:block}
+.acct-drop a{display:block;padding:8px 14px;font-size:12px;color:var(--text);text-decoration:none;transition:background .1s}
+.acct-drop a:hover{background:rgba(255,255,255,.05);color:var(--bright)}
 
 /* ═══ CONTROLS — single compact row ═══ */
 .ctrl{display:flex;gap:8px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
@@ -122,33 +131,34 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 /* ─── Heatmap ─── */
 .hm-wrap{display:flex;gap:2px;padding:12px 20px;overflow-x:auto;min-height:calc(100vh - 300px)}
 .panel{flex:1;min-width:320px;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
-.panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
-.panel-sym{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--bright)}
-.panel-price{font-size:18px;font-weight:600;color:var(--bright)}
-.panel-sub{display:flex;justify-content:space-between;padding:4px 14px 5px;border-bottom:1px solid var(--border)}
-.panel-sub span{font-size:11px;color:var(--dim)}
-.panel-gp{padding:5px 14px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;align-items:center}
-.gbadge{padding:3px 8px;border-radius:3px;font-size:10px;font-weight:600}
+.panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:14px 14px 10px;border-bottom:1px solid var(--border)}
+.panel-sym{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--bright)}
+.panel-price{font-size:20px;font-weight:600;color:var(--bright)}
+.panel-sub{display:flex;justify-content:space-between;padding:5px 14px 6px;border-bottom:1px solid var(--border)}
+.panel-sub span{font-size:13px;color:var(--dim)}
+.panel-gp{padding:6px 14px;border-bottom:1px solid var(--border);font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.gbadge{padding:4px 10px;border-radius:3px;font-size:12px;font-weight:600}
 .gbadge.pos{background:rgba(251,191,36,.12);color:var(--yellow)}.gbadge.neg{background:rgba(168,85,247,.12);color:var(--purple)}.gbadge.neu{background:rgba(34,197,94,.12);color:var(--green)}
 .klevels{display:flex;gap:6px;padding:5px 14px 6px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-.klev{font-size:9px;padding:3px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
+.klev{font-size:11px;padding:3px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
 .klev.gw{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
 .klev.pw{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
 .klev.kn{background:rgba(239,68,68,.12);color:var(--king);border:1px solid rgba(239,68,68,.2)}
 .klev.sp{background:rgba(255,255,255,.05);color:var(--bright);border:1px solid rgba(255,255,255,.1)}
 .strikes{flex:1;overflow-y:auto;padding:2px 0}
-.sr{display:flex;align-items:center;height:34px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
+.sr{display:flex;align-items:center;height:36px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
 .sr:hover{outline:1px solid rgba(255,255,255,.15);z-index:1}
 .sr.spot{outline:2px solid #fff;z-index:2}
-.sr.king{outline:2px solid var(--king);z-index:3}
-.sr-bg{position:absolute;inset:0;transition:opacity .15s}
+.sr.king{outline:none;z-index:5;border:3px solid #ff2222;box-shadow:0 0 12px rgba(255,30,30,.4);border-radius:3px}
+.sr-bg{position:absolute;top:0;bottom:0;transition:opacity .15s}
 .sr:hover .sr-bg{opacity:.85}
-.sr-lbl{width:85px;font-size:14px;font-weight:500;text-align:right;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
+.sr-lbl{width:90px;font-size:15px;font-weight:500;text-align:right;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
 .sr.spot .sr-lbl{color:#fff;font-weight:700}
 .sr.spot .sr-lbl::after{content:" ▸"}
-.sr.king .sr-lbl::before{content:"👑 ";font-size:11px}
+.sr.king .sr-lbl{color:#ff4444;font-weight:700}
+.sr.king .sr-lbl::before{content:"👑 ";font-size:13px}
 .gbar-c{flex:1;height:100%;position:relative;display:flex;align-items:center;justify-content:flex-end}
-.gval{font-size:14px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:75px;text-align:right}
+.gval{font-size:15px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:80px;text-align:right}
 
 /* ═══ MOBILE RESPONSIVE ═══ */
 @media(max-width:900px){
@@ -207,6 +217,17 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     <span class="countdown" id="countdown"></span>
     <div class="status-dot" id="sd"></div>
     <span class="status-text" id="st">Connecting...</span>
+    <div class="acct-menu">
+      <button onclick="document.getElementById('acctDrop').classList.toggle('vis')" class="acct-btn">👤 Account</button>
+      <div class="acct-drop" id="acctDrop">
+        <a href="#" onclick="event.preventDefault()">📊 Dashboard</a>
+        <a href="#" onclick="event.preventDefault()">💳 Billing</a>
+        <a href="#" onclick="event.preventDefault()">⚙️ Settings</a>
+        <a href="#" onclick="event.preventDefault()">📱 API Keys</a>
+        <div style="border-top:1px solid var(--border);margin:4px 0"></div>
+        <a href="#" onclick="event.preventDefault()">🚪 Sign Out</a>
+      </div>
+    </div>
   </div>
 </div>
 <div class="ctrl">
@@ -372,153 +393,140 @@ function generateStrategy(d) {
   const etMins = etH*60+etM;
   const lateSession = etMins >= 720; // 12:00 PM ET = 9:00 AM PST
 
+  // Spread width: $10 SPX, $3 ETF (tighter for 0DTE)
+  const SPREAD_WIDTH = symbol==='SPX' ? 10 : 3;
+
   let strategies = [];
 
   // ═══ +GAMMA → SELL PREMIUM (CONSERVATIVE 0DTE) ═══
   if (profile === 'positive') {
-    // 10Δ shorts — ~30pts OTM for SPX, much wider than old 16Δ
-    const rawSP = getDeltaStrike('put', 0.10);
-    const rawSC = getDeltaStrike('call', 0.10);
-    const valP = gexValidate(rawSP,'put'), valC = gexValidate(rawSC,'call');
-    const sp = valP.strike, sc = valC.strike;
-    const lp = sp-WING, lc = sc+WING;
-
-    // Premium estimate from live data
-    const sPutN = sorted.reduce((b,c)=>Math.abs(c.strike-sp)<Math.abs(b.strike-sp)?c:b);
-    const sCallN = sorted.reduce((b,c)=>Math.abs(c.strike-sc)<Math.abs(b.strike-sc)?c:b);
-    const lpN = sorted.reduce((b,c)=>Math.abs(c.strike-lp)<Math.abs(b.strike-lp)?c:b);
-    const lcN = sorted.reduce((b,c)=>Math.abs(c.strike-lc)<Math.abs(b.strike-lc)?c:b);
-    const pCr = ((sPutN.put_bid||0)+(sPutN.put_ask||0))/2-((lpN.put_bid||0)+(lpN.put_ask||0))/2;
-    const cCr = ((sCallN.call_bid||0)+(sCallN.call_ask||0))/2-((lcN.call_bid||0)+(lcN.call_ask||0))/2;
-    const totCr = pCr+cCr;
-    const premEst = totCr>.10?`~$${totCr.toFixed(2)}/ct ($${(totCr*100).toFixed(0)} per IC)`:`Target ⅓ of $${WING} wing`;
-
-    strategies.push({
-      name:'Iron Condor (0DTE)',type:'ic',
-      rationale:`<strong>Conservative 0DTE:</strong> 10Δ shorts (~${symbol==='SPX'?'30pts':'0.6%'} OTM), $${WING} wings. +Gamma = dealers dampen vol. <em>Safe to hold to expiry if within range.</em>`,
-      legs:[
-        {action:'BUY',type:'PUT',strike:lp,tag:`Wing ($${WING})`,tagCls:'sp'},
-        {action:'SELL',type:'PUT',strike:sp,tag:valP.tag,tagCls:valP.tagCls,note:sp!==valP.orig?`(shifted from ${fp(valP.orig)})`:'(~10Δ)'},
-        {action:'SELL',type:'CALL',strike:sc,tag:valC.tag,tagCls:valC.tagCls,note:sc!==valC.orig?`(shifted from ${fp(valC.orig)})`:'(~10Δ)'},
-        {action:'BUY',type:'CALL',strike:lc,tag:`Wing ($${WING})`,tagCls:'sp'},
-      ],
-      expectedPremium:premEst,
-      maxProfit:totCr>.10?`$${(totCr*100).toFixed(0)}`:'Credit received',
-      maxRisk:totCr>.10?`$${((WING-totCr)*100).toFixed(0)}`:`$${WING*100} minus credit`,
-      target:`Stay between ${fp(sp)} – ${fp(sc)}`,
-      why:[
-        driftComm(),
-        `<strong>Why 10Δ not 16Δ:</strong> 0DTE gamma is extreme. 16Δ is too close — a 1% move breaches your short. 10Δ gives ~90% POP per side, ~80% combined.`,
-        `<strong>$${WING} wings:</strong> Wider than 45DTE ICs because 0DTE gamma spikes can blow through narrow wings.`,
-        `<strong>Stop:</strong> Each side separately = total IC credit. If one side stops, the other likely profits (breakeven IC). Close by 3:45pm.`,
-        `<strong>Entry:</strong> Best after 10:30am ET. Avoid first 30min (opening volatility).`,
-      ],
-    });
-
     if(!lateSession){
-      // Sell Put at +gamma support — only before 9AM PST
-      if(kd>=0&&posBelow[0]){
-        const nk=posBelow[0].strike, nkP=estPrem(nk,'put');
-        strategies.push({name:'Sell Put (Support)',type:'cs',
-          rationale:`+Gamma support at ${fp(nk)}. Dealers defend this floor.`,
-          legs:[{action:'SELL',type:'PUT',strike:nk,tag:'+Gamma Wall',tagCls:'gw',note:'(~15-20Δ)'}],
-          expectedPremium:nkP||'Check chain',maxProfit:'Credit',maxRisk:`Assignment at ${fp(nk)}`,target:`Above ${fp(nk)}`,
-          why:[driftComm(),`Close at 50% profit. Roll if delta hits 40.`],
-        });
-      }
+      // Iron Condor — only before 9AM PST
+      const rawSP = getDeltaStrike('put', 0.10);
+      const rawSC = getDeltaStrike('call', 0.10);
+      const valP = gexValidate(rawSP,'put'), valC = gexValidate(rawSC,'call');
+      const sp = valP.strike, sc = valC.strike;
+      const lp = sp-WING, lc = sc+WING;
+      const sPutN = sorted.reduce((b,c)=>Math.abs(c.strike-sp)<Math.abs(b.strike-sp)?c:b);
+      const sCallN = sorted.reduce((b,c)=>Math.abs(c.strike-sc)<Math.abs(b.strike-sc)?c:b);
+      const lpN = sorted.reduce((b,c)=>Math.abs(c.strike-lp)<Math.abs(b.strike-lp)?c:b);
+      const lcN = sorted.reduce((b,c)=>Math.abs(c.strike-lc)<Math.abs(b.strike-lc)?c:b);
+      const pCr = ((sPutN.put_bid||0)+(sPutN.put_ask||0))/2-((lpN.put_bid||0)+(lpN.put_ask||0))/2;
+      const cCr = ((sCallN.call_bid||0)+(sCallN.call_ask||0))/2-((lcN.call_bid||0)+(lcN.call_ask||0))/2;
+      const totCr = pCr+cCr;
+      const premEst = totCr>.10?`~$${totCr.toFixed(2)}/ct ($${(totCr*100).toFixed(0)} per IC)`:`Target ⅓ of $${WING} wing`;
+      strategies.push({
+        name:'Iron Condor (0DTE)',type:'ic',
+        rationale:`<strong>Conservative 0DTE:</strong> 10Δ shorts, $${WING} wings. +Gamma = dealers dampen vol.`,
+        legs:[
+          {action:'BUY',type:'PUT',strike:lp,tag:`Wing ($${WING})`,tagCls:'sp'},
+          {action:'SELL',type:'PUT',strike:sp,tag:valP.tag,tagCls:valP.tagCls,note:sp!==valP.orig?`(shifted from ${fp(valP.orig)})`:'(~10Δ)'},
+          {action:'SELL',type:'CALL',strike:sc,tag:valC.tag,tagCls:valC.tagCls,note:sc!==valC.orig?`(shifted from ${fp(valC.orig)})`:'(~10Δ)'},
+          {action:'BUY',type:'CALL',strike:lc,tag:`Wing ($${WING})`,tagCls:'sp'},
+        ],
+        expectedPremium:premEst,maxProfit:totCr>.10?`$${(totCr*100).toFixed(0)}`:'Credit received',
+        maxRisk:totCr>.10?`$${((WING-totCr)*100).toFixed(0)}`:`$${WING*100} minus credit`,
+        target:`Stay between ${fp(sp)} – ${fp(sc)}`,
+        why:[driftComm(),`Close by 3:45pm. Stop = credit per side.`],
+      });
+    }
 
-      // Buy ATM Call if king above
-      if(kd>spot*.001){
-        const cs=rnd(spot),cP=estPrem(cs,'call');
-        strategies.push({name:'Buy Call (Drift)',type:'ds',
-          rationale:`King above = upward magnet. +Gamma = controlled drift. ATM call captures move.`,
-          legs:[{action:'BUY',type:'CALL',strike:cs,tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
-          expectedPremium:cP?`Cost: ${cP}`:'Check chain',maxProfit:'Unlimited',maxRisk:'Premium paid',target:`Rally to ${fp(king.strike)}`,
-          why:[driftComm(),`Take profit 50-100%. Cut at 50% loss. Best entered AM.`],
-        });
-      }
+    // Butterfly — allowed any time (safe to hold)
+    if(Math.abs(kdPct)<.25){
+      const ctr=rnd(king.strike);
+      strategies.push({name:'Butterfly (Pin)',type:'bf',
+        rationale:`King near spot + +gamma = pin probability.${lateSession?' Safe to hold to expiry.':''}`,
+        legs:[
+          {action:'BUY',type:'CALL',strike:ctr-WING,tag:'Lower',tagCls:'sp'},
+          {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn',qty:2},
+          {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Upper',tagCls:'sp'},
+        ],
+        expectedPremium:'~$1-$3 debit',maxProfit:`$${WING*100} minus debit`,maxRisk:'Debit paid',target:`Pin ${fp(ctr)}`,
+        why:[driftComm(),lateSession?`Late session: butterfly is defined-risk, safe to hold.`:`Enter after 2pm. Small size — lottery ticket.`],
+      });
+    }
 
-      // Butterfly pin play
-      if(Math.abs(kdPct)<.2){
-        const ctr=rnd(king.strike);
-        strategies.push({name:'Butterfly (Pin)',type:'bf',
-          rationale:`King near spot + +gamma = pin probability. Lottery ticket after 2pm.`,
-          legs:[
-            {action:'BUY',type:'CALL',strike:ctr-WING,tag:'Lower',tagCls:'sp'},
-            {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn',qty:2},
-            {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Upper',tagCls:'sp'},
-          ],
-          expectedPremium:'~$1-$3 debit',maxProfit:`$${WING*100} minus debit`,maxRisk:'Debit paid',target:`Pin ${fp(ctr)}`,
-          why:[`Enter after 2pm. Small size — lottery ticket.`],
-        });
-      }
+    // Conservative call/put — allowed any time
+    if(kd>spot*.001){
+      const cs=rnd(spot),cP=estPrem(cs,'call');
+      strategies.push({name:'Buy Call (Drift)',type:'ds',
+        rationale:`King above = upward magnet. Conservative single leg.`,
+        legs:[{action:'BUY',type:'CALL',strike:cs,tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
+        expectedPremium:cP?`Cost: ${cP}`:'Check chain',maxProfit:'Unlimited',maxRisk:'Premium paid',target:`Rally to ${fp(king.strike)}`,
+        why:[driftComm(),`Take profit 50-100%. Cut at 50% loss.`],
+      });
     }
   }
 
   // ═══ −GAMMA → DIRECTIONAL ═══
   else if (profile === 'negative') {
-    if(lateSession){
-      // After 9AM PST: only show protective/hedged strategies safe to hold
-      strategies.push({name:'⚠ Late Session — Reduced Risk',type:'dg',
-        rationale:`After 12PM ET. −Gamma = high risk. Only enter hedged positions or wait for tomorrow.`,
-        legs:[],expectedPremium:'—',maxProfit:'—',maxRisk:'—',target:'Manage existing positions',
-        why:[driftComm(),`<strong>Late session warning:</strong> 0DTE gamma accelerates into close. New directional trades are high risk. Consider closing open positions or hedging.`],
-      });
-    } else {
-      // Before 9AM PST: normal directional strategies
-      if(kd>0){
-        // Call Debit Spread: BUY lower (ATM/near), SELL higher (OTM near king)
+    if(kd>0){
+      if(!lateSession){
+        // Call Debit Spread — only before 9AM PST, tight $10/$3 width
         const buyStrike=rnd(spot);
-        const sellStrike=rnd(Math.min(king.strike, spot+step*8));
-        if(sellStrike>buyStrike){
-          const buyPrem=estPrem(buyStrike,'call');
-          strategies.push({name:'Call Debit Spread',type:'ds',
-            rationale:`−Gamma + king above = dealers amplify upward moves. Buy direction.`,
-            legs:[
-              {action:'BUY',type:'CALL',strike:buyStrike,tag:'Near ATM',tagCls:'sp',note:`(~50Δ)`},
-              {action:'SELL',type:'CALL',strike:sellStrike,tag:'OTM',tagCls:'kn',note:`(~${Math.round(Math.abs(sellStrike-spot)/spot*100*15)}Δ)`}
-            ],
-            expectedPremium:buyPrem?`Debit: ${buyPrem}`:'Verify',
-            maxProfit:`$${((sellStrike-buyStrike)*100).toFixed(0)}`,
-            maxRisk:'Debit paid',
-            target:`Rally to ${fp(sellStrike)}`,
-            why:[driftComm(),`<span class="pur">−Gamma = DON'T sell ICs here.</span> Buy direction.`,`Take profit 50-75%. Cut at 50% debit loss.`],
-          });
-        }
-        const cP2=estPrem(rnd(spot),'call');
-        strategies.push({name:'Buy Call (Momentum)',type:'ds',
-          rationale:`−Gamma amplifies. King above. Naked call for max upside.`,
-          legs:[{action:'BUY',type:'CALL',strike:rnd(spot),tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
-          expectedPremium:cP2?`Cost: ${cP2}`:'Check chain',maxProfit:'Unlimited',maxRisk:'Premium',target:`${fp(king.strike)}+`,
-          why:[driftComm(),`Trail stop at 50% gains.`],
-        });
-      }else if(kd<0){
-        // Put Debit Spread: BUY higher (ATM), SELL lower (OTM near king)
-        const buyStrike=rnd(spot);
-        const sellStrike=rnd(Math.max(king.strike, spot-step*8));
-        if(buyStrike>sellStrike){
-          const buyPrem=estPrem(buyStrike,'put');
-          strategies.push({name:'Put Debit Spread',type:'ds',
-            rationale:`−Gamma + king below = dealers amplify down. Buy direction.`,
-            legs:[
-              {action:'BUY',type:'PUT',strike:buyStrike,tag:'Near ATM',tagCls:'sp',note:`(~50Δ)`},
-              {action:'SELL',type:'PUT',strike:sellStrike,tag:'OTM',tagCls:'kn',note:`(~${Math.round(Math.abs(spot-sellStrike)/spot*100*15)}Δ)`}
-            ],
-            expectedPremium:buyPrem?`Debit: ${buyPrem}`:'Verify',
-            maxProfit:`$${((buyStrike-sellStrike)*100).toFixed(0)}`,
-            maxRisk:'Debit paid',
-            target:`Drop to ${fp(sellStrike)}`,
-            why:[driftComm(),`Take profit 50-75%. Cut at 50% debit loss.`],
-          });
-        }
-        const pP=estPrem(rnd(spot),'put');
-        strategies.push({name:'Buy Put (Momentum)',type:'ds',
-          rationale:`−Gamma + king below. Naked put for max downside.`,
-          legs:[{action:'BUY',type:'PUT',strike:rnd(spot),tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
-          expectedPremium:pP?`Cost: ${pP}`:'Check chain',maxProfit:'Substantial',maxRisk:'Premium',target:`${fp(king.strike)}+`,
-          why:[driftComm(),`Trail stop at 50% gains.`],
+        const sellStrike=rnd(buyStrike+SPREAD_WIDTH);
+        const buyPrem=estPrem(buyStrike,'call');
+        strategies.push({name:'Call Debit Spread',type:'ds',
+          rationale:`−Gamma + king above. $${SPREAD_WIDTH}-wide debit spread for defined risk.`,
+          legs:[
+            {action:'BUY',type:'CALL',strike:buyStrike,tag:'Near ATM',tagCls:'sp',note:'(~50Δ)'},
+            {action:'SELL',type:'CALL',strike:sellStrike,tag:'OTM',tagCls:'sp',note:`$${SPREAD_WIDTH} wide`}
+          ],
+          expectedPremium:buyPrem?`Debit: ${buyPrem}`:'Verify',
+          maxProfit:`$${(SPREAD_WIDTH*100).toFixed(0)} minus debit`,maxRisk:'Debit paid',
+          target:`Rally to ${fp(sellStrike)}+`,
+          why:[driftComm(),`<span class="pur">−Gamma = DON'T sell ICs.</span> Buy direction.`,`Take profit 50-75%. Cut at 50% loss.`],
         });
       }
+      // Buy Call — allowed any time (conservative single leg)
+      const cP2=estPrem(rnd(spot),'call');
+      strategies.push({name:`Buy Call${lateSession?' (Conservative)':''}`,type:'ds',
+        rationale:`−Gamma + king above. ${lateSession?'Late session — single leg only, defined risk.':'Momentum play.'}`,
+        legs:[{action:'BUY',type:'CALL',strike:rnd(spot),tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
+        expectedPremium:cP2?`Cost: ${cP2}`:'Check chain',maxProfit:'Unlimited',maxRisk:'Premium',target:`${fp(king.strike)}+`,
+        why:[driftComm(),lateSession?`Late session: single leg = defined risk. Set hard stop.`:`Trail stop at 50% gains.`],
+      });
+    }else if(kd<0){
+      if(!lateSession){
+        // Put Debit Spread — only before 9AM PST, tight $10/$3 width
+        const buyStrike=rnd(spot);
+        const sellStrike=rnd(buyStrike-SPREAD_WIDTH);
+        const buyPrem=estPrem(buyStrike,'put');
+        strategies.push({name:'Put Debit Spread',type:'ds',
+          rationale:`−Gamma + king below. $${SPREAD_WIDTH}-wide debit spread for defined risk.`,
+          legs:[
+            {action:'BUY',type:'PUT',strike:buyStrike,tag:'Near ATM',tagCls:'sp',note:'(~50Δ)'},
+            {action:'SELL',type:'PUT',strike:sellStrike,tag:'OTM',tagCls:'sp',note:`$${SPREAD_WIDTH} wide`}
+          ],
+          expectedPremium:buyPrem?`Debit: ${buyPrem}`:'Verify',
+          maxProfit:`$${(SPREAD_WIDTH*100).toFixed(0)} minus debit`,maxRisk:'Debit paid',
+          target:`Drop to ${fp(sellStrike)}`,
+          why:[driftComm(),`Take profit 50-75%. Cut at 50% loss.`],
+        });
+      }
+      // Buy Put — allowed any time
+      const pP=estPrem(rnd(spot),'put');
+      strategies.push({name:`Buy Put${lateSession?' (Conservative)':''}`,type:'ds',
+        rationale:`−Gamma + king below. ${lateSession?'Late session — single leg only.':'Momentum play.'}`,
+        legs:[{action:'BUY',type:'PUT',strike:rnd(spot),tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
+        expectedPremium:pP?`Cost: ${pP}`:'Check chain',maxProfit:'Substantial',maxRisk:'Premium',target:`${fp(king.strike)}`,
+        why:[driftComm(),lateSession?`Late session: single leg = defined risk. Set hard stop.`:`Trail stop at 50% gains.`],
+      });
+    }
+
+    // Butterfly — allowed any time for −gamma too
+    if(Math.abs(kdPct)<.3){
+      const ctr=rnd(king.strike);
+      strategies.push({name:'Butterfly (King Target)',type:'bf',
+        rationale:`King at ${fp(ctr)}. Low cost lottery for pin.${lateSession?' Safe defined-risk play.':''}`,
+        legs:[
+          {action:'BUY',type:'CALL',strike:ctr-WING,tag:'Lower',tagCls:'sp'},
+          {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn',qty:2},
+          {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Upper',tagCls:'sp'},
+        ],
+        expectedPremium:'~$1-$3 debit',maxProfit:`$${WING*100} minus debit`,maxRisk:'Debit paid',target:`Pin ${fp(ctr)}`,
+        why:[driftComm()],
+      });
     }
   }
 
@@ -693,14 +701,14 @@ function renderRecs(){
     const c=document.createElement('div');c.className=`rec ${bias}`;
     c.innerHTML=`<div class="rec-sym">${sym} $${fp(spot)} <span class="rec-badge ${bias}">${bias.toUpperCase()}</span></div>`+
       `<div class="rec-sum">${r.summary||''}</div>`+
-      `<div class="rec-gamma ${gpClass}">${commentary}<br><span style="font-size:8px;color:var(--dim);margin-top:2px;display:inline-block">${dirLine}</span></div>`+
-      `<div>${(r.action_items||[]).map(i=>`<div class="rec-act"><span>${i.includes('↑')?'🟣':i.includes('↓')?'🟣':i.includes('SUPPORT')?'🟡':i.includes('RESIST')?'🟡':'★'}</span>${i}</div>`).join('')}</div>`+
+      `<div class="rec-gamma ${gpClass}">${commentary}<br><span style="font-size:10px;color:var(--dim);margin-top:2px;display:inline-block">${dirLine}</span></div>`+
       `<div class="rec-lvls">`+
         `<span class="rec-lv king">👑 King: ${fp(king?king.strike:0)}</span>`+
         `<span class="rec-lv gp">${gpLabel}</span>`+
+        `<span class="rec-lv" style="background:rgba(251,191,36,.08);color:var(--yellow);border:1px solid rgba(251,191,36,.15)">Support: ${support}</span>`+
+        `<span class="rec-lv" style="background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.15)">Resist: ${resist}</span>`+
         `${r.expected_range?`<span class="rec-lv rng">Range: ${fp(r.expected_range.low)}–${fp(r.expected_range.high)}</span>`:''}`+
-      `</div>`+
-      `<div style="display:flex;gap:10px;margin-top:6px;font-size:8px;color:var(--dim)"><span>🟡 Support: ${support}</span><span>🟠 Resist: ${resist}</span></div>`;
+      `</div>`;
     rw.appendChild(c);
   });
 }
@@ -721,9 +729,27 @@ function renderPanel(d){
   const pd=pc==='pos'?'Vol↓ Mean revert':pc==='neg'?'Vol↑ Momentum':'Choppy';
   const kingD=ks-spot,kingP=((kingD/spot)*100).toFixed(2);
 
-  const p=document.createElement('div');p.className='panel';
+  // Item 14: % day change for spot
+  const openSnap=openingGEX[symbol];
+  let dayChgHtml='';
+  if(openSnap && openSnap._openSpot){
+    const dayChg=((spot-openSnap._openSpot)/openSnap._openSpot*100);
+    const sign=dayChg>=0?'+':'';
+    const clr=dayChg>=0?'var(--green)':'var(--red)';
+    dayChgHtml=`<span style="font-size:12px;color:${clr};margin-left:6px">${sign}${dayChg.toFixed(2)}%</span>`;
+  }
+
   const trackHtml = getTrackingHtml(symbol);
-  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}</span></div><div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div><div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:9px;color:var(--dim)">${pd}</span></div><div class="klevels"><span class="klev kn">👑 ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div><div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div>${trackHtml}<div class="strikes" id="s-${symbol}"></div>`;
+
+  const p=document.createElement('div');p.className='panel';
+  // Item 4: Move king distance and tracking info into the symbol box header area (after badges, before strikes)
+  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}${dayChgHtml}</span></div>`+
+    `<div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div>`+
+    `<div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:10px;color:var(--dim)">${pd}</span></div>`+
+    `<div class="klevels"><span class="klev kn">👑 ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div>`+
+    `<div style="padding:3px 14px;font-size:10px;color:var(--king);border-bottom:1px solid var(--border)">${kingD>0?'↑':'↓'} $${Math.abs(kingD).toFixed(2)} (${kingP}%) ${kingD>0?'above':'below'} spot</div>`+
+    `${trackHtml}`+
+    `<div class="strikes" id="s-${symbol}"></div>`;
   const cont=p.querySelector(`#s-${symbol}`);
 
   // Volume surge strikes to highlight
@@ -732,9 +758,8 @@ function renderPanel(d){
   vis.forEach(s=>{
     const iS=s.strike===ss,iK=s.strike===ks,iV=surgeStrikes.has(s.strike);
     const co=gc(s.net_gex,mx,iK);const tco=tc(s.net_gex,mx,iK);
-    // % change since market open
+    // Item 5: % change since open — show NEXT TO strike label
     let chgTag='';
-    const openSnap=openingGEX[symbol];
     if(openSnap){
       const openVal=openSnap[s.strike];
       if(openVal && Math.abs(openVal)>1000){
@@ -742,13 +767,20 @@ function renderPanel(d){
         if(Math.abs(pctChg)>=25){
           const sign=pctChg>0?'+':'';
           const clr=pctChg>0?'#4ade80':'#f87171';
-          chgTag=` <span style="font-size:9px;color:${clr};font-weight:400">${sign}${pctChg.toFixed(0)}%</span>`;
+          chgTag=`<span style="font-size:9px;color:${clr};margin-left:2px">${sign}${pctChg.toFixed(0)}%</span>`;
         }
       }
     }
-    const row=document.createElement('div');row.className='sr'+(iS?' spot':'')+(iK?' king':'');
+    // Item 10: bar width proportional to GEX magnitude
+    const barPct=Math.min(100,Math.round(Math.abs(s.net_gex)/mx*100));
+    const barDir=s.net_gex>=0?'left':'right';
+
+    // Item 11: King row styled via CSS .sr.king
+    const row=document.createElement('div');
+    row.className='sr'+(iS?' spot':'')+(iK?' king':'');
     if(iV) row.style.borderRight='3px solid var(--cyan)';
-    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b})"></div><span class="sr-lbl">${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}${chgTag}</span></div>`;
+
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;${barDir==='right'?'right:0;left:auto':'left:0'}"></div><span class="sr-lbl">${fp(s.strike)}${chgTag}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
   });
@@ -814,7 +846,7 @@ function startCountdown(){
     const mm=Math.floor(secs/60),ss=secs%60;
     const el=document.getElementById('countdown');
     if(remaining<=0){el.textContent='Updating...'}
-    else{el.textContent=`Next update: ${mm}:${ss.toString().padStart(2,'0')}`}
+    else{el.textContent=`Next update in ${mm}:${ss.toString().padStart(2,'0')}`}
   },1000);
 }
 
@@ -889,7 +921,7 @@ async function fetchFromServer() {
         // Save opening GEX snapshot (first fetch of day = baseline for % change)
         if(Object.keys(openingGEX).length===0){
           Object.keys(newD).forEach(sym=>{
-            openingGEX[sym]={};
+            openingGEX[sym]={_openSpot:newD[sym].spot};
             (newD[sym].strikes||[]).forEach(s=>{openingGEX[sym][s.strike]=s.net_gex});
           });
         }
