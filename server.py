@@ -127,6 +127,11 @@ def index():
     return send_from_directory("templates", "gex_heatmap.html")
 
 
+@app.route("/live")
+def gex_live():
+    return send_from_directory("templates", "gex_live.html")
+
+
 # ─── User database (in production, use a real DB) ───
 USERS = {
     "admin": "strikegex",
