@@ -13,6 +13,7 @@ app = Flask(__name__)
 
 # ─── State ───
 gex_data = {}
+gex_all_data = {}   # multi-expiry data for GEX Live view
 last_fetch = None
 fetch_lock = threading.Lock()
 
@@ -23,6 +24,13 @@ if os.path.exists("gex_data.json"):
             gex_data = json.load(f)
         last_fetch = gex_data.get(list(gex_data.keys())[0], {}).get("timestamp") if gex_data else None
         print(f"✅ Loaded cached gex_data.json ({len(gex_data)} symbols)")
+    except:
+        pass
+if os.path.exists("gex_all_data.json"):
+    try:
+        with open("gex_all_data.json") as f:
+            gex_all_data = json.load(f)
+        print(f"✅ Loaded cached gex_all_data.json ({len(gex_all_data)} symbols)")
     except:
         pass
 
@@ -72,7 +80,7 @@ def is_market_hours():
 
 def fetch_loop():
     """Background: fetch GEX from Schwab every FETCH_INTERVAL seconds."""
-    global gex_data, last_fetch
+    global gex_data, gex_all_data, last_fetch
     import gex_fetcher as gf
 
     client = None
@@ -100,19 +108,29 @@ def fetch_loop():
                 print("✅ Schwab client ready (from token file)")
 
             data = {}
+            all_data = {}
             for sym in SYMBOLS:
                 try:
                     data[sym] = gf.fetch_gex(client, sym, history)
                 except Exception as e:
-                    print(f"  ⚠️ {sym}: {e}")
+                    print(f"  ⚠️ {sym} 0DTE: {e}")
+                try:
+                    all_data[sym] = gf.fetch_gex_all_expirations(client, sym)
+                except Exception as e:
+                    print(f"  ⚠️ {sym} ALL-EXP: {e}")
 
             if data:
                 gf.save_history(history)
                 with fetch_lock:
                     gex_data = data
+                    if all_data:
+                        gex_all_data = all_data
                     last_fetch = datetime.now().isoformat()
                 with open("gex_data.json", "w") as f:
                     json.dump(data, f)
+                if all_data:
+                    with open("gex_all_data.json", "w") as f:
+                        json.dump(all_data, f)
                 print(f"  ✅ {len(data)} symbols @ {datetime.now().strftime('%H:%M:%S')}")
 
         except Exception as e:
@@ -125,11 +143,6 @@ def fetch_loop():
 @app.route("/")
 def index():
     return send_from_directory("templates", "gex_heatmap.html")
-
-
-@app.route("/live")
-def gex_live():
-    return send_from_directory("templates", "gex_live.html")
 
 
 # ─── User database (in production, use a real DB) ───
@@ -161,6 +174,12 @@ def api_login():
 def api_gex():
     with fetch_lock:
         return jsonify(gex_data)
+
+
+@app.route("/api/gex-all")
+def api_gex_all():
+    with fetch_lock:
+        return jsonify(gex_all_data)
 
 
 @app.route("/api/status")
