@@ -212,6 +212,38 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .footer-social a:hover{color:var(--bright)}
 .footer-copy{font-size:10px;color:var(--dim)}
 
+/* ═══ GEX LIVE INLINE VIEW ═══ */
+.live-row{display:flex;align-items:center;height:24px;position:relative;border-bottom:1px solid rgba(255,255,255,.02)}
+.live-row:hover{background:rgba(255,255,255,.03)}
+.live-row.is-spot{background:rgba(255,255,255,.06)}
+.live-row.is-king{background:rgba(239,68,68,.04)}
+.live-str{width:60px;font-size:11px;text-align:center;color:var(--dim);flex-shrink:0;z-index:2;position:relative}
+.live-row.is-spot .live-str{color:#fff;font-weight:700}
+.live-row.is-king .live-str{color:var(--king);font-weight:700}
+.live-bar-area{flex:1;height:100%;position:relative;overflow:hidden}
+.live-bar-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08);z-index:1}
+.live-bar{position:absolute;top:2px;bottom:2px;z-index:2;border-radius:1px;min-width:1px}
+.live-bar.pos{background:var(--green);right:50%}
+.live-bar.neg{background:var(--red);left:50%}
+.live-oi,.live-vol{width:70px;font-size:9px;text-align:right;padding-right:8px;flex-shrink:0;z-index:2}
+.live-tag{position:absolute;left:0;z-index:10;font-size:8px;font-weight:700;padding:1px 5px;border-radius:0 3px 3px 0;white-space:nowrap}
+.live-tag.spot-tag{background:#fff;color:#000}
+.live-tag.king-tag{background:var(--king);color:#fff}
+.live-tag.gw-tag{background:var(--green);color:#fff}
+.live-tag.pw-tag{background:var(--red);color:#fff}
+.live-exp-tab{padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--dim);background:transparent;transition:all .15s;white-space:nowrap}
+.live-exp-tab:hover{border-color:var(--accent);color:var(--text)}
+.live-exp-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.live-sym-tab{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;color:var(--dim);background:rgba(255,255,255,.03);border:1px solid transparent;transition:all .15s}
+.live-sym-tab:hover{color:var(--text);border-color:var(--border)}
+.live-sym-tab.active{background:rgba(99,102,241,.12);color:var(--accent);border-color:rgba(99,102,241,.3)}
+.sb-sec{padding:12px 14px;border-bottom:1px solid var(--border)}
+.sb-ttl{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kl-row{display:flex;align-items:center;padding:3px 0;font-size:11px}
+.kl-dot{width:7px;height:7px;border-radius:50%;margin-right:7px;flex-shrink:0}
+.kl-nm{flex:1;color:var(--text)}.kl-pr{font-weight:600;color:var(--bright);margin-right:6px}.kl-pct{font-size:10px;font-weight:600}
+@media(max-width:900px){.live-oi-col,.live-vol-col,.live-oi,.live-vol{display:none}#liveSidebar{display:none}}
+
 /* ═══ LOGIN OVERLAY ═══ */
 .login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
 .login-overlay.hidden{display:none}
@@ -271,7 +303,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy</button></div>
   <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px;opacity:0.5">IWM: OFF</button></div>
   <div class="ctrl-g"><button onclick="toggleColorGuide()" id="cgBtn" style="font-size:9px;padding:3px 8px">? Guide</button></div>
-  <div class="ctrl-g"><a href="/live" style="font-size:10px;padding:4px 10px;background:rgba(83,109,254,.12);color:var(--accent);border:1px solid rgba(83,109,254,.25);border-radius:4px;text-decoration:none;font-weight:600">📊 GEX Live</a></div>
+  <div class="ctrl-g"><button onclick="toggleLiveView()" id="liveBtn" style="font-size:10px;padding:4px 10px;background:rgba(83,109,254,.12);color:var(--accent);border:1px solid rgba(83,109,254,.25);border-radius:4px;font-weight:600;cursor:pointer">📊 GEX Live</button></div>
   <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
     <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
   </div>
@@ -329,6 +361,32 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 <!-- Heatmap -->
 <div class="hm-wrap" id="hc">
   <div class="empty"><h2>Load GEX Data</h2><p>Click <code>📂 Load JSON</code> or <code>🧪 Sample</code></p></div>
+</div>
+
+<!-- ═══ GEX LIVE VIEW (hidden by default, shown on toggle) ═══ -->
+<div id="gexLive" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+  <!-- Expiry tabs -->
+  <div style="display:flex;align-items:center;padding:6px 16px;border-bottom:1px solid var(--border);background:var(--panel);gap:4px;overflow-x:auto;flex-shrink:0">
+    <div id="liveSymTabs" style="display:flex;gap:4px;margin-right:12px"></div>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0"></div>
+    <div id="liveExpTabs" style="display:flex;gap:4px;overflow-x:auto"></div>
+  </div>
+  <!-- Main area: chart + sidebar -->
+  <div style="flex:1;display:flex;overflow:hidden">
+    <!-- Chart -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);background:var(--card);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0">
+        <div style="width:60px;text-align:center">STRIKE</div>
+        <div style="flex:1;text-align:center;font-weight:600">NET GEX</div>
+        <div style="width:70px;text-align:center" class="live-oi-col">Net OI</div>
+        <div style="width:70px;text-align:center" class="live-vol-col">Net Vol</div>
+        <div style="width:60px;text-align:center">STRIKE</div>
+      </div>
+      <div id="liveRows" style="flex:1;overflow-y:auto"></div>
+    </div>
+    <!-- Sidebar -->
+    <div id="liveSidebar" style="width:310px;border-left:1px solid var(--border);background:var(--panel);overflow-y:auto;flex-shrink:0"></div>
+  </div>
 </div>
 
 <!-- Footer -->
@@ -1063,6 +1121,205 @@ if (window.location.protocol !== 'file:') {
   if(sessionStorage.getItem('gex_auth')==='1') startServerFetch();
 } else {
   document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ═══ GEX LIVE VIEW (inline, toggled within the page)  ═══
+// ═══════════════════════════════════════════════════════════
+let liveMode=false, liveData=null, liveSym='SPX', liveExp='ALL', liveFetchInt=null;
+
+function toggleLiveView(){
+  liveMode=!liveMode;
+  const btn=document.getElementById('liveBtn');
+  const heatmapEls=['rw','sw','hc','sb'];
+  const liveEl=document.getElementById('gexLive');
+  const legendEl=document.querySelector('.legend');
+  const legendDetail=document.getElementById('legend-detail');
+  if(liveMode){
+    btn.style.background='var(--accent)';btn.style.color='#fff';btn.textContent='🔥 Heatmap';
+    heatmapEls.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});
+    if(legendEl)legendEl.style.display='none';
+    if(legendDetail)legendDetail.style.display='none';
+    liveEl.style.display='flex';
+    fetchLiveData();
+    if(!liveFetchInt)liveFetchInt=setInterval(fetchLiveData,60*1000);
+  }else{
+    btn.style.background='rgba(83,109,254,.12)';btn.style.color='var(--accent)';btn.textContent='📊 GEX Live';
+    heatmapEls.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=''});
+    if(legendEl)legendEl.style.display='';
+    liveEl.style.display='none';
+    if(liveFetchInt){clearInterval(liveFetchInt);liveFetchInt=null}
+  }
+}
+
+async function fetchLiveData(){
+  try{
+    const r=await fetch('/api/gex-all');
+    if(r.ok){
+      const d=await r.json();
+      if(d&&Object.keys(d).length){liveData=d;renderLiveSymTabs();renderLive()}
+    }
+  }catch(e){console.error('GEX-ALL fetch:',e)}
+}
+
+function renderLiveSymTabs(){
+  const c=document.getElementById('liveSymTabs');c.innerHTML='';
+  if(!liveData)return;
+  Object.keys(liveData).forEach(sym=>{
+    const t=document.createElement('div');t.className='live-sym-tab'+(sym===liveSym?' active':'');
+    t.textContent=sym;t.onclick=()=>{liveSym=sym;liveExp='ALL';renderLiveSymTabs();renderLive()};
+    c.appendChild(t);
+  });
+}
+
+function renderLive(){
+  if(!liveData||!liveData[liveSym])return;
+  const sd=liveData[liveSym];
+  const spot=sd.spot;
+  const expData=sd.exp_data||{};
+
+  // Expiry tabs
+  const et=document.getElementById('liveExpTabs');et.innerHTML='';
+  const exps=sd.expirations||[];
+
+  // "ALL" tab first
+  const allTab=document.createElement('div');allTab.className='live-exp-tab'+(liveExp==='ALL'?' active':'');
+  allTab.innerHTML='Σ ALL';allTab.onclick=()=>{liveExp='ALL';renderLive()};
+  et.appendChild(allTab);
+
+  exps.forEach(exp=>{
+    const ed=expData[exp];if(!ed)return;
+    const t=document.createElement('div');t.className='live-exp-tab'+(liveExp===exp?' active':'');
+    const dte=ed.dte;
+    let label=exp.slice(5); // MM-DD
+    if(dte===0)label=`<span style="color:var(--king)">${label}</span> <span style="font-size:8px;opacity:.7">0DTE</span>`;
+    else if(dte<=7)label+=` <span style="font-size:8px;opacity:.7">${dte}d</span>`;
+    else label+=` <span style="font-size:8px;opacity:.7">${dte}d</span>`;
+    t.innerHTML=label;
+    t.onclick=()=>{liveExp=exp;renderLive()};
+    et.appendChild(t);
+  });
+
+  // Get the selected expiry data
+  const selected=expData[liveExp];
+  if(!selected||!selected.strikes||!selected.strikes.length){
+    document.getElementById('liveRows').innerHTML='<div style="padding:40px;text-align:center;color:var(--dim)">No data for this expiration</div>';
+    return;
+  }
+
+  const strikes=selected.strikes;
+  const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
+  const byStrike=[...strikes].sort((a,b)=>b.strike-a.strike);
+  const nearSpot=strikes.reduce((b,s)=>Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b);
+  const kingStrike=selected.king_strike||0;
+  const gwStrike=selected.gamma_wall||0;
+  const pwStrike=selected.put_wall||0;
+  const totalGex=selected.total_net_gex||0;
+
+  // Render rows
+  const wrap=document.getElementById('liveRows');wrap.innerHTML='';
+  let spotRow=null;
+
+  byStrike.forEach(s=>{
+    const row=document.createElement('div');row.className='live-row';
+    const isSpot=s.strike===nearSpot.strike;
+    const isKing=Math.abs(s.strike-kingStrike)<0.01;
+    if(isSpot){row.classList.add('is-spot');spotRow=row}
+    if(isKing)row.classList.add('is-king');
+
+    const pct=Math.max(1,Math.abs(s.net_gex)/mx*45);
+    const isPos=s.net_gex>=0;
+    const netOI=(s.call_oi||0)-(s.put_oi||0);
+    const netVol=(s.call_volume||0)-(s.put_volume||0);
+
+    let tags='';
+    if(isSpot)tags+=`<span class="live-tag spot-tag">● $${spot.toFixed(1)}</span>`;
+    if(isKing)tags+=`<span class="live-tag king-tag" style="left:auto;right:0">👑 KING</span>`;
+    if(Math.abs(s.strike-gwStrike)<0.01&&!isKing)tags+=`<span class="live-tag gw-tag" style="left:auto;right:0">CR</span>`;
+    if(Math.abs(s.strike-pwStrike)<0.01)tags+=`<span class="live-tag pw-tag">PS</span>`;
+
+    const fk=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(1)+'M':a>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)};
+
+    row.innerHTML=
+      `<div class="live-str">${s.strike.toFixed(s.strike%1?1:0)}</div>`+
+      `<div class="live-bar-area"><div class="live-bar-center"></div><div class="live-bar ${isPos?'pos':'neg'}" style="width:${pct}%"></div>${tags}</div>`+
+      `<div class="live-oi" style="color:${netOI>=0?'var(--green)':'var(--red)'}">${fk(netOI)}</div>`+
+      `<div class="live-vol" style="color:${netVol>=0?'var(--green)':'var(--red)'}">${fk(netVol)}</div>`+
+      `<div class="live-str">${s.strike.toFixed(s.strike%1?1:0)}</div>`;
+
+    wrap.appendChild(row);
+  });
+
+  if(spotRow)setTimeout(()=>spotRow.scrollIntoView({block:'center'}),50);
+
+  // Sidebar
+  renderLiveSidebar(sd,selected,strikes,mx);
+}
+
+function renderLiveSidebar(sd,selected,strikes,mx){
+  const sb=document.getElementById('liveSidebar');
+  const spot=sd.spot;
+  const totalGex=selected.total_net_gex||0;
+  const kingStrike=selected.king_strike||0;
+  const gwStrike=selected.gamma_wall||0;
+  const pwStrike=selected.put_wall||0;
+
+  const fk=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(2)+'M':a>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)};
+  const fp2=v=>v.toFixed(2);
+  const pctF=(val)=>{const p=((val-spot)/spot*100);return{cls:p>=0?'color:var(--green)':'color:var(--red)',txt:(p>=0?'+':'')+p.toFixed(2)+'%'}};
+
+  const isPos=totalGex>mx*.05,isNeg=totalGex<-mx*.05;
+  const gpCls=isPos?'var(--green)':isNeg?'var(--red)':'var(--yellow)';
+  const gpSign=isPos?'+':isNeg?'−':'○';
+  const gpLabel=isPos?'Positive Gamma':isNeg?'Negative Gamma':'Neutral';
+  const aboveKing=spot>kingStrike;
+  let gpDesc=isPos?(aboveKing?'Above CR → mean revert / squeeze':'Below king → drift toward king')
+    :isNeg?(aboveKing?'Above king → momentum continuation':'Below CR → dealer amplification')
+    :'Mixed positioning — reduce size';
+
+  const tCV=strikes.reduce((s,x)=>s+(x.call_volume||0),0);
+  const tPV=strikes.reduce((s,x)=>s+(x.put_volume||0),0);
+  const tCO=strikes.reduce((s,x)=>s+(x.call_oi||0),0);
+  const tPO=strikes.reduce((s,x)=>s+(x.put_oi||0),0);
+  const totVol=tCV+tPV||1;
+  const totOI=tCO+tPO||1;
+
+  sb.innerHTML=
+    `<div class="sb-sec">`+
+      `<div style="display:flex;gap:8px;margin-bottom:4px">`+
+        `<div style="flex:1;text-align:center"><div class="sb-ttl">GEX</div><div style="font-size:16px;font-weight:700;color:${totalGex>=0?'var(--green)':'var(--red)'}">${fk(totalGex)}</div></div>`+
+        `<div style="flex:1;text-align:center"><div class="sb-ttl">Expiry</div><div style="font-size:13px;font-weight:600;color:var(--bright)">${selected.expiration==='ALL'?'Σ All':selected.expiration.slice(5)}${selected.dte>=0?' <span style="font-size:10px;color:var(--dim)">'+selected.dte+'d</span>':''}</div></div>`+
+      `</div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Gamma Profile</div>`+
+      `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">`+
+        `<div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;background:${isPos?'rgba(0,200,83,.15)':isNeg?'rgba(255,23,68,.15)':'rgba(255,214,0,.15)'};color:${gpCls}">${gpSign}</div>`+
+        `<div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:${gpCls}">${gpLabel}</div>`+
+      `</div>`+
+      `<div style="font-size:10px;color:var(--dim)">${gpDesc}</div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Key GEX Levels</div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:var(--king)"></div><div class="kl-nm">PS</div><div class="kl-pr">${pwStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(pwStrike).cls}">${pctF(pwStrike).txt}</div></div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:var(--dim)"></div><div class="kl-nm">${liveSym}</div><div class="kl-pr">$${fp2(spot)}</div><div class="kl-pct" style="color:var(--dim)">spot</div></div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:var(--green)"></div><div class="kl-nm">CR</div><div class="kl-pr">${gwStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(gwStrike).cls}">${pctF(gwStrike).txt}</div></div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:#ff5252"></div><div class="kl-nm">👑 King</div><div class="kl-pr">${kingStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(kingStrike).cls}">${pctF(kingStrike).txt}</div></div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Chain Activity</div>`+
+      `<div style="text-align:center;font-size:13px;font-weight:700;color:${tPV>tCV?'var(--red)':'var(--green)'};margin-bottom:4px">${tPV>tCV?'PUTS':'CALLS'}</div>`+
+      `<div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin:6px 0"><div style="height:100%;width:${Math.round(tPV/totVol*100)}%;background:var(--red);border-radius:3px"></div></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--red)">PUTS</span><span style="color:var(--dim)">BALANCED</span><span style="color:var(--green)">CALLS</span></div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Volume</div>`+
+      `<div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:flex;margin:6px 0"><div style="height:100%;width:${Math.round(tCV/totVol*100)}%;background:var(--green)"></div><div style="height:100%;width:${Math.round(tPV/totVol*100)}%;background:var(--red)"></div></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--green)">${fk(tCV)} Call</span><span style="color:var(--red)">${fk(tPV)} Put</span></div>`+
+      `<div class="sb-ttl" style="margin-top:8px">Open Interest</div>`+
+      `<div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:flex;margin:6px 0"><div style="height:100%;width:${Math.round(tCO/totOI*100)}%;background:var(--green)"></div><div style="height:100%;width:${Math.round(tPO/totOI*100)}%;background:var(--red)"></div></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--green)">${fk(tCO)} Call</span><span style="color:var(--red)">${fk(tPO)} Put</span></div>`+
+    `</div>`;
 }
 </script>
 </body></html>
