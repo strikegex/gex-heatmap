@@ -22,6 +22,9 @@ CONTRACT_MULTIPLIER = 100
 DTE_WEIGHTS = {0: 1.0}
 DTE_DEFAULT_WEIGHT = 0.0
 
+# For "all expirations" mode: weight everything equally
+ALL_EXP_WEIGHT = 1.0
+
 HISTORY_FILE = "gex_history_intraday.json"
 
 
@@ -116,12 +119,16 @@ def get_spot_price(client, symbol):
     return float(q.get("lastPrice", q.get("closePrice", 0)))
 
 
-def get_option_chain(client, symbol, expiry=None, num_strikes=60):
+def get_option_chain(client, symbol, expiry=None, num_strikes=60, all_expirations=False):
     sym = f"${symbol}" if symbol in ("SPX","NDX","RUT","DJX","VIX") else symbol
     kw = {"include_underlying_quote": True, "strike_count": num_strikes * 2}
     if expiry:
         d = date.fromisoformat(expiry)
         kw["from_date"] = d; kw["to_date"] = d + timedelta(days=1)
+    elif all_expirations:
+        # Fetch next ~45 days of expirations
+        kw["from_date"] = date.today()
+        kw["to_date"] = date.today() + timedelta(days=45)
     else:
         kw["from_date"] = date.today()
         kw["to_date"] = date.today() + timedelta(days=1)
@@ -199,6 +206,75 @@ def calculate_gex(chain, spot):
         s["total_gamma"] = abs(s["net_gex"])
 
     return strikes
+
+
+def calculate_gex_per_expiry(chain, spot):
+    """Calculate GEX broken out by expiration date. Returns {exp_date: {strike: data}}"""
+    today = date.today()
+    per_exp = {}  # {exp_date_str: {strike: {...}}}
+
+    for exp_key, smap in chain.get("callExpDateMap", {}).items():
+        parts = exp_key.split(":")
+        exp_date = parts[0]
+        try:
+            dte = int(parts[1]) if len(parts) >= 2 else (date.fromisoformat(parts[0]) - today).days
+        except:
+            dte = 99
+        if exp_date not in per_exp:
+            per_exp[exp_date] = {}
+        strikes = per_exp[exp_date]
+        for sk, contracts in smap.items():
+            strike = float(sk)
+            if strike not in strikes:
+                strikes[strike] = dict(
+                    strike=strike, net_gex=0, call_gex=0, put_gex=0,
+                    total_gamma=0, call_oi=0, put_oi=0,
+                    call_volume=0, put_volume=0, dte=dte,
+                )
+            for c in contracts:
+                oi = int(c.get("openInterest", 0))
+                vol = int(c.get("totalVolume", 0))
+                gamma = float(c.get("gamma", 0) or 0)
+                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER
+                strikes[strike]["call_gex"] += gex
+                strikes[strike]["net_gex"] += gex
+                strikes[strike]["call_oi"] += oi
+                strikes[strike]["call_volume"] += vol
+
+    for exp_key, smap in chain.get("putExpDateMap", {}).items():
+        parts = exp_key.split(":")
+        exp_date = parts[0]
+        try:
+            dte = int(parts[1]) if len(parts) >= 2 else (date.fromisoformat(parts[0]) - today).days
+        except:
+            dte = 99
+        if exp_date not in per_exp:
+            per_exp[exp_date] = {}
+        strikes = per_exp[exp_date]
+        for sk, contracts in smap.items():
+            strike = float(sk)
+            if strike not in strikes:
+                strikes[strike] = dict(
+                    strike=strike, net_gex=0, call_gex=0, put_gex=0,
+                    total_gamma=0, call_oi=0, put_oi=0,
+                    call_volume=0, put_volume=0, dte=dte,
+                )
+            for c in contracts:
+                oi = int(c.get("openInterest", 0))
+                vol = int(c.get("totalVolume", 0))
+                gamma = float(c.get("gamma", 0) or 0)
+                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER
+                strikes[strike]["put_gex"] -= gex
+                strikes[strike]["net_gex"] -= gex
+                strikes[strike]["put_oi"] += oi
+                strikes[strike]["put_volume"] += vol
+
+    # Set total_gamma
+    for exp_strikes in per_exp.values():
+        for s in exp_strikes.values():
+            s["total_gamma"] = abs(s["net_gex"])
+
+    return per_exp
 
 
 def filter_near_spot(strikes, spot, n=30):
@@ -282,6 +358,107 @@ def fetch_gex(client, symbol, history, expiry=None, num_strikes=30):
         "recommendation": rec,
         "king_history": king_timeline,
         "volume_surges": vol_surges,
+    }
+
+
+def fetch_gex_all_expirations(client, symbol, num_strikes=40):
+    """Fetch ALL available expirations (up to 45 days) with per-expiry GEX breakdown."""
+    print(f"\n  {symbol} — Fetching ALL expirations...")
+    spot = get_spot_price(client, symbol)
+    chain = get_option_chain(client, symbol, None, num_strikes, all_expirations=True)
+    ul = chain.get("underlying", {})
+    if ul and ul.get("last"): spot = float(ul["last"])
+
+    # Get all expiration dates
+    all_exp_keys = set()
+    for k in chain.get("callExpDateMap", {}).keys():
+        all_exp_keys.add(k)
+    for k in chain.get("putExpDateMap", {}).keys():
+        all_exp_keys.add(k)
+
+    exps_info = []
+    for ek in sorted(all_exp_keys):
+        parts = ek.split(":")
+        exp_date = parts[0]
+        try:
+            dte = int(parts[1]) if len(parts) >= 2 else (date.fromisoformat(parts[0]) - date.today()).days
+        except:
+            dte = 99
+        exps_info.append({"date": exp_date, "dte": dte, "key": ek})
+
+    # Per-expiry GEX
+    per_exp = calculate_gex_per_expiry(chain, spot)
+
+    # Build per-expiry summaries
+    exp_data = {}
+    for ei in exps_info:
+        exp_d = ei["date"]
+        strikes_dict = per_exp.get(exp_d, {})
+        if not strikes_dict:
+            continue
+        strikes_list = sorted(strikes_dict.values(), key=lambda x: x["strike"])
+        # Filter near spot
+        if strikes_list:
+            ci = min(range(len(strikes_list)), key=lambda i: abs(strikes_list[i]["strike"] - spot))
+            n = num_strikes
+            filtered = strikes_list[max(0, ci-n):min(len(strikes_list), ci+n+1)]
+        else:
+            filtered = []
+
+        total = sum(s["net_gex"] for s in filtered)
+        king = max(filtered, key=lambda s: abs(s["net_gex"])) if filtered else None
+
+        exp_data[exp_d] = {
+            "expiration": exp_d,
+            "dte": ei["dte"],
+            "strikes": filtered,
+            "total_net_gex": total,
+            "king_strike": king["strike"] if king else 0,
+            "gamma_wall": max(filtered, key=lambda s: s["net_gex"])["strike"] if filtered else 0,
+            "put_wall": min(filtered, key=lambda s: s["net_gex"])["strike"] if filtered else 0,
+        }
+
+    # Also compute cumulative (all exps combined)
+    all_strikes = {}
+    for exp_strikes in per_exp.values():
+        for strike, data in exp_strikes.items():
+            if strike not in all_strikes:
+                all_strikes[strike] = dict(
+                    strike=strike, net_gex=0, call_gex=0, put_gex=0,
+                    total_gamma=0, call_oi=0, put_oi=0,
+                    call_volume=0, put_volume=0,
+                )
+            for k in ("net_gex","call_gex","put_gex","call_oi","put_oi","call_volume","put_volume"):
+                all_strikes[strike][k] += data.get(k, 0)
+            all_strikes[strike]["total_gamma"] = abs(all_strikes[strike]["net_gex"])
+
+    cum_list = sorted(all_strikes.values(), key=lambda x: x["strike"])
+    if cum_list:
+        ci = min(range(len(cum_list)), key=lambda i: abs(cum_list[i]["strike"] - spot))
+        cum_filtered = cum_list[max(0, ci-num_strikes):min(len(cum_list), ci+num_strikes+1)]
+    else:
+        cum_filtered = []
+
+    cum_total = sum(s["net_gex"] for s in cum_filtered)
+    cum_king = max(cum_filtered, key=lambda s: abs(s["net_gex"])) if cum_filtered else None
+
+    exp_data["ALL"] = {
+        "expiration": "ALL",
+        "dte": -1,
+        "strikes": cum_filtered,
+        "total_net_gex": cum_total,
+        "king_strike": cum_king["strike"] if cum_king else 0,
+        "gamma_wall": max(cum_filtered, key=lambda s: s["net_gex"])["strike"] if cum_filtered else 0,
+        "put_wall": min(cum_filtered, key=lambda s: s["net_gex"])["strike"] if cum_filtered else 0,
+    }
+
+    print(f"  ${spot:,.2f} | {len(exp_data)-1} expirations + cumulative")
+
+    return {
+        "symbol": symbol, "spot": spot,
+        "timestamp": datetime.now().isoformat(),
+        "expirations": [e["date"] for e in exps_info],
+        "exp_data": exp_data,
     }
 
 
