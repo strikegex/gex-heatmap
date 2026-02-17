@@ -994,7 +994,16 @@ function getVisibleSyms(){
   return Object.keys(D).filter(s=> showIWM || s!=='IWM').sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0);
 }
 
-function rerender(){if(!D)return;renderRecs();if(stratVisible)renderStrats();const c=document.getElementById('hc');c.innerHTML='';
+function rerender(){
+  const c=document.getElementById('hc');
+  const es=document.getElementById('emptyState');
+  if(!D){
+    c.innerHTML='';
+    if(es){ es.style.display=''; c.appendChild(es); }
+    return;
+  }
+  if(es) es.style.display='none';
+  renderRecs();if(stratVisible)renderStrats();c.innerHTML='';
   getVisibleSyms().forEach(s=>c.appendChild(renderPanel(D[s])));updateTimestamp()}
 
 function updateTimestamp(){
@@ -1065,35 +1074,48 @@ async function fetchFromServer() {
     }
     const newD = await resp.json();
     if (newD && Object.keys(newD).length > 0) {
-      const newTs = newD[Object.keys(newD)[0]]?.timestamp;
-      const oldTs = D?.[Object.keys(D||{})[0]]?.timestamp;
-      if (newTs !== oldTs || !D) {
-        D = newD;
-        // Save opening GEX snapshot (first fetch of day = baseline for % change)
-        if(Object.keys(openingGEX).length===0){
-          Object.keys(newD).forEach(sym=>{
-            openingGEX[sym]={_openSpot:newD[sym].spot};
-            (newD[sym].strikes||[]).forEach(s=>{openingGEX[sym][s.strike]=s.net_gex});
-          });
-        }
-        document.getElementById('sd').className = 'status-dot live';
-        // Show last updated time
-        try{
-          const ts=new Date(newTs);
-          const ago=Math.round((Date.now()-ts.getTime())/60000);
-          if(ago>60) document.getElementById('st').textContent = `Last: ${ts.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
-          else document.getElementById('st').textContent = `Live · ${ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
-        }catch(e){ document.getElementById('st').textContent = 'Live'; }
-        rerender();
-        startCountdown();
-        fetchAttempts = 0;
+      // Always load data — server serves cached JSON even when market is closed
+      D = newD;
+      if(Object.keys(openingGEX).length===0){
+        Object.keys(newD).forEach(sym=>{
+          openingGEX[sym]={_openSpot:newD[sym].spot};
+          (newD[sym].strikes||[]).forEach(s=>{openingGEX[sym][s.strike]=s.net_gex});
+        });
       }
+      fetchAttempts = 0;
+      const newTs = newD[Object.keys(newD)[0]]?.timestamp;
+      const ts = new Date(newTs);
+      const ageMin = Math.round((Date.now()-ts.getTime())/60000);
+      const isStale = ageMin > 30;
+      const sb = document.getElementById('staleBanner');
+      if(isStale){
+        if(!sb){
+          const banner=document.createElement('div');
+          banner.id='staleBanner';
+          banner.style.cssText='background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);color:#fbbf24;font-size:11px;padding:6px 16px;text-align:center;letter-spacing:.3px';
+          const tsStr=ts.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+          banner.textContent='Market closed · Showing last data from '+tsStr;
+          const hc=document.getElementById('hc');
+          hc.parentElement.insertBefore(banner,hc);
+        }
+        document.getElementById('sd').className='status-dot';
+        document.getElementById('st').textContent='Last: '+ts.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      } else {
+        if(sb) sb.remove();
+        document.getElementById('sd').className='status-dot live';
+        try{
+          document.getElementById('st').textContent='Live · '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        }catch(e){ document.getElementById('st').textContent='Live'; }
+        startCountdown();
+      }
+      rerender();
     } else {
       fetchAttempts++;
-      if (!D) {
-        document.getElementById('st').textContent = 'Waiting for data (market may be closed)';
+      if(!D){
+        document.getElementById('st').textContent='Waiting for data (market may be closed)';
+        rerender(); // show emptyState
       }
-      // Never clear existing data — keep showing last fetch
+      // D already has data — keep displaying it, never blank the page
     }
   } catch(e) {
     fetchAttempts++;
