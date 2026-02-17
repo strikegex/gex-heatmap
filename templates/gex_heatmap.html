@@ -1220,53 +1220,53 @@ async function fetchLiveData(){
 // ── Color scale: negative=purple, zero=black, positive=green ──
 function gexColor(v, mx){
   if(mx===0) return '#0a0e0a';
-  const t = Math.max(-1, Math.min(1, v/mx));  // -1..1 normalized
 
-  // Color stops matching reference heatmap (like matplotlib RdYlGn / custom)
-  // Positive: dark(0) → teal(0.25) → green(0.5) → lime(0.75) → yellow(1.0)
-  // Negative: dark(0) → dark-purple(0.25) → purple(0.5) → violet(0.75) → magenta-purple(1.0)
+  // Use sqrt scaling so mid-range values get real color (not just outliers)
+  // This matches the reference images where most cells show visible color
+  const sign = v >= 0 ? 1 : -1;
+  const t = Math.sqrt(Math.min(1, Math.abs(v) / mx)); // 0..1, sqrt-compressed
 
-  function lerp(a, b, t){ return Math.round(a + (b-a)*t); }
-  function colorAt(stops, t){
-    // stops: array of [r,g,b], t: 0..1
+  function lerp(a, b, f){ return Math.round(a + (b-a)*f); }
+  function colorAt(stops, f){
     const n = stops.length - 1;
-    const i = Math.min(n-1, Math.floor(t * n));
-    const f = t * n - i;
-    return [lerp(stops[i][0],stops[i+1][0],f),
-            lerp(stops[i][1],stops[i+1][1],f),
-            lerp(stops[i][2],stops[i+1][2],f)];
+    const i = Math.min(n-1, Math.floor(f * n));
+    const frac = f * n - i;
+    return [lerp(stops[i][0],stops[i+1][0],frac),
+            lerp(stops[i][1],stops[i+1][1],frac),
+            lerp(stops[i][2],stops[i+1][2],frac)];
   }
 
-  if(t >= 0){
-    // dark → teal-green → bright green → yellow-green (matching reference)
-    const posStops = [
-      [8, 14, 8],       // 0.0 near-black dark green base
-      [4, 80, 60],      // 0.25 dark teal
-      [20, 150, 80],    // 0.5  medium green
-      [90, 200, 40],    // 0.75 lime green
-      [200, 240, 10],   // 1.0  yellow-green (max)
+  if(sign >= 0){
+    // near-black → teal → green → lime → yellow (matching reference heatmap)
+    const stops = [
+      [6,  18,  12],   // 0.0  near-black
+      [5,  90,  65],   // 0.25 dark teal-green
+      [15, 160,  75],  // 0.5  medium green
+      [80, 210,  30],  // 0.75 lime
+      [210,245,   8],  // 1.0  yellow-green max
     ];
-    const [r,g,b] = colorAt(posStops, t);
+    const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
   } else {
-    // dark → dark blue-purple → purple → bright purple (matching reference)
-    const negStops = [
-      [8, 8, 14],       // 0.0 near-black dark base
-      [40, 10, 80],     // 0.25 dark purple
-      [100, 10, 150],   // 0.5  medium purple
-      [150, 10, 200],   // 0.75 bright purple
-      [190, 20, 220],   // 1.0  max purple/violet
+    // near-black → dark-purple → purple → bright violet (matching reference)
+    const stops = [
+      [6,   6,  18],   // 0.0  near-black
+      [50,   8,  95],  // 0.25 dark purple
+      [110,  8, 165],  // 0.5  medium purple
+      [160,  8, 210],  // 0.75 bright purple
+      [195, 15, 230],  // 1.0  max violet
     ];
-    const [r,g,b] = colorAt(negStops, -t);
+    const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
   }
 }
 
 function textColor(v, mx){
-  if(mx===0) return 'rgba(255,255,255,.4)';
-  const intensity = Math.abs(v)/mx;
-  if(intensity < 0.08) return 'rgba(255,255,255,.3)';
-  if(intensity < 0.25) return 'rgba(255,255,255,.6)';
+  if(mx===0) return 'rgba(255,255,255,.35)';
+  // Use same sqrt scale for text brightness
+  const t = Math.sqrt(Math.min(1, Math.abs(v) / mx));
+  if(t < 0.18) return 'rgba(255,255,255,.35)';
+  if(t < 0.40) return 'rgba(255,255,255,.65)';
   return '#fff';
 }
 
