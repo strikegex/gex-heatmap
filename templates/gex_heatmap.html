@@ -317,8 +317,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   </div>
 </div>
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('live')">🔴 Live View</div>
-  <div class="tab" onclick="switchTab('heatmap')">🔥 Heatmap</div>
+  <div class="tab active" onclick="switchTab('live')">🗺️ StrikeMap</div>
+  <div class="tab" onclick="switchTab('heatmap')">🔥 HeatMap</div>
 </div>
 <div class="ctrl" id="ctrlBar">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
@@ -385,6 +385,15 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
           style="background:var(--accent);border:none;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:.3px">GO</button>
       </div>
       <div id="liveSymInfo" style="font-size:11px;color:var(--dim)"></div>
+      <!-- Legend -->
+      <div style="display:flex;align-items:center;gap:10px;font-size:10px;padding:0 8px">
+        <span style="color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.5px">Legend:</span>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#50d28a"></div><span style="color:#8ab030">+Gamma</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#9010c8"></div><span style="color:#9060d0">−Gamma</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#1e4040"></div><span style="color:var(--dim)">Neutral</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><span>🔥</span><span style="color:var(--king)">👑 King</span></div>
+      </div>
+      <button onclick="toggleColorGuide()" style="font-size:9px;padding:3px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">? Guide</button>
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
         <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Range:</span>
         <select id="liveDteRange" onchange="renderLiveHeatmap()"
