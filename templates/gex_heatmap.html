@@ -161,7 +161,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr.king{outline:none;z-index:5;border:4px solid #ff0000;box-shadow:0 0 16px rgba(255,0,0,.5),inset 0 0 8px rgba(255,0,0,.15);border-radius:4px;margin:2px 0}
 .sr-bg{position:absolute;top:0;bottom:0;transition:opacity .15s}
 .sr:hover .sr-bg{opacity:.85}
-.sr-lbl{width:90px;font-size:15px;font-weight:500;text-align:right;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
+.sr-lbl{width:110px;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:flex-end;gap:4px;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
 .sr.spot .sr-lbl{color:#fff;font-weight:700}
 .sr.spot .sr-lbl::before{content:"◂ ";font-size:12px}
 .sr.king .sr-lbl{color:#ff4444;font-weight:700}
@@ -184,7 +184,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   .strat-card{min-width:100%}
   .panel-sym{font-size:16px}.panel-price{font-size:16px}
   .sr{height:36px}
-  .sr-lbl{font-size:14px;width:85px}
+  .sr-lbl{font-size:14px;width:100px}
   .gval{font-size:14px}
 }
 @media(max-width:480px){
@@ -194,7 +194,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   .ctrl{padding:4px 8px}
   button,select{font-size:10px;padding:4px 8px}
   .legend{display:none}
-  .sr-lbl{width:70px;font-size:12px}
+  .sr-lbl{width:85px;font-size:12px}
   .gval{font-size:12px;min-width:60px}
 }
 
@@ -359,9 +359,6 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 
 <!-- LIVE VIEW TAB -->
 <div class="tab-content active" id="live-tab">
-  <!-- Recs -->
-  <div class="rec-wrap" id="rw"></div>
-
   <!-- King/volume tracking is now inside each panel -->
 
   <!-- Strategy (hidden by default) -->
@@ -370,6 +367,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 
 <!-- HEATMAP TAB -->
 <div class="tab-content" id="heatmap-tab">
+  <!-- Recs above heatmap panels -->
+  <div class="rec-wrap" id="rw"></div>
   <!-- Heatmap -->
   <div class="hm-wrap" id="hc">
     <div class="empty" id="emptyState"><h2>Loading GEX Data...</h2><p>Connecting to server. Data will appear automatically.</p></div>
@@ -970,7 +969,7 @@ function renderPanel(d){
     row.className='sr'+(iS?' spot':'')+(iK?' king':'');
     if(iV) row.style.borderRight='3px solid var(--cyan)';
 
-    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${fp(s.strike)}${chgTag}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
   });
@@ -1128,7 +1127,7 @@ let liveMode=false, liveData=null, liveSym='SPX', liveExp='ALL', liveFetchInt=nu
 function toggleLiveView(){
   liveMode=!liveMode;
   const btn=document.getElementById('liveBtn');
-  const heatmapEls=['rw','sw','hc','sb'];
+  const heatmapEls=['sw','hc','sb'];
   const liveEl=document.getElementById('gexLive');
   const legendEl=document.querySelector('.legend');
   const legendDetail=document.getElementById('legend-detail');
