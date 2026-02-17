@@ -368,6 +368,9 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 </div>
 
 
+<!-- Strategy wrap: shown above whichever tab is active -->
+<div class="strat-wrap" id="sw"></div>
+
 <!-- LIVE VIEW TAB -->
 <div class="tab-content active" id="live-tab" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
   <!-- GEX Live Heatmap (shown directly in this tab) -->
@@ -390,14 +393,14 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
         <select id="liveDteRange" onchange="renderLiveHeatmap()"
           style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
           <option value="45">0-45 DTE</option>
-          <option value="7">0-7 DTE</option>
+          <option value="7" selected>0-7 DTE</option>
           <option value="21">0-21 DTE</option>
         </select>
         <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Strikes:</span>
         <select id="liveStrikeRange" onchange="renderLiveHeatmap()"
           style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
           <option value="40">±40</option>
-          <option value="20">±20</option>
+          <option value="20" selected>±20</option>
           <option value="60">±60</option>
           <option value="0">All</option>
         </select>
