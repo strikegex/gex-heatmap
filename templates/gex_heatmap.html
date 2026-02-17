@@ -256,10 +256,10 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 /* ── GEX Live Heatmap ── */
 .lhm-table{border-collapse:collapse;font-size:12px;width:100%}
 .lhm-header-row th{position:sticky;top:0;z-index:20;background:var(--panel);padding:6px 4px;font-size:10px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;min-width:90px}
-.lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:44px;max-width:44px;font-size:8px}
-.lhm-row td{padding:3px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.03);min-width:90px;cursor:default;transition:filter .1s}
+.lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:44px;max-width:44px;font-size:8px;text-align:center}
+.lhm-row td{padding:4px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);min-width:90px;cursor:default;transition:filter .1s}
 .lhm-row td:hover{filter:brightness(1.4)}
-.lhm-row td.strike-col{position:sticky;left:0;z-index:10;background:var(--bg);font-size:10px;font-weight:600;color:var(--dim);border-right:1px solid var(--border);text-align:right;padding-right:6px;min-width:44px;max-width:44px}
+.lhm-row td.strike-col{position:sticky;left:0;z-index:10;background:var(--bg);font-size:10px;font-weight:600;color:var(--dim);border-right:1px solid var(--border);text-align:center;padding:0 2px;min-width:44px;max-width:44px}
 .lhm-row.is-spot td.strike-col{color:#fff;background:rgba(255,255,255,.07)}
 .lhm-row.is-king td.strike-col{color:var(--king)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
@@ -1219,27 +1219,55 @@ async function fetchLiveData(){
 
 // ── Color scale: negative=purple, zero=black, positive=green ──
 function gexColor(v, mx){
-  if(mx===0) return 'rgba(0,0,0,0)';
-  const t = Math.max(-1, Math.min(1, v/mx));  // -1..1
-  if(t>=0){
-    // black → green
-    const g = Math.round(t * 200);
-    const r = Math.round(t * 83);  // slight yellow tint at extremes
-    return `rgb(${r},${g},${Math.round(t*20)})`;
+  if(mx===0) return '#0a0e0a';
+  const t = Math.max(-1, Math.min(1, v/mx));  // -1..1 normalized
+
+  // Color stops matching reference heatmap (like matplotlib RdYlGn / custom)
+  // Positive: dark(0) → teal(0.25) → green(0.5) → lime(0.75) → yellow(1.0)
+  // Negative: dark(0) → dark-purple(0.25) → purple(0.5) → violet(0.75) → magenta-purple(1.0)
+
+  function lerp(a, b, t){ return Math.round(a + (b-a)*t); }
+  function colorAt(stops, t){
+    // stops: array of [r,g,b], t: 0..1
+    const n = stops.length - 1;
+    const i = Math.min(n-1, Math.floor(t * n));
+    const f = t * n - i;
+    return [lerp(stops[i][0],stops[i+1][0],f),
+            lerp(stops[i][1],stops[i+1][1],f),
+            lerp(stops[i][2],stops[i+1][2],f)];
+  }
+
+  if(t >= 0){
+    // dark → teal-green → bright green → yellow-green (matching reference)
+    const posStops = [
+      [8, 14, 8],       // 0.0 near-black dark green base
+      [4, 80, 60],      // 0.25 dark teal
+      [20, 150, 80],    // 0.5  medium green
+      [90, 200, 40],    // 0.75 lime green
+      [200, 240, 10],   // 1.0  yellow-green (max)
+    ];
+    const [r,g,b] = colorAt(posStops, t);
+    return `rgb(${r},${g},${b})`;
   } else {
-    // black → purple
-    const a = -t; // 0..1
-    const r = Math.round(a * 120);
-    const b = Math.round(a * 180);
-    const g2 = Math.round(a * 20);
-    return `rgb(${r},${g2},${b})`;
+    // dark → dark blue-purple → purple → bright purple (matching reference)
+    const negStops = [
+      [8, 8, 14],       // 0.0 near-black dark base
+      [40, 10, 80],     // 0.25 dark purple
+      [100, 10, 150],   // 0.5  medium purple
+      [150, 10, 200],   // 0.75 bright purple
+      [190, 20, 220],   // 1.0  max purple/violet
+    ];
+    const [r,g,b] = colorAt(negStops, -t);
+    return `rgb(${r},${g},${b})`;
   }
 }
 
 function textColor(v, mx){
-  if(mx===0) return 'var(--dim)';
+  if(mx===0) return 'rgba(255,255,255,.4)';
   const intensity = Math.abs(v)/mx;
-  return intensity > 0.35 ? '#fff' : 'rgba(255,255,255,.55)';
+  if(intensity < 0.08) return 'rgba(255,255,255,.3)';
+  if(intensity < 0.25) return 'rgba(255,255,255,.6)';
+  return '#fff';
 }
 
 function fmtGex(v){
@@ -1355,7 +1383,7 @@ function renderLiveHeatmap(){
     filteredExps.forEach(exp => {
       const v = lookup[exp][strike];
       if(v === undefined || v === 0){
-        html += `<td style="background:#0a0a0a;color:rgba(255,255,255,.15)">–</td>`;
+        html += `<td style="background:#080e08;color:rgba(255,255,255,.18)">–</td>`;
       } else {
         const bg = gexColor(v, globalMax);
         const fg = textColor(v, globalMax);
