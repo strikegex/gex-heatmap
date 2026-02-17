@@ -254,12 +254,12 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 @media(max-width:900px){.live-oi-col,.live-vol-col,.live-oi,.live-vol{display:none}#liveSidebar{display:none}}
 
 /* ── GEX Live Heatmap ── */
-.lhm-table{border-collapse:collapse;font-size:11px;width:100%}
-.lhm-header-row th{position:sticky;top:0;z-index:20;background:var(--panel);padding:6px 4px;font-size:9px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;min-width:90px}
-.lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:64px;max-width:64px}
-.lhm-row td{padding:2px 4px;text-align:center;font-size:10px;font-weight:500;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.03);min-width:90px;cursor:default;transition:filter .1s}
+.lhm-table{border-collapse:collapse;font-size:12px;width:100%}
+.lhm-header-row th{position:sticky;top:0;z-index:20;background:var(--panel);padding:6px 4px;font-size:10px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;min-width:90px}
+.lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:44px;max-width:44px;font-size:8px}
+.lhm-row td{padding:3px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.03);min-width:90px;cursor:default;transition:filter .1s}
 .lhm-row td:hover{filter:brightness(1.4)}
-.lhm-row td.strike-col{position:sticky;left:0;z-index:10;background:var(--bg);font-size:10px;font-weight:600;color:var(--dim);border-right:1px solid var(--border);text-align:right;padding-right:8px;min-width:64px;max-width:64px}
+.lhm-row td.strike-col{position:sticky;left:0;z-index:10;background:var(--bg);font-size:10px;font-weight:600;color:var(--dim);border-right:1px solid var(--border);text-align:right;padding-right:6px;min-width:44px;max-width:44px}
 .lhm-row.is-spot td.strike-col{color:#fff;background:rgba(255,255,255,.07)}
 .lhm-row.is-king td.strike-col{color:var(--king)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
@@ -320,7 +320,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="tab active" onclick="switchTab('live')">🔴 Live View</div>
   <div class="tab" onclick="switchTab('heatmap')">🔥 Heatmap</div>
 </div>
-<div class="ctrl">
+<div class="ctrl" id="ctrlBar">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
   <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy</button></div>
   <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px;opacity:0.5">IWM: OFF</button></div>
@@ -329,7 +329,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
   </div>
 </div>
-<div class="legend">
+<div class="legend" id="legendBar">
   <span class="legend-t">Legend:</span>
   <div class="legend-i"><div class="lsw y"></div><span style="color:var(--yellow)">+Gamma</span></div>
   <div class="legend-i"><div class="lsw p"></div><span style="color:var(--purple)">−Gamma</span></div>
@@ -447,13 +447,21 @@ function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const ctrlBar = document.getElementById('ctrlBar');
+  const legendBar = document.getElementById('legendBar');
+  const swBar = document.getElementById('sw');
   if (tab === 'live') {
     document.getElementById('live-tab').classList.add('active');
-    // Fetch/render live heatmap when switching to this tab
+    if(ctrlBar) ctrlBar.style.display = 'none';
+    if(legendBar) legendBar.style.display = 'none';
+    if(swBar) swBar.style.display = 'none';
     if(!liveData) fetchLiveData();
     else renderLiveHeatmap();
   } else if (tab === 'heatmap') {
     document.getElementById('heatmap-tab').classList.add('active');
+    if(ctrlBar) ctrlBar.style.display = '';
+    if(legendBar) legendBar.style.display = '';
+    // sw visibility controlled by toggleStrats
   }
 }
 
@@ -469,8 +477,10 @@ function doLogin(){
         sessionStorage.setItem('gex_auth','1');
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
-        startServerFetch();
-        fetchLiveData();
+        startServerFetch(); fetchLiveData();
+        // Default to live tab — hide heatmap controls
+        const cb2=document.getElementById('ctrlBar');const lb2=document.getElementById('legendBar');
+        if(cb2)cb2.style.display='none'; if(lb2)lb2.style.display='none';
       }else{err.textContent=d.error||'Invalid credentials';err.style.display='block'}
     }).catch(()=>{
       // Fallback for local/file mode
@@ -1159,7 +1169,12 @@ updateMarketSession();
 setInterval(updateMarketSession, 60000);
 if (window.location.protocol !== 'file:') {
   // Only auto-fetch if already authenticated (session restored)
-  if(sessionStorage.getItem('gex_auth')==='1'){ startServerFetch(); fetchLiveData(); }
+  if(sessionStorage.getItem('gex_auth')==='1'){
+  startServerFetch(); fetchLiveData();
+  // Start on live tab — hide heatmap-only controls
+  const cb=document.getElementById('ctrlBar');const lb=document.getElementById('legendBar');
+  if(cb)cb.style.display='none'; if(lb)lb.style.display='none';
+}
 } else {
   document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
 }
