@@ -253,6 +253,17 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .kl-nm{flex:1;color:var(--text)}.kl-pr{font-weight:600;color:var(--bright);margin-right:6px}.kl-pct{font-size:10px;font-weight:600}
 @media(max-width:900px){.live-oi-col,.live-vol-col,.live-oi,.live-vol{display:none}#liveSidebar{display:none}}
 
+/* ── GEX Live Heatmap ── */
+.lhm-table{border-collapse:collapse;font-size:11px;width:100%}
+.lhm-header-row th{position:sticky;top:0;z-index:20;background:var(--panel);padding:6px 4px;font-size:9px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;min-width:90px}
+.lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:64px;max-width:64px}
+.lhm-row td{padding:2px 4px;text-align:center;font-size:10px;font-weight:500;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.03);min-width:90px;cursor:default;transition:filter .1s}
+.lhm-row td:hover{filter:brightness(1.4)}
+.lhm-row td.strike-col{position:sticky;left:0;z-index:10;background:var(--bg);font-size:10px;font-weight:600;color:var(--dim);border-right:1px solid var(--border);text-align:right;padding-right:8px;min-width:64px;max-width:64px}
+.lhm-row.is-spot td.strike-col{color:#fff;background:rgba(255,255,255,.07)}
+.lhm-row.is-king td.strike-col{color:var(--king)}
+.lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
+
 /* ═══ LOGIN OVERLAY ═══ */
 .login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
 .login-overlay.hidden{display:none}
@@ -378,29 +389,41 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 <!-- Tooltip -->
 <div class="tip" id="tip"><div class="tip-t" id="tt"></div><div id="tb"></div></div>
 
-<!-- ═══ GEX LIVE VIEW (hidden by default, shown on toggle) ═══ -->
+<!-- ═══ GEX LIVE HEATMAP VIEW ═══ -->
 <div id="gexLive" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-  <!-- Expiry tabs -->
-  <div style="display:flex;align-items:center;padding:6px 16px;border-bottom:1px solid var(--border);background:var(--panel);gap:4px;overflow-x:auto;flex-shrink:0">
-    <div id="liveSymTabs" style="display:flex;gap:4px;margin-right:12px"></div>
-    <div style="width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0"></div>
-    <div id="liveExpTabs" style="display:flex;gap:4px;overflow-x:auto"></div>
-  </div>
-  <!-- Main area: chart + sidebar -->
-  <div style="flex:1;display:flex;overflow:hidden">
-    <!-- Chart -->
-    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-      <div style="display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);background:var(--card);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0">
-        <div style="width:60px;text-align:center">STRIKE</div>
-        <div style="flex:1;text-align:center;font-weight:600">NET GEX</div>
-        <div style="width:70px;text-align:center" class="live-oi-col">Net OI</div>
-        <div style="width:70px;text-align:center" class="live-vol-col">Net Vol</div>
-        <div style="width:60px;text-align:center">STRIKE</div>
-      </div>
-      <div id="liveRows" style="flex:1;overflow-y:auto"></div>
+  <!-- Toolbar: symbol search + current symbol display -->
+  <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--panel);gap:10px;flex-shrink:0;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 10px">
+      <span style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Symbol</span>
+      <input id="liveSymInput" type="text" value="SPX" maxlength="6"
+        style="background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);width:70px;text-transform:uppercase"
+        placeholder="SPX" oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')setLiveSym(this.value.trim())">
+      <button onclick="setLiveSym(document.getElementById('liveSymInput').value.trim())"
+        style="background:var(--accent);border:none;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:.3px">GO</button>
     </div>
-    <!-- Sidebar -->
-    <div id="liveSidebar" style="width:310px;border-left:1px solid var(--border);background:var(--panel);overflow-y:auto;flex-shrink:0"></div>
+    <div id="liveSymInfo" style="font-size:11px;color:var(--dim)"></div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Range:</span>
+      <select id="liveDteRange" onchange="renderLiveHeatmap()"
+        style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
+        <option value="45">0-45 DTE</option>
+        <option value="7">0-7 DTE</option>
+        <option value="21">0-21 DTE</option>
+      </select>
+      <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Strikes:</span>
+      <select id="liveStrikeRange" onchange="renderLiveHeatmap()"
+        style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
+        <option value="40">±40</option>
+        <option value="20">±20</option>
+        <option value="60">±60</option>
+        <option value="0">All</option>
+      </select>
+    </div>
+  </div>
+  <!-- Heatmap grid -->
+  <div style="flex:1;overflow:auto;padding:0">
+    <div id="liveHeatmapWrap" style="min-width:max-content;padding-bottom:24px"></div>
   </div>
 </div>
 
@@ -1142,9 +1165,18 @@ if (window.location.protocol !== 'file:') {
 }
 
 // ═══════════════════════════════════════════════════════════
-// ═══ GEX LIVE VIEW (inline, toggled within the page)  ═══
+// ═══ GEX LIVE HEATMAP VIEW
 // ═══════════════════════════════════════════════════════════
-let liveMode=false, liveData=null, liveSym='SPX', liveExp='ALL', liveFetchInt=null;
+let liveMode=false, liveData=null, liveSym='SPX', liveFetchInt=null;
+
+function setLiveSym(sym){
+  if(!sym) return;
+  liveSym=sym.toUpperCase();
+  document.getElementById('liveSymInput').value=liveSym;
+  // If we already have data for this symbol show it, else fetch
+  if(liveData&&liveData[liveSym]){ renderLiveHeatmap(); return; }
+  fetchLiveData();
+}
 
 function toggleLiveView(){
   liveMode=!liveMode;
@@ -1175,169 +1207,177 @@ async function fetchLiveData(){
     const r=await fetch('/api/gex-all');
     if(r.ok){
       const d=await r.json();
-      if(d&&Object.keys(d).length){liveData=d;renderLiveSymTabs();renderLive()}
+      if(d&&Object.keys(d).length){
+        liveData=d;
+        // Auto-select first symbol if current not in data
+        if(!liveData[liveSym]){
+          liveSym=Object.keys(liveData)[0];
+          document.getElementById('liveSymInput').value=liveSym;
+        }
+        renderLiveHeatmap();
+      }
     }
   }catch(e){console.error('GEX-ALL fetch:',e)}
 }
 
-function renderLiveSymTabs(){
-  const c=document.getElementById('liveSymTabs');c.innerHTML='';
-  if(!liveData)return;
-  Object.keys(liveData).forEach(sym=>{
-    const t=document.createElement('div');t.className='live-sym-tab'+(sym===liveSym?' active':'');
-    t.textContent=sym;t.onclick=()=>{liveSym=sym;liveExp='ALL';renderLiveSymTabs();renderLive()};
-    c.appendChild(t);
-  });
+// ── Color scale: negative=purple, zero=black, positive=green ──
+function gexColor(v, mx){
+  if(mx===0) return 'rgba(0,0,0,0)';
+  const t = Math.max(-1, Math.min(1, v/mx));  // -1..1
+  if(t>=0){
+    // black → green
+    const g = Math.round(t * 200);
+    const r = Math.round(t * 83);  // slight yellow tint at extremes
+    return `rgb(${r},${g},${Math.round(t*20)})`;
+  } else {
+    // black → purple
+    const a = -t; // 0..1
+    const r = Math.round(a * 120);
+    const b = Math.round(a * 180);
+    const g2 = Math.round(a * 20);
+    return `rgb(${r},${g2},${b})`;
+  }
 }
 
-function renderLive(){
-  if(!liveData||!liveData[liveSym])return;
-  const sd=liveData[liveSym];
-  const spot=sd.spot;
-  const expData=sd.exp_data||{};
+function textColor(v, mx){
+  if(mx===0) return 'var(--dim)';
+  const intensity = Math.abs(v)/mx;
+  return intensity > 0.35 ? '#fff' : 'rgba(255,255,255,.55)';
+}
 
-  // Expiry tabs
-  const et=document.getElementById('liveExpTabs');et.innerHTML='';
-  const exps=sd.expirations||[];
+function fmtGex(v){
+  const a=Math.abs(v);
+  if(a===0) return '$0';
+  if(a>=1e6) return (v>=0?'':'-')+'$'+(a/1e6).toFixed(1)+'M';
+  if(a>=1e3) return (v>=0?'':'-')+'$'+(a/1e3).toFixed(1)+'K';
+  return (v>=0?'':'-')+'$'+a.toFixed(0);
+}
 
-  // "ALL" tab first
-  const allTab=document.createElement('div');allTab.className='live-exp-tab'+(liveExp==='ALL'?' active':'');
-  allTab.innerHTML='Σ ALL';allTab.onclick=()=>{liveExp='ALL';renderLive()};
-  et.appendChild(allTab);
+function renderLiveHeatmap(){
+  if(!liveData) return;
+  const sd = liveData[liveSym];
+  const wrap = document.getElementById('liveHeatmapWrap');
+  const infoEl = document.getElementById('liveSymInfo');
 
-  exps.forEach(exp=>{
-    const ed=expData[exp];if(!ed)return;
-    const t=document.createElement('div');t.className='live-exp-tab'+(liveExp===exp?' active':'');
-    const dte=ed.dte;
-    let label=exp.slice(5); // MM-DD
-    if(dte===0)label=`<span style="color:var(--king)">${label}</span> <span style="font-size:8px;opacity:.7">0DTE</span>`;
-    else if(dte<=7)label+=` <span style="font-size:8px;opacity:.7">${dte}d</span>`;
-    else label+=` <span style="font-size:8px;opacity:.7">${dte}d</span>`;
-    t.innerHTML=label;
-    t.onclick=()=>{liveExp=exp;renderLive()};
-    et.appendChild(t);
-  });
-
-  // Get the selected expiry data
-  const selected=expData[liveExp];
-  if(!selected||!selected.strikes||!selected.strikes.length){
-    document.getElementById('liveRows').innerHTML='<div style="padding:40px;text-align:center;color:var(--dim)">No data for this expiration</div>';
+  if(!sd){
+    wrap.innerHTML=`<div style="padding:40px;text-align:center;color:var(--dim)">No data for ${liveSym}. Try fetching first.</div>`;
     return;
   }
 
-  const strikes=selected.strikes;
-  const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-  const byStrike=[...strikes].sort((a,b)=>b.strike-a.strike);
-  const nearSpot=strikes.reduce((b,s)=>Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b);
-  const kingStrike=selected.king_strike||0;
-  const gwStrike=selected.gamma_wall||0;
-  const pwStrike=selected.put_wall||0;
-  const totalGex=selected.total_net_gex||0;
+  const spot = sd.spot;
+  const expData = sd.exp_data || {};
+  const expirations = (sd.expirations || []);
 
-  // Render rows
-  const wrap=document.getElementById('liveRows');wrap.innerHTML='';
-  let spotRow=null;
-
-  byStrike.forEach(s=>{
-    const row=document.createElement('div');row.className='live-row';
-    const isSpot=s.strike===nearSpot.strike;
-    const isKing=Math.abs(s.strike-kingStrike)<0.01;
-    if(isSpot){row.classList.add('is-spot');spotRow=row}
-    if(isKing)row.classList.add('is-king');
-
-    const pct=Math.max(1,Math.abs(s.net_gex)/mx*45);
-    const isPos=s.net_gex>=0;
-    const netOI=(s.call_oi||0)-(s.put_oi||0);
-    const netVol=(s.call_volume||0)-(s.put_volume||0);
-
-    let tags='';
-    if(isSpot)tags+=`<span class="live-tag spot-tag">● $${spot.toFixed(1)}</span>`;
-    if(isKing)tags+=`<span class="live-tag king-tag" style="left:auto;right:0">👑 KING</span>`;
-    if(Math.abs(s.strike-gwStrike)<0.01&&!isKing)tags+=`<span class="live-tag gw-tag" style="left:auto;right:0">CR</span>`;
-    if(Math.abs(s.strike-pwStrike)<0.01)tags+=`<span class="live-tag pw-tag">PS</span>`;
-
-    const fk=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(1)+'M':a>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)};
-
-    row.innerHTML=
-      `<div class="live-str">${s.strike.toFixed(s.strike%1?1:0)}</div>`+
-      `<div class="live-bar-area"><div class="live-bar-center"></div><div class="live-bar ${isPos?'pos':'neg'}" style="width:${pct}%"></div>${tags}</div>`+
-      `<div class="live-oi" style="color:${netOI>=0?'var(--green)':'var(--red)'}">${fk(netOI)}</div>`+
-      `<div class="live-vol" style="color:${netVol>=0?'var(--green)':'var(--red)'}">${fk(netVol)}</div>`+
-      `<div class="live-str">${s.strike.toFixed(s.strike%1?1:0)}</div>`;
-
-    wrap.appendChild(row);
+  // Filter expirations by DTE range
+  const maxDte = parseInt(document.getElementById('liveDteRange').value) || 45;
+  const filteredExps = expirations.filter(exp => {
+    const ed = expData[exp];
+    return ed && ed.dte >= 0 && ed.dte <= maxDte;
   });
 
-  if(spotRow)setTimeout(()=>spotRow.scrollIntoView({block:'center'}),50);
+  if(!filteredExps.length){
+    wrap.innerHTML=`<div style="padding:40px;text-align:center;color:var(--dim)">No expirations in range.</div>`;
+    return;
+  }
 
-  // Sidebar
-  renderLiveSidebar(sd,selected,strikes,mx);
+  // Gather all unique strikes across all expirations
+  const strikeSet = new Set();
+  filteredExps.forEach(exp => {
+    const ed = expData[exp];
+    if(ed && ed.strikes) ed.strikes.forEach(s => strikeSet.add(s.strike));
+  });
+
+  let allStrikes = Array.from(strikeSet).sort((a,b) => b-a); // descending
+
+  // Filter strikes around spot
+  const strikeN = parseInt(document.getElementById('liveStrikeRange').value) || 0;
+  if(strikeN > 0){
+    // Find spot index
+    let nearest = allStrikes.reduce((b,s) => Math.abs(s-spot) < Math.abs(b-spot) ? s : b, allStrikes[0]);
+    const idx = allStrikes.indexOf(nearest);
+    const lo = Math.max(0, idx - strikeN);
+    const hi = Math.min(allStrikes.length-1, idx + strikeN);
+    allStrikes = allStrikes.slice(lo, hi+1);
+  }
+
+  // Build lookup: exp -> strike -> gex value
+  const lookup = {};
+  filteredExps.forEach(exp => {
+    lookup[exp] = {};
+    const ed = expData[exp];
+    if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = s.net_gex; });
+  });
+
+  // Global max for color scaling
+  let globalMax = 1;
+  filteredExps.forEach(exp => {
+    const ed = expData[exp];
+    if(ed && ed.strikes) ed.strikes.forEach(s => { if(Math.abs(s.net_gex) > globalMax) globalMax = Math.abs(s.net_gex); });
+  });
+
+  // Find spot row
+  const nearSpot = allStrikes.reduce((b,s) => Math.abs(s-spot) < Math.abs(b-spot) ? s : b, allStrikes[0]);
+
+  // King strike (from ALL or first exp)
+  const allED = expData['ALL'] || expData[filteredExps[0]];
+  const kingStrike = allED ? (allED.king_strike || 0) : 0;
+
+  // Update info bar
+  infoEl.textContent = `${liveSym} · Spot $${spot.toFixed(2)} · ${filteredExps.length} expirations · ${allStrikes.length} strikes`;
+  if(sd.timestamp){
+    const ts=new Date(sd.timestamp);
+    const ageMin=Math.round((Date.now()-ts.getTime())/60000);
+    if(ageMin>30) infoEl.textContent += ` · Last: ${ts.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
+  }
+
+  // Build table HTML
+  let html = `<table class="lhm-table"><thead><tr class="lhm-header-row">`;
+  html += `<th class="strike-col">Strike</th>`;
+  filteredExps.forEach(exp => {
+    const ed = expData[exp];
+    const dte = ed ? ed.dte : '';
+    let dateLabel = exp === 'ALL' ? 'Σ ALL' : exp.replace(/^\d{4}-/, ''); // YYYY-MM-DD → MM-DD
+    let dteLabel = (typeof dte === 'number') ? `<br><span style="font-size:8px;font-weight:400;opacity:.6">${dte===0?'0DTE':dte+'d'}</span>` : '';
+    const isZero = dte===0;
+    html += `<th style="${isZero?'color:var(--king)':''}">${dateLabel}${dteLabel}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+
+  allStrikes.forEach((strike, i) => {
+    const isSpot = strike === nearSpot;
+    const isKing = Math.abs(strike - kingStrike) < 0.01;
+    const isAboveSpot = i > 0 && allStrikes[i-1] > spot && strike <= spot; // draw line above spot row
+    let rowCls = 'lhm-row';
+    if(isSpot) rowCls += ' is-spot';
+    if(isKing) rowCls += ' is-king';
+    if(isAboveSpot) rowCls += ' lhm-spot-line';
+
+    html += `<tr class="${rowCls}">`;
+    html += `<td class="strike-col">${strike % 1 ? strike.toFixed(1) : strike.toFixed(0)}</td>`;
+
+    filteredExps.forEach(exp => {
+      const v = lookup[exp][strike];
+      if(v === undefined || v === 0){
+        html += `<td style="background:#0a0a0a;color:rgba(255,255,255,.15)">–</td>`;
+      } else {
+        const bg = gexColor(v, globalMax);
+        const fg = textColor(v, globalMax);
+        html += `<td style="background:${bg};color:${fg}" title="${strike} ${exp}: ${fmtGex(v)}">${fmtGex(v)}</td>`;
+      }
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+
+  // Scroll near-spot row into view
+  setTimeout(() => {
+    const rows = wrap.querySelectorAll('tr.is-spot');
+    if(rows.length) rows[0].scrollIntoView({block:'center', behavior:'smooth'});
+  }, 80);
 }
 
-function renderLiveSidebar(sd,selected,strikes,mx){
-  const sb=document.getElementById('liveSidebar');
-  const spot=sd.spot;
-  const totalGex=selected.total_net_gex||0;
-  const kingStrike=selected.king_strike||0;
-  const gwStrike=selected.gamma_wall||0;
-  const pwStrike=selected.put_wall||0;
-
-  const fk=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(2)+'M':a>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)};
-  const fp2=v=>v.toFixed(2);
-  const pctF=(val)=>{const p=((val-spot)/spot*100);return{cls:p>=0?'color:var(--green)':'color:var(--red)',txt:(p>=0?'+':'')+p.toFixed(2)+'%'}};
-
-  const isPos=totalGex>mx*.05,isNeg=totalGex<-mx*.05;
-  const gpCls=isPos?'var(--green)':isNeg?'var(--red)':'var(--yellow)';
-  const gpSign=isPos?'+':isNeg?'−':'○';
-  const gpLabel=isPos?'Positive Gamma':isNeg?'Negative Gamma':'Neutral';
-  const aboveKing=spot>kingStrike;
-  let gpDesc=isPos?(aboveKing?'Above CR → mean revert / squeeze':'Below king → drift toward king')
-    :isNeg?(aboveKing?'Above king → momentum continuation':'Below CR → dealer amplification')
-    :'Mixed positioning — reduce size';
-
-  const tCV=strikes.reduce((s,x)=>s+(x.call_volume||0),0);
-  const tPV=strikes.reduce((s,x)=>s+(x.put_volume||0),0);
-  const tCO=strikes.reduce((s,x)=>s+(x.call_oi||0),0);
-  const tPO=strikes.reduce((s,x)=>s+(x.put_oi||0),0);
-  const totVol=tCV+tPV||1;
-  const totOI=tCO+tPO||1;
-
-  sb.innerHTML=
-    `<div class="sb-sec">`+
-      `<div style="display:flex;gap:8px;margin-bottom:4px">`+
-        `<div style="flex:1;text-align:center"><div class="sb-ttl">GEX</div><div style="font-size:16px;font-weight:700;color:${totalGex>=0?'var(--green)':'var(--red)'}">${fk(totalGex)}</div></div>`+
-        `<div style="flex:1;text-align:center"><div class="sb-ttl">Expiry</div><div style="font-size:13px;font-weight:600;color:var(--bright)">${selected.expiration==='ALL'?'Σ All':selected.expiration.slice(5)}${selected.dte>=0?' <span style="font-size:10px;color:var(--dim)">'+selected.dte+'d</span>':''}</div></div>`+
-      `</div>`+
-    `</div>`+
-    `<div class="sb-sec">`+
-      `<div class="sb-ttl">Gamma Profile</div>`+
-      `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">`+
-        `<div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;background:${isPos?'rgba(0,200,83,.15)':isNeg?'rgba(255,23,68,.15)':'rgba(255,214,0,.15)'};color:${gpCls}">${gpSign}</div>`+
-        `<div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:${gpCls}">${gpLabel}</div>`+
-      `</div>`+
-      `<div style="font-size:10px;color:var(--dim)">${gpDesc}</div>`+
-    `</div>`+
-    `<div class="sb-sec">`+
-      `<div class="sb-ttl">Key GEX Levels</div>`+
-      `<div class="kl-row"><div class="kl-dot" style="background:var(--king)"></div><div class="kl-nm">PS</div><div class="kl-pr">${pwStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(pwStrike).cls}">${pctF(pwStrike).txt}</div></div>`+
-      `<div class="kl-row"><div class="kl-dot" style="background:var(--dim)"></div><div class="kl-nm">${liveSym}</div><div class="kl-pr">$${fp2(spot)}</div><div class="kl-pct" style="color:var(--dim)">spot</div></div>`+
-      `<div class="kl-row"><div class="kl-dot" style="background:var(--green)"></div><div class="kl-nm">CR</div><div class="kl-pr">${gwStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(gwStrike).cls}">${pctF(gwStrike).txt}</div></div>`+
-      `<div class="kl-row"><div class="kl-dot" style="background:#ff5252"></div><div class="kl-nm">👑 King</div><div class="kl-pr">${kingStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(kingStrike).cls}">${pctF(kingStrike).txt}</div></div>`+
-    `</div>`+
-    `<div class="sb-sec">`+
-      `<div class="sb-ttl">Chain Activity</div>`+
-      `<div style="text-align:center;font-size:13px;font-weight:700;color:${tPV>tCV?'var(--red)':'var(--green)'};margin-bottom:4px">${tPV>tCV?'PUTS':'CALLS'}</div>`+
-      `<div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin:6px 0"><div style="height:100%;width:${Math.round(tPV/totVol*100)}%;background:var(--red);border-radius:3px"></div></div>`+
-      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--red)">PUTS</span><span style="color:var(--dim)">BALANCED</span><span style="color:var(--green)">CALLS</span></div>`+
-    `</div>`+
-    `<div class="sb-sec">`+
-      `<div class="sb-ttl">Volume</div>`+
-      `<div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:flex;margin:6px 0"><div style="height:100%;width:${Math.round(tCV/totVol*100)}%;background:var(--green)"></div><div style="height:100%;width:${Math.round(tPV/totVol*100)}%;background:var(--red)"></div></div>`+
-      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--green)">${fk(tCV)} Call</span><span style="color:var(--red)">${fk(tPV)} Put</span></div>`+
-      `<div class="sb-ttl" style="margin-top:8px">Open Interest</div>`+
-      `<div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:flex;margin:6px 0"><div style="height:100%;width:${Math.round(tCO/totOI*100)}%;background:var(--green)"></div><div style="height:100%;width:${Math.round(tPO/totOI*100)}%;background:var(--red)"></div></div>`+
-      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--green)">${fk(tCO)} Call</span><span style="color:var(--red)">${fk(tPO)} Put</span></div>`+
-    `</div>`;
-}
 </script>
 </body></html>
