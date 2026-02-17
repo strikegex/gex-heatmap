@@ -43,8 +43,8 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 .tab{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--dim);padding:12px 20px;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;position:relative;top:2px}
 .tab:hover{color:var(--text);background:rgba(255,255,255,.02)}
 .tab.active{color:var(--bright);border-bottom-color:var(--accent);background:rgba(99,102,241,.08)}
-.tab-content{display:none}
-.tab-content.active{display:flex;flex-direction:column;flex:1;min-height:0}
+.tab-content{display:none!important}
+.tab-content.active{display:flex!important;flex-direction:column;flex:1;min-height:0}
 
 /* ═══ CONTROLS — single compact row ═══ */
 .ctrl{display:flex;gap:8px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
@@ -368,11 +368,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 </div>
 
 
-<!-- Strategy wrap: shown above whichever tab is active -->
-<div class="strat-wrap" id="sw"></div>
-
 <!-- LIVE VIEW TAB -->
-<div class="tab-content active" id="live-tab" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+<div class="tab-content active" id="live-tab">
   <!-- GEX Live Heatmap (shown directly in this tab) -->
   <!-- ═══ GEX LIVE HEATMAP VIEW ═══ -->
   <div id="gexLive" style="display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0">
@@ -415,6 +412,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 
 <!-- HEATMAP TAB -->
 <div class="tab-content" id="heatmap-tab">
+  <!-- Strategy (heatmap only) -->
+  <div class="strat-wrap" id="sw"></div>
   <!-- Recs above heatmap panels -->
   <div class="rec-wrap" id="rw"></div>
   <!-- Heatmap -->
@@ -449,19 +448,16 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   const ctrlBar = document.getElementById('ctrlBar');
   const legendBar = document.getElementById('legendBar');
-  const swBar = document.getElementById('sw');
   if (tab === 'live') {
     document.getElementById('live-tab').classList.add('active');
     if(ctrlBar) ctrlBar.style.display = 'none';
     if(legendBar) legendBar.style.display = 'none';
-    if(swBar) swBar.style.display = 'none';
     if(!liveData) fetchLiveData();
     else renderLiveHeatmap();
   } else if (tab === 'heatmap') {
     document.getElementById('heatmap-tab').classList.add('active');
     if(ctrlBar) ctrlBar.style.display = '';
     if(legendBar) legendBar.style.display = '';
-    // sw visibility controlled by toggleStrats
   }
 }
 
@@ -1272,10 +1268,12 @@ function textColor(v, mx){
 
 function fmtGex(v){
   const a=Math.abs(v);
+  const s=v>=0?'':'-';
   if(a===0) return '$0';
-  if(a>=1e6) return (v>=0?'':'-')+'$'+(a/1e6).toFixed(1)+'M';
-  if(a>=1e3) return (v>=0?'':'-')+'$'+(a/1e3).toFixed(1)+'K';
-  return (v>=0?'':'-')+'$'+a.toFixed(0);
+  if(a>=1e9) return s+'$'+(a/1e9).toFixed(2)+'B';
+  if(a>=1e6) return s+'$'+(a/1e6).toFixed(1)+'M';
+  if(a>=1e3) return s+'$'+(a/1e3).toFixed(1)+'K';
+  return s+'$'+a.toFixed(0);
 }
 
 function renderLiveHeatmap(){
