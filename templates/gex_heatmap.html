@@ -439,6 +439,7 @@ function doLogin(){
         sessionStorage.setItem('gex_auth','1');
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
+        startServerFetch();
       }else{err.textContent='Invalid credentials';err.style.display='block'}
     });
 }
@@ -1064,7 +1065,7 @@ function readAndRender(f){const r=new FileReader();r.onload=ev=>{try{const nd=JS
 function startAutoReload(){if(autoInterval)clearInterval(autoInterval);autoInterval=setInterval(()=>{if(autoFile)readAndRender(autoFile)},30000);document.getElementById('st').textContent='Auto-reload ON (30s)'}
 function stopAutoReload(){if(autoInterval){clearInterval(autoInterval);autoInterval=null}document.getElementById('st').textContent='Auto-reload OFF'}
 
-// ═══ SERVER AUTO-FETCH (every 5 min) ═══
+// ═══ SERVER AUTO-FETCH (every 60s, matching backend) ═══
 let serverInterval = null;
 let fetchAttempts = 0;
 async function fetchFromServer() {
@@ -1072,7 +1073,8 @@ async function fetchFromServer() {
     const resp = await fetch('/api/gex');
     if (!resp.ok) {
       fetchAttempts++;
-      if (fetchAttempts <= 2) document.getElementById('st').textContent = `Server error (${resp.status}) — retrying...`;
+      document.getElementById('st').textContent = `Server error (${resp.status}) — retrying...`;
+      if(fetchAttempts<=3)setTimeout(fetchFromServer,5000); // fast retry
       return;
     }
     const newD = await resp.json();
@@ -1089,7 +1091,6 @@ async function fetchFromServer() {
           });
         }
         document.getElementById('sd').className = 'status-dot live';
-        // Show last updated time
         try{
           const ts=new Date(newTs);
           const ago=Math.round((Date.now()-ts.getTime())/60000);
@@ -1103,21 +1104,21 @@ async function fetchFromServer() {
     } else {
       fetchAttempts++;
       if (!D) {
-        document.getElementById('st').textContent = 'Waiting for data (market may be closed)';
+        document.getElementById('st').textContent = 'Waiting for data...';
+        if(fetchAttempts<=5)setTimeout(fetchFromServer,3000); // fast retry until data arrives
       }
-      // Never clear existing data — keep showing last fetch
     }
   } catch(e) {
     fetchAttempts++;
-    if (fetchAttempts <= 2) document.getElementById('st').textContent = 'Connecting to server...';
-    else document.getElementById('st').textContent = 'Server unreachable — retrying...';
+    document.getElementById('st').textContent = fetchAttempts<=3?'Connecting to server...':'Server unreachable — retrying...';
+    if(fetchAttempts<=5)setTimeout(fetchFromServer,5000); // fast retry on network error
   }
 }
 
 function startServerFetch() {
   fetchFromServer();
   if (serverInterval) clearInterval(serverInterval);
-  serverInterval = setInterval(fetchFromServer, 5 * 60 * 1000);
+  serverInterval = setInterval(fetchFromServer, 60 * 1000);
   document.getElementById('st').textContent = 'Connecting...';
 }
 
