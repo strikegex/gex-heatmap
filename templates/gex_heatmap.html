@@ -355,7 +355,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     </div>
   </div>
 </div>
-<div class="sample-banner" id="sb">⚠ Sample data</div>
+
 
 <!-- LIVE VIEW TAB -->
 <div class="tab-content active" id="live-tab">
@@ -1088,48 +1088,10 @@ function toggleColorGuide(){
 // ═══ AUTO-RELOAD ═══
 let autoFile=null,autoInterval=null;
 function loadFile(e){const f=e.target.files[0];if(!f)return;autoFile=f;readAndRender(f);startAutoReload()}
-function readAndRender(f){const r=new FileReader();r.onload=ev=>{try{const nd=JSON.parse(ev.target.result);const nt=nd[Object.keys(nd)[0]]?.timestamp;const ot=D?.[Object.keys(D||{})[0]]?.timestamp;if(nt!==ot||!D){D=nd;document.getElementById('sb').classList.remove('vis');document.getElementById('sd').className='status-dot live';rerender()}}catch(e){console.error(e)}};r.readAsText(f)}
+function readAndRender(f){const r=new FileReader();r.onload=ev=>{try{const nd=JSON.parse(ev.target.result);const nt=nd[Object.keys(nd)[0]]?.timestamp;const ot=D?.[Object.keys(D||{})[0]]?.timestamp;if(nt!==ot||!D){D=nd;document.getElementById('sd').className='status-dot live';rerender()}}catch(e){console.error(e)}};r.readAsText(f)}
 function startAutoReload(){if(autoInterval)clearInterval(autoInterval);autoInterval=setInterval(()=>{if(autoFile)readAndRender(autoFile)},30000);document.getElementById('st').textContent='Auto-reload ON (30s)'}
 function stopAutoReload(){if(autoInterval){clearInterval(autoInterval);autoInterval=null}document.getElementById('st').textContent='Auto-reload OFF'}
 
-function loadSample(){
-  const sp={SPX:6974,SPY:695,QQQ:615,IWM:267};D={};
-  Object.keys(sp).forEach(sym=>{
-    const spot=sp[sym]*(1+(Math.random()-.5)*.002),step=sym==='SPX'?5:1;
-    const strikes=[],center=Math.round(spot/step)*step;
-    const scale=sym==='SPX'?1:sym==='SPY'?8:sym==='QQQ'?1.5:0.4;
-    for(let i=-25;i<=25;i++){
-      const strike=center+i*step;let net;const decay=Math.exp(-Math.abs(i)*.07);
-      if(Math.abs(i)<=1)net=(Math.random()-.4)*15e3*scale;
-      else if(i>0){net=12e3*(.05+Math.random()*.5)*decay*scale;if(strike%(step*10)===0)net*=2.5+Math.random()*2}
-      else{net=-12e3*(.05+Math.random()*.5)*decay*scale;if(strike%(step*10)===0)net*=2.5+Math.random()*2}
-      if(i===-1)net=35e3*scale;
-      const cg=Math.abs(net)*(.5+Math.random()*.4),pg=Math.abs(net)*(.3+Math.random()*.3);
-      strikes.push({strike,net_gex:net,call_gex:net>0?cg:cg*.3,put_gex:net<0?-pg:-pg*.2,total_gamma:cg+pg,call_oi:~~(Math.random()*12e3+100),put_oi:~~(Math.random()*12e3+100),call_volume:~~(Math.random()*5e3),put_volume:~~(Math.random()*5e3),call_bid:Math.max(0,(20-Math.abs(i)*1.2)+Math.random()*2)*1,call_ask:Math.max(.05,(20-Math.abs(i)*1.1)+Math.random()*3)*1,put_bid:Math.max(0,(15-Math.abs(i)*1)+Math.random()*2)*1,put_ask:Math.max(.05,(15-Math.abs(i)*.9)+Math.random()*3)*1,call_iv:18+Math.random()*8,put_iv:20+Math.random()*10,call_delta:Math.max(0,.5-i*.03),put_delta:Math.min(0,-.5-i*.03)})
-    }
-    strikes.sort((a,b)=>a.strike-b.strike);
-    const tot=strikes.reduce((s,x)=>s+x.net_gex,0);
-    // Simulate king history — king moved from +10pts to current
-    const origKing=center+step*2;
-    const kingNow=strikes.reduce((b,s)=>s.total_gamma>b.total_gamma?s:b);
-    const now=new Date();
-    D[sym]={symbol:sym,spot,timestamp:now.toISOString(),expirations:['2026-02-11'],total_net_gex:tot,
-      gamma_wall:strikes.reduce((b,s)=>s.net_gex>b.net_gex?s:b).strike,
-      put_wall:strikes.reduce((b,s)=>s.net_gex<b.net_gex?s:b).strike,
-      king_node:kingNow.strike,strikes,
-      king_history:[
-        {strike:origKing,timestamp:new Date(now-2*3600000).toISOString(),spot:spot+5},
-        {strike:origKing-step,timestamp:new Date(now-3600000).toISOString(),spot:spot+2},
-        {strike:kingNow.strike,timestamp:now.toISOString(),spot},
-      ],
-      volume_surges:[
-        {strike:center-step*3,prev_vol:800,curr_vol:2400,delta:1600,pct:200,call_vol:1200,put_vol:1200},
-        {strike:center+step*5,prev_vol:500,curr_vol:1100,delta:600,pct:120,call_vol:900,put_vol:200},
-      ],
-    }
-  });
-  document.getElementById('sb').classList.add('vis');document.getElementById('sd').className='status-dot live';document.getElementById('st').textContent='Sample (0DTE)';rerender()
-}
 // ═══ SERVER AUTO-FETCH (every 5 min) ═══
 let serverInterval = null;
 let fetchAttempts = 0;
@@ -1154,8 +1116,14 @@ async function fetchFromServer() {
             (newD[sym].strikes||[]).forEach(s=>{openingGEX[sym][s.strike]=s.net_gex});
           });
         }
-        document.getElementById('sb').classList.remove('vis');
         document.getElementById('sd').className = 'status-dot live';
+        // Show last updated time
+        try{
+          const ts=new Date(newTs);
+          const ago=Math.round((Date.now()-ts.getTime())/60000);
+          if(ago>60) document.getElementById('st').textContent = `Last: ${ts.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
+          else document.getElementById('st').textContent = `Live · ${ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+        }catch(e){}
         rerender();
         startCountdown();
         fetchAttempts = 0;
@@ -1164,22 +1132,13 @@ async function fetchFromServer() {
       fetchAttempts++;
       if (!D) {
         document.getElementById('st').textContent = 'Waiting for data (market may be closed)';
-        document.getElementById('hc').innerHTML = '<div class="empty"><h2>Waiting for Market Data</h2><p>The fetcher is running but market may be closed. Data will appear automatically when available.</p></div>';
-      } else {
-        // We have cached data — keep showing it, just update status
-        const ts = D[Object.keys(D)[0]]?.timestamp;
-        document.getElementById('st').textContent = ts ? 'Last data: ' + new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Using cached data';
-        document.getElementById('sd').className = 'status-dot';
       }
+      // Never clear existing data — keep showing last fetch
     }
   } catch(e) {
     fetchAttempts++;
     if (fetchAttempts <= 2) document.getElementById('st').textContent = 'Connecting to server...';
-    else if (D) {
-      const ts = D[Object.keys(D)[0]]?.timestamp;
-      document.getElementById('st').textContent = ts ? 'Last data: ' + new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'Using cached data';
-    }
-    else document.getElementById('st').textContent = 'Server unreachable';
+    else document.getElementById('st').textContent = 'Server unreachable — retrying...';
   }
 }
 
