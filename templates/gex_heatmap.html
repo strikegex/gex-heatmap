@@ -44,7 +44,7 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 .tab:hover{color:var(--text);background:rgba(255,255,255,.02)}
 .tab.active{color:var(--bright);border-bottom-color:var(--accent);background:rgba(99,102,241,.08)}
 .tab-content{display:none}
-.tab-content.active{display:block}
+.tab-content.active{display:flex;flex-direction:column;flex:1;min-height:0}
 
 /* ═══ CONTROLS — single compact row ═══ */
 .ctrl{display:flex;gap:8px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
@@ -369,11 +369,45 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 
 
 <!-- LIVE VIEW TAB -->
-<div class="tab-content active" id="live-tab">
-  <!-- King/volume tracking is now inside each panel -->
-
-  <!-- Strategy (hidden by default) -->
-  <div class="strat-wrap" id="sw"></div>
+<div class="tab-content active" id="live-tab" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+  <!-- GEX Live Heatmap (shown directly in this tab) -->
+  <!-- ═══ GEX LIVE HEATMAP VIEW ═══ -->
+  <div id="gexLive" style="display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0">
+    <!-- Toolbar: symbol search + current symbol display -->
+    <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--panel);gap:10px;flex-shrink:0;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 10px">
+        <span style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Symbol</span>
+        <input id="liveSymInput" type="text" value="SPX" maxlength="6"
+          style="background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);width:70px;text-transform:uppercase"
+          placeholder="SPX" oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter')setLiveSym(this.value.trim())">
+        <button onclick="setLiveSym(document.getElementById('liveSymInput').value.trim())"
+          style="background:var(--accent);border:none;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:.3px">GO</button>
+      </div>
+      <div id="liveSymInfo" style="font-size:11px;color:var(--dim)"></div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Range:</span>
+        <select id="liveDteRange" onchange="renderLiveHeatmap()"
+          style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
+          <option value="45">0-45 DTE</option>
+          <option value="7">0-7 DTE</option>
+          <option value="21">0-21 DTE</option>
+        </select>
+        <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Strikes:</span>
+        <select id="liveStrikeRange" onchange="renderLiveHeatmap()"
+          style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
+          <option value="40">±40</option>
+          <option value="20">±20</option>
+          <option value="60">±60</option>
+          <option value="0">All</option>
+        </select>
+      </div>
+    </div>
+    <!-- Heatmap grid -->
+    <div style="flex:1;overflow:auto;padding:0">
+      <div id="liveHeatmapWrap" style="min-width:max-content;padding-bottom:24px"></div>
+    </div>
+  </div>
 </div>
 
 <!-- HEATMAP TAB -->
@@ -388,44 +422,6 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 
 <!-- Tooltip -->
 <div class="tip" id="tip"><div class="tip-t" id="tt"></div><div id="tb"></div></div>
-
-<!-- ═══ GEX LIVE HEATMAP VIEW ═══ -->
-<div id="gexLive" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-  <!-- Toolbar: symbol search + current symbol display -->
-  <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--panel);gap:10px;flex-shrink:0;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 10px">
-      <span style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Symbol</span>
-      <input id="liveSymInput" type="text" value="SPX" maxlength="6"
-        style="background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);width:70px;text-transform:uppercase"
-        placeholder="SPX" oninput="this.value=this.value.toUpperCase()"
-        onkeydown="if(event.key==='Enter')setLiveSym(this.value.trim())">
-      <button onclick="setLiveSym(document.getElementById('liveSymInput').value.trim())"
-        style="background:var(--accent);border:none;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:.3px">GO</button>
-    </div>
-    <div id="liveSymInfo" style="font-size:11px;color:var(--dim)"></div>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-      <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Range:</span>
-      <select id="liveDteRange" onchange="renderLiveHeatmap()"
-        style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
-        <option value="45">0-45 DTE</option>
-        <option value="7">0-7 DTE</option>
-        <option value="21">0-21 DTE</option>
-      </select>
-      <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Strikes:</span>
-      <select id="liveStrikeRange" onchange="renderLiveHeatmap()"
-        style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
-        <option value="40">±40</option>
-        <option value="20">±20</option>
-        <option value="60">±60</option>
-        <option value="0">All</option>
-      </select>
-    </div>
-  </div>
-  <!-- Heatmap grid -->
-  <div style="flex:1;overflow:auto;padding:0">
-    <div id="liveHeatmapWrap" style="min-width:max-content;padding-bottom:24px"></div>
-  </div>
-</div>
 
 <!-- Footer -->
 <div class="footer">
@@ -445,14 +441,14 @@ let openingGEX={}; // Store first fetch of day as baseline
 
 // ═══ TAB SWITCHING ═══
 function switchTab(tab) {
-  // Update tab buttons
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
-
-  // Update tab content
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   if (tab === 'live') {
     document.getElementById('live-tab').classList.add('active');
+    // Fetch/render live heatmap when switching to this tab
+    if(!liveData) fetchLiveData();
+    else renderLiveHeatmap();
   } else if (tab === 'heatmap') {
     document.getElementById('heatmap-tab').classList.add('active');
   }
@@ -471,6 +467,7 @@ function doLogin(){
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
         startServerFetch();
+        fetchLiveData();
       }else{err.textContent=d.error||'Invalid credentials';err.style.display='block'}
     }).catch(()=>{
       // Fallback for local/file mode
@@ -1159,7 +1156,7 @@ updateMarketSession();
 setInterval(updateMarketSession, 60000);
 if (window.location.protocol !== 'file:') {
   // Only auto-fetch if already authenticated (session restored)
-  if(sessionStorage.getItem('gex_auth')==='1') startServerFetch();
+  if(sessionStorage.getItem('gex_auth')==='1'){ startServerFetch(); fetchLiveData(); }
 } else {
   document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
 }
@@ -1179,27 +1176,9 @@ function setLiveSym(sym){
 }
 
 function toggleLiveView(){
-  liveMode=!liveMode;
-  const btn=document.getElementById('liveBtn');
-  const heatmapEls=['sw','hc','sb'];
-  const liveEl=document.getElementById('gexLive');
-  const legendEl=document.querySelector('.legend');
-  const legendDetail=document.getElementById('legend-detail');
-  if(liveMode){
-    btn.style.background='var(--accent)';btn.style.color='#fff';btn.textContent='🔥 Heatmap';
-    heatmapEls.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});
-    if(legendEl)legendEl.style.display='none';
-    if(legendDetail)legendDetail.style.display='none';
-    liveEl.style.display='flex';
-    fetchLiveData();
-    if(!liveFetchInt)liveFetchInt=setInterval(fetchLiveData,60*1000);
-  }else{
-    btn.style.background='rgba(83,109,254,.12)';btn.style.color='var(--accent)';btn.textContent='📊 GEX Live';
-    heatmapEls.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=''});
-    if(legendEl)legendEl.style.display='';
-    liveEl.style.display='none';
-    if(liveFetchInt){clearInterval(liveFetchInt);liveFetchInt=null}
-  }
+  // Legacy - Live View is now always visible in the Live tab
+  if(!liveData) fetchLiveData();
+  else renderLiveHeatmap();
 }
 
 async function fetchLiveData(){
