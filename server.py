@@ -85,13 +85,15 @@ def fetch_loop():
 
     client = None
     history = gf.load_history()
+    first_run = True  # attempt one fetch regardless of market hours on startup
 
     while True:
         try:
-            if not is_market_hours():
+            if not is_market_hours() and not first_run:
                 print(f"  💤 Market closed — skipping fetch ({datetime.now().strftime('%H:%M:%S')} UTC)")
                 time.sleep(FETCH_INTERVAL)
                 continue
+            first_run = False
 
             if client is None:
                 from schwab import auth
