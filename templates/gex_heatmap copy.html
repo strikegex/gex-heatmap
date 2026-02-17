@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<!-- saved from url=(0048)file:///Users/kevin/Downloads/gex_heatmap_2.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEX Heatmap + Strategy</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08080d;--panel:#0e0e16;--card:#12121c;--border:#1a1a2a;--text:#b8b8cc;--dim:#555570;--bright:#e8e8f4;--yellow:#fbbf24;--purple:#a855f7;--green:#22c55e;--king:#ef4444;--accent:#6366f1;--red:#ef4444;--cyan:#06b6d4}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;font-size:14px}
+
+/* ═══ TOP BAR ═══ */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:2px solid var(--border);background:var(--panel);flex-wrap:wrap;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;color:var(--bright);letter-spacing:-1px;white-space:nowrap;display:flex;align-items:center;gap:12px}
+.topbar-title::before{content:'📊';font-size:36px;filter:drop-shadow(0 0 8px rgba(99,102,241,.4))}
+.topbar-title em{font-style:normal;color:var(--accent);background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.market-session{font-size:10px;padding:4px 10px;border-radius:4px;font-weight:600;white-space:nowrap}
+.market-session.pre{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.market-session.open{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.market-session.power{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.market-session.closed{background:rgba(85,85,112,.1);color:var(--dim);border:1px solid rgba(85,85,112,.2)}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.topbar-right .disc{font-size:7px;color:var(--dim);opacity:.6;max-width:160px;line-height:1.3}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0}
+.status-dot.live{background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.status-text{font-size:12px;color:var(--dim);white-space:nowrap}
+.countdown{font-size:11px;color:var(--accent);font-weight:600;white-space:nowrap}
+
+/* ═══ ACCOUNT MENU ═══ */
+.acct-menu{position:relative}
+.acct-btn{font-size:11px;padding:5px 10px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;cursor:pointer}
+.acct-btn:hover{background:var(--border);color:var(--bright)}
+.acct-drop{display:none;position:absolute;top:100%;right:0;margin-top:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;min-width:160px;padding:6px 0;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.acct-drop.vis{display:block}
+.acct-drop a{display:block;padding:8px 14px;font-size:12px;color:var(--text);text-decoration:none;transition:background .1s}
+.acct-drop a:hover{background:rgba(255,255,255,.05);color:var(--bright)}
+
+/* ═══ TABS ═══ */
+.tabs{display:flex;gap:0;padding:0 24px;border-bottom:2px solid var(--border);background:var(--panel)}
+.tab{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--dim);padding:12px 20px;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;position:relative;top:2px}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.02)}
+.tab.active{color:var(--bright);border-bottom-color:var(--accent);background:rgba(99,102,241,.08)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ═══ CONTROLS — single compact row ═══ */
+.ctrl{display:flex;gap:8px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
+button,select{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--card);color:var(--text);border:1px solid var(--border);padding:6px 12px;border-radius:4px;cursor:pointer;transition:all .15s}
+button:hover{background:var(--border);color:var(--bright);border-color:var(--accent)}
+.ctrl label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.ctrl-g{display:flex;align-items:center;gap:6px}
+
+/* ═══ LEGEND — compact inline ═══ */
+.legend{display:flex;gap:12px;padding:4px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
+.legend-t{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.legend-i{display:flex;align-items:center;gap:4px;font-size:9px}
+.lsw{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+.lsw.y{background:#8ab030}.lsw.p{background:#4040b0}.lsw.g{background:#1e4040}
+.lsw.k{background:var(--king);position:relative}
+.lsw.k::after{content:"👑";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px}
+.legend-d{color:var(--dim);font-size:8px}
+
+.sample-banner{display:none;padding:5px 24px;background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.15);font-size:10px;color:var(--yellow);text-align:center}
+.sample-banner.vis{display:block}
+
+/* ─── Rec Cards ─── */
+.rec-wrap{display:none;padding:12px 24px;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.rec-wrap.vis{display:flex}
+.rec{flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden}
+.rec::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.rec.range::before{background:var(--yellow)}.rec.trend::before{background:var(--purple)}.rec.chop::before{background:var(--green)}.rec.bullish::before{background:var(--green)}.rec.bearish::before{background:var(--red)}
+.rec-sym{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--bright);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rec-badge{font-size:11px;padding:3px 10px;border-radius:3px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.rec-badge.range{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.rec-badge.trend{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.rec-badge.chop{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.rec-badge.bullish{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.rec-badge.bearish{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.rec-sum{font-size:15px;color:var(--bright);font-weight:600;line-height:1.5;margin-bottom:8px}
+.rec-gamma{font-size:13px;padding:10px 12px;border-radius:4px;margin-bottom:10px;line-height:1.7}
+.rec-gamma.neg{background:rgba(168,85,247,.06);border-left:3px solid var(--purple);color:var(--text)}
+.rec-gamma.pos{background:rgba(251,191,36,.06);border-left:3px solid var(--yellow);color:var(--text)}
+.rec-gamma.neu{background:rgba(34,197,94,.06);border-left:3px solid var(--green);color:var(--text)}
+.rec-gamma strong{color:var(--bright)}.rec-gamma .hl{color:var(--king);font-weight:600}
+.rec-act{font-size:9px;padding:2px 0;display:flex;align-items:baseline;gap:5px;color:var(--text)}
+.rec-lvls{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.rec-lv{font-size:10px;padding:3px 8px;border-radius:3px}
+.rec-lv.king{background:rgba(245,158,11,.12);color:var(--king);border:1px solid rgba(245,158,11,.25)}
+.rec-lv.rng{background:rgba(99,102,241,.08);color:var(--accent);border:1px solid rgba(99,102,241,.2)}
+.rec-lv.gp{background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+
+/* ═══ STRATEGY PANEL ═══ */
+.strat-wrap{display:none;padding:12px 24px;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.strat-wrap.vis{display:flex}
+.strat-card{flex:1;min-width:280px;max-width:480px;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.strat-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.strat-sym{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--bright)}
+.strat-type-badge{font-size:9px;padding:3px 8px;border-radius:4px;font-weight:600;letter-spacing:.3px}
+.strat-type-badge.ic{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25)}
+.strat-type-badge.cs{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.25)}
+.strat-type-badge.bf{background:rgba(6,182,212,.12);color:var(--cyan);border:1px solid rgba(6,182,212,.25)}
+.strat-type-badge.ds{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.strat-type-badge.dg{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+
+.strat-body{padding:14px 16px}
+.strat-name{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--bright);margin-bottom:4px}
+.strat-rationale{font-size:10px;color:var(--text);line-height:1.7;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.02);border-radius:4px;border-left:3px solid var(--king)}
+
+.strat-legs{margin-bottom:12px}
+.strat-legs-title{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.strat-leg{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,.02);border-radius:4px;margin-bottom:3px;font-size:11px}
+.strat-leg-action{font-weight:700;width:40px;text-align:center;padding:2px 0;border-radius:3px;font-size:9px}
+.strat-leg-action.sell{background:rgba(239,68,68,.15);color:var(--red)}
+.strat-leg-action.buy{background:rgba(34,197,94,.15);color:var(--green)}
+.strat-leg-type{color:var(--dim);width:40px}
+.strat-leg-strike{color:var(--bright);font-weight:600;flex:1}
+.strat-leg-tag{font-size:8px;padding:1px 5px;border-radius:3px}
+.strat-leg-tag.gw{background:rgba(251,191,36,.1);color:var(--yellow)}
+.strat-leg-tag.pw{background:rgba(168,85,247,.1);color:var(--purple)}
+.strat-leg-tag.kn{background:rgba(245,158,11,.1);color:var(--king)}
+.strat-leg-tag.sp{background:rgba(255,255,255,.06);color:var(--dim)}
+
+.strat-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.strat-detail{background:rgba(255,255,255,.02);border-radius:4px;padding:8px 10px;text-align:center}
+.strat-detail-label{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.strat-detail-val{font-size:13px;font-weight:600;color:var(--bright)}
+.strat-detail-val.profit{color:var(--green)}
+.strat-detail-val.risk{color:var(--red)}
+
+.strat-why{font-size:9px;color:var(--dim);line-height:1.6;padding:8px 10px;background:rgba(255,255,255,.015);border-radius:4px;border:1px solid var(--border)}
+.strat-why strong{color:var(--text)}
+.strat-why em{font-style:normal;color:var(--yellow)}
+.strat-why .pur{color:var(--purple)}
+
+.strat-disclaimer{font-size:8px;color:var(--dim);padding:8px 16px;border-top:1px solid var(--border);text-align:center;letter-spacing:.3px}
+
+/* ─── Heatmap ─── */
+.hm-wrap{display:flex;gap:2px;padding:12px 20px;overflow-x:auto;min-height:calc(100vh - 300px)}
+.panel{flex:1;min-width:320px;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
+.panel-sym{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--bright)}
+.panel-price{font-size:20px;font-weight:600;color:var(--bright)}
+.panel-sub{display:flex;justify-content:space-between;padding:4px 14px 5px;border-bottom:1px solid var(--border)}
+.panel-sub span{font-size:13px;color:var(--dim)}
+.panel-gp{padding:6px 14px;border-bottom:1px solid var(--border);font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.gbadge{padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600}
+.gbadge.pos{background:rgba(251,191,36,.12);color:var(--yellow)}.gbadge.neg{background:rgba(168,85,247,.12);color:var(--purple)}.gbadge.neu{background:rgba(34,197,94,.12);color:var(--green)}
+.klevels{display:flex;gap:6px;padding:6px 14px 7px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.klev{font-size:11px;padding:4px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
+.klev.gw{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.klev.pw{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.klev.kn{background:rgba(239,68,68,.12);color:var(--king);border:1px solid rgba(239,68,68,.2)}
+.klev.sp{background:rgba(255,255,255,.05);color:var(--bright);border:1px solid rgba(255,255,255,.1)}
+.strikes{flex:1;overflow-y:auto;padding:2px 0}
+.sr{display:flex;align-items:center;height:36px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
+.sr:hover{outline:1px solid rgba(255,255,255,.15);z-index:1}
+.sr.spot{outline:2px solid #fff;z-index:2}
+.sr.king{outline:none;z-index:5;border:4px solid #ff0000;box-shadow:0 0 16px rgba(255,0,0,.5),inset 0 0 8px rgba(255,0,0,.15);border-radius:4px;margin:2px 0}
+.sr-bg{position:absolute;top:0;bottom:0;transition:opacity .15s}
+.sr:hover .sr-bg{opacity:.85}
+.sr-lbl{width:90px;font-size:15px;font-weight:500;text-align:right;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
+.sr.spot .sr-lbl{color:#fff;font-weight:700}
+.sr.spot .sr-lbl::before{content:"◂ ";font-size:12px}
+.sr.king .sr-lbl{color:#ff4444;font-weight:700}
+.sr.king .sr-lbl::before{content:"👑 ";font-size:13px}
+.gbar-c{flex:1;height:100%;position:relative;display:flex;align-items:center;justify-content:flex-end}
+.gval{font-size:15px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:80px;text-align:right}
+
+/* ═══ MOBILE RESPONSIVE ═══ */
+@media(max-width:900px){
+  .topbar{padding:8px 12px}
+  .topbar-title{font-size:14px}
+  .topbar-right .disc{display:none}
+  .ctrl{padding:6px 12px;gap:6px}
+  .legend{padding:3px 12px;gap:8px}
+  .hm-wrap{flex-direction:column;padding:8px 8px;gap:8px;overflow-x:hidden}
+  .panel{min-width:100%;max-width:100%}
+  .rec-wrap{padding:8px 8px;gap:6px}
+  .rec{min-width:100%}
+  .strat-wrap{padding:8px 8px}
+  .strat-card{min-width:100%}
+  .panel-sym{font-size:16px}.panel-price{font-size:16px}
+  .sr{height:36px}
+  .sr-lbl{font-size:14px;width:85px}
+  .gval{font-size:14px}
+}
+@media(max-width:480px){
+  .topbar-left{gap:6px}
+  .topbar-title{font-size:12px}
+  .market-session{font-size:8px;padding:3px 6px}
+  .ctrl{padding:4px 8px}
+  button,select{font-size:10px;padding:4px 8px}
+  .legend{display:none}
+  .sr-lbl{width:70px;font-size:12px}
+  .gval{font-size:12px;min-width:60px}
+}
+
+.tip{display:none;position:fixed;background:#14142a;border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:11px;z-index:100;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:240px}
+.tip.vis{display:block}
+.tip-t{font-weight:600;color:var(--bright);margin-bottom:6px;font-size:12px}
+.tip-r{display:flex;justify-content:space-between;gap:14px;margin:3px 0}
+.tip-l{color:var(--dim)}.tip-v{color:var(--bright);font-weight:500}
+.tip-d{border-top:1px solid var(--border);margin:5px 0}
+.tip-b{font-size:9px;color:var(--dim);margin-top:4px;line-height:1.5}
+.tip-b strong{color:var(--text)}
+
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:50vh;gap:12px;text-align:center;padding:40px}
+.empty h2{font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--bright)}
+.empty p{font-size:12px;color:var(--dim);max-width:440px;line-height:1.7}
+.empty code{background:var(--card);padding:2px 6px;border-radius:3px;font-size:10px;color:var(--accent)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ═══ FOOTER ═══ */
+.footer{padding:16px 24px;border-top:1px solid var(--border);background:var(--panel);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.footer-left{display:flex;align-items:center;gap:16px}
+.footer-social a{color:var(--dim);text-decoration:none;font-size:12px;display:inline-flex;align-items:center;gap:4px;transition:color .15s}
+.footer-social a:hover{color:var(--bright)}
+.footer-copy{font-size:10px;color:var(--dim)}
+
+/* ═══ GEX LIVE INLINE VIEW ═══ */
+.live-row{display:flex;align-items:center;height:24px;position:relative;border-bottom:1px solid rgba(255,255,255,.02)}
+.live-row:hover{background:rgba(255,255,255,.03)}
+.live-row.is-spot{background:rgba(255,255,255,.06)}
+.live-row.is-king{background:rgba(239,68,68,.04)}
+.live-str{width:60px;font-size:11px;text-align:center;color:var(--dim);flex-shrink:0;z-index:2;position:relative}
+.live-row.is-spot .live-str{color:#fff;font-weight:700}
+.live-row.is-king .live-str{color:var(--king);font-weight:700}
+.live-bar-area{flex:1;height:100%;position:relative;overflow:hidden}
+.live-bar-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08);z-index:1}
+.live-bar{position:absolute;top:2px;bottom:2px;z-index:2;border-radius:1px;min-width:1px}
+.live-bar.pos{background:var(--green);right:50%}
+.live-bar.neg{background:var(--red);left:50%}
+.live-oi,.live-vol{width:70px;font-size:9px;text-align:right;padding-right:8px;flex-shrink:0;z-index:2}
+.live-tag{position:absolute;left:0;z-index:10;font-size:8px;font-weight:700;padding:1px 5px;border-radius:0 3px 3px 0;white-space:nowrap}
+.live-tag.spot-tag{background:#fff;color:#000}
+.live-tag.king-tag{background:var(--king);color:#fff}
+.live-tag.gw-tag{background:var(--green);color:#fff}
+.live-tag.pw-tag{background:var(--red);color:#fff}
+.live-exp-tab{padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--dim);background:transparent;transition:all .15s;white-space:nowrap}
+.live-exp-tab:hover{border-color:var(--accent);color:var(--text)}
+.live-exp-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.live-sym-tab{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;color:var(--dim);background:rgba(255,255,255,.03);border:1px solid transparent;transition:all .15s}
+.live-sym-tab:hover{color:var(--text);border-color:var(--border)}
+.live-sym-tab.active{background:rgba(99,102,241,.12);color:var(--accent);border-color:rgba(99,102,241,.3)}
+.sb-sec{padding:12px 14px;border-bottom:1px solid var(--border)}
+.sb-ttl{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kl-row{display:flex;align-items:center;padding:3px 0;font-size:11px}
+.kl-dot{width:7px;height:7px;border-radius:50%;margin-right:7px;flex-shrink:0}
+.kl-nm{flex:1;color:var(--text)}.kl-pr{font-weight:600;color:var(--bright);margin-right:6px}.kl-pct{font-size:10px;font-weight:600}
+@media(max-width:900px){.live-oi-col,.live-vol-col,.live-oi,.live-vol{display:none}#liveSidebar{display:none}}
+
+/* ═══ LOGIN OVERLAY ═══ */
+.login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+.login-overlay.hidden{display:none}
+.login-box{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:40px 36px;width:340px;max-width:90vw;text-align:center}
+.login-box h2{font-family:'Space Grotesk',sans-serif;font-size:20px;color:var(--bright);margin-bottom:6px}
+.login-box h2 em{font-style:normal;color:var(--accent)}
+.login-box p{font-size:11px;color:var(--dim);margin-bottom:24px}
+.login-box input{width:100%;padding:10px 14px;margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--card);color:var(--bright);border:1px solid var(--border);border-radius:6px;outline:none}
+.login-box input:focus{border-color:var(--accent)}
+.login-box .login-btn{width:100%;padding:10px;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;transition:opacity .15s}
+.login-box .login-btn:hover{opacity:.85}
+.login-box .login-err{font-size:11px;color:var(--red);margin-top:8px;display:none}
+</style>
+</head>
+<body>
+<!-- ═══ LOGIN OVERLAY ═══ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2><em>Strike</em>GEX</h2>
+    <p>Restricted access. Enter your credentials.</p>
+    <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="loginErr">Invalid username or password</div>
+  </div>
+</div>
+
+<!-- ═══ APP (hidden until authenticated) ═══ -->
+<div id="appWrap" style="display:none">
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title"><em>Strike</em>GEX</span>
+    <span class="market-session closed" id="mktSession">CLOSED</span>
+  </div>
+  <div class="topbar-right">
+    <span class="disc">Educational only · Not financial advice</span>
+    <span class="countdown" id="countdown"></span>
+    <div class="status-dot" id="sd"></div>
+    <span class="status-text" id="st">Connecting...</span>
+    <div class="acct-menu">
+      <button onclick="document.getElementById('acctDrop').classList.toggle('vis')" class="acct-btn">👤 Account</button>
+      <div class="acct-drop" id="acctDrop">
+        <a href="#" onclick="event.preventDefault()">📊 Dashboard</a>
+        <a href="#" onclick="event.preventDefault()">💳 Billing</a>
+        <a href="#" onclick="event.preventDefault()">⚙️ Settings</a>
+        <a href="#" onclick="event.preventDefault()">📱 API Keys</a>
+        <div style="border-top:1px solid var(--border);margin:4px 0"></div>
+        <a href="#" onclick="event.preventDefault()">🚪 Sign Out</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('live')">🔴 Live View</div>
+  <div class="tab" onclick="switchTab('heatmap')">🔥 Heatmap</div>
+</div>
+<div class="ctrl">
+  <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
+  <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy</button></div>
+  <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px;opacity:0.5">IWM: OFF</button></div>
+  <div class="ctrl-g"><button onclick="toggleColorGuide()" id="cgBtn" style="font-size:9px;padding:3px 8px">? Guide</button></div>
+  <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
+    <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
+  </div>
+</div>
+<div class="legend">
+  <span class="legend-t">Legend:</span>
+  <div class="legend-i"><div class="lsw y"></div><span style="color:var(--yellow)">+Gamma</span></div>
+  <div class="legend-i"><div class="lsw p"></div><span style="color:var(--purple)">−Gamma</span></div>
+  <div class="legend-i"><div class="lsw g"></div><span style="color:var(--dim)">Neutral</span></div>
+  <div class="legend-i"><div class="lsw k"></div><span style="color:var(--king)">👑 King</span></div>
+</div>
+<div id="legend-detail" style="display:none;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--panel);font-size:10px;line-height:1.8">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+    <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:6px;padding:12px 14px">
+      <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:6px">🟡 Yellow — Positive Gamma (+GEX)</div>
+      <div style="color:var(--text)"><strong>What it means:</strong> Dealers are NET SHORT options at this strike.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>How dealers hedge:</strong> They hedge AGAINST the move. If price rises, they sell. If price falls, they buy. This creates <em>mean reversion</em> — price snaps back.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Price is "sticky." Acts as support (below) or resistance (above). Vol dampens. Range-bound.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ✅ SELL premium here. Iron condors, credit spreads, butterflies. Dealers defend your position.</div>
+    </div>
+    <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:6px;padding:12px 14px">
+      <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">🟣 Purple — Negative Gamma (−GEX)</div>
+      <div style="color:var(--text)"><strong>What it means:</strong> Dealers are NET LONG options at this strike.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>How dealers hedge:</strong> They hedge WITH the move. Price rises → they buy more. Falls → they sell more. This creates <em>momentum</em> — moves accelerate.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Price is "slippery." Breakouts carry through. Vol expands. Trending action.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ⚠️ DO NOT sell premium. Dealers amplify against you. Buy debit spreads, ride momentum, or stay away.</div>
+    </div>
+    <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:6px;padding:12px 14px">
+      <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px">🟢 Green — Neutral / Mixed</div>
+      <div style="color:var(--text)"><strong>What it means:</strong> Dealer positioning is roughly balanced. No strong directional bias.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Choppy, indecisive. No strong pull either way. Low conviction zone.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ⚪ Reduce size. Wait for clearer setup. Can flip +/− without warning.</div>
+    </div>
+    <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;padding:12px 14px">
+      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Max Absolute Gamma</div>
+      <div style="color:var(--text)"><strong>What it means:</strong> The strike with the LARGEST absolute gamma exposure. Most dealer hedging activity.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Acts as a <em>price magnet</em>. Spot drifts toward king throughout the day, especially during 0DTE. Think gravity.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> 👑 This is your TARGET. Center butterflies here. King above spot → bullish drift. Below → bearish. At spot → pin, ideal for ICs.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- LIVE VIEW TAB -->
+<div class="tab-content active" id="live-tab">
+  <!-- Recs -->
+  <div class="rec-wrap" id="rw"></div>
+
+  <!-- King/volume tracking is now inside each panel -->
+
+  <!-- Strategy (hidden by default) -->
+  <div class="strat-wrap" id="sw"></div>
+</div>
+
+<!-- HEATMAP TAB -->
+<div class="tab-content" id="heatmap-tab">
+  <!-- Heatmap -->
+  <div class="hm-wrap" id="hc">
+    <div class="empty" id="emptyState"><h2>Loading GEX Data...</h2><p>Connecting to server. Data will appear automatically.</p></div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tip" id="tip"><div class="tip-t" id="tt"></div><div id="tb"></div></div>
+
+<!-- ═══ GEX LIVE VIEW (hidden by default, shown on toggle) ═══ -->
+<div id="gexLive" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+  <!-- Expiry tabs -->
+  <div style="display:flex;align-items:center;padding:6px 16px;border-bottom:1px solid var(--border);background:var(--panel);gap:4px;overflow-x:auto;flex-shrink:0">
+    <div id="liveSymTabs" style="display:flex;gap:4px;margin-right:12px"></div>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0"></div>
+    <div id="liveExpTabs" style="display:flex;gap:4px;overflow-x:auto"></div>
+  </div>
+  <!-- Main area: chart + sidebar -->
+  <div style="flex:1;display:flex;overflow:hidden">
+    <!-- Chart -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);background:var(--card);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0">
+        <div style="width:60px;text-align:center">STRIKE</div>
+        <div style="flex:1;text-align:center;font-weight:600">NET GEX</div>
+        <div style="width:70px;text-align:center" class="live-oi-col">Net OI</div>
+        <div style="width:70px;text-align:center" class="live-vol-col">Net Vol</div>
+        <div style="width:60px;text-align:center">STRIKE</div>
+      </div>
+      <div id="liveRows" style="flex:1;overflow-y:auto"></div>
+    </div>
+    <!-- Sidebar -->
+    <div id="liveSidebar" style="width:310px;border-left:1px solid var(--border);background:var(--panel);overflow-y:auto;flex-shrink:0"></div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-left">
+    <div class="footer-social">
+      <a href="https://x.com" target="_blank" rel="noopener">𝕏 Follow on X</a>
+      <a href="https://discord.gg" target="_blank" rel="noopener" style="margin-left:12px">💬 Discord</a>
+    </div>
+  </div>
+  <span class="footer-copy">© 2025 StrikeGEX — Gamma Exposure Intelligence. All rights reserved.</span>
+</div>
+</div><!-- end appWrap -->
+
+<script>
+let D=null;
+let openingGEX={}; // Store first fetch of day as baseline
+
+// ═══ TAB SWITCHING ═══
+function switchTab(tab) {
+  // Update tab buttons
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  // Update tab content
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  if (tab === 'live') {
+    document.getElementById('live-tab').classList.add('active');
+  } else if (tab === 'heatmap') {
+    document.getElementById('heatmap-tab').classList.add('active');
+  }
+}
+
+// ═══ AUTH SYSTEM ═══
+function doLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginErr');
+  err.style.display='none';
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){
+        sessionStorage.setItem('gex_auth','1');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('appWrap').style.display='';
+        startServerFetch();
+      }else{err.textContent=d.error||'Invalid credentials';err.style.display='block'}
+    }).catch(()=>{
+      // Fallback for local/file mode
+      if(user==='admin'&&pass==='strikegex'){
+        sessionStorage.setItem('gex_auth','1');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('appWrap').style.display='';
+      }else{err.textContent='Invalid credentials';err.style.display='block'}
+    });
+}
+// Enter key submits login
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPass').focus()});
+
+// Check session on load
+if(sessionStorage.getItem('gex_auth')==='1'){
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('appWrap').style.display='';
+}
+
+// ═══ COLOR — solid saturated like reference tool ═══
+function gc(n,m,k){
+  // King keeps underlying GEX color — NO override
+  const r=n/m,a=Math.min(Math.abs(r),1);
+  if(a<.01)return{r:30,g:60,b:55};
+  if(r>0){
+    const t=Math.pow(a,0.5);
+    return{r:Math.round(30+190*t),g:Math.round(80+100*t),b:Math.round(55-35*t)};
+  }
+  const t=Math.pow(a,0.5);
+  return{r:Math.round(25+70*t),g:Math.round(50+10*t),b:Math.round(70+110*t)};
+}
+function tc(n,m,k){
+  if(k)return'#ff4444'; // King text RED
+  const r=n/m,a=Math.abs(r);
+  if(a<.01)return'#556';
+  if(a>.3)return'#fff';
+  return r>0?'#e8e8d0':'#d0d0e8';
+}
+function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
+function bh(c,k){if(k)return'<strong>👑 King</strong> — Max Gamma · Price Magnet';if(c==='positive')return'<strong>+Gamma</strong> — Dealers Short · Mean Reversion';if(c==='negative')return'<strong>−Gamma</strong> — Dealers Long · Momentum';return'<strong>Neutral</strong> — Choppy'}
+function fg(v){const a=Math.abs(v);const s=v<0?'-':'';if(a>=1e9)return s+'$'+(a/1e9).toFixed(1)+'B';if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';if(a>=1e3)return s+'$'+(a/1e3).toFixed(1)+'K';return s+'$'+a.toFixed(0)}
+function fp(p){return p>=1000?p.toFixed(0):p.toFixed(2)}
+
+// ═══ STRATEGY ENGINE — 0DTE Conservative ═══
+// 0DTE IC rules: 5-15Δ shorts, $25-30 wings, stop = total credit per side
+// Conservative 0DTE strike selection: 10Δ shorts, wide wings
+function generateStrategy(d) {
+  const {symbol, spot, strikes, total_net_gex} = d;
+  if (!strikes || !strikes.length) return null;
+
+  const mx = Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
+  const king = strikes.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b);
+  const gw = strikes.reduce((b,s)=>s.net_gex>b.net_gex?s:b);
+  const pw = strikes.reduce((b,s)=>s.net_gex<b.net_gex?s:b);
+  const posAbove = strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.12).sort((a,b)=>a.strike-b.strike);
+  const posBelow = strikes.filter(s=>s.strike<spot&&s.net_gex>mx*.12).sort((a,b)=>b.strike-a.strike);
+  const profile = total_net_gex>mx*.1?'positive':total_net_gex<-mx*.1?'negative':'neutral';
+  const kd = king.strike-spot, kdPct=(kd/spot)*100;
+
+  const sorted = [...strikes].sort((a,b)=>a.strike-b.strike);
+  const step = sorted.length>=2 ? sorted[1].strike-sorted[0].strike : 5;
+  const rnd = v => Math.round(v/step)*step;
+
+  // 0DTE WINGS: Tight for 0DTE - $15 SPX, $3 ETFs
+  const WING = symbol==='SPX' ? 15 : 3;
+  // Spread width for debit spreads: $5 SPX, $2 ETF
+  const SPREAD_WIDTH = symbol==='SPX' ? 5 : 2;
+
+  // 0DTE DELTA: 10Δ shorts (conservative, 5-15Δ range)
+  // SPX 10Δ ~= 30-40pts OTM, ETFs 10Δ ~= 0.6-0.8% OTM
+  function getDeltaStrike(direction, targetDelta) {
+    const spxPts = {0.05:50, 0.08:38, 0.10:30, 0.12:25, 0.15:20};
+    const etfPct = {0.05:0.010, 0.08:0.007, 0.10:0.006, 0.12:0.005, 0.15:0.004};
+    let offset = symbol==='SPX' ? (spxPts[targetDelta]||30) : spot*(etfPct[targetDelta]||0.006);
+    return rnd(direction==='call' ? spot+offset : spot-offset);
+  }
+
+  function gexValidate(strike, direction) {
+    const nearest = sorted.reduce((b,s)=>Math.abs(s.strike-strike)<Math.abs(b.strike-strike)?s:b);
+    const gexR = nearest.net_gex/mx;
+    let tag='',tagCls='sp',conf='STANDARD',adj=strike;
+    if(gexR>.15){tag='+Gamma Wall';tagCls='gw';conf='HIGH';adj=nearest.strike}
+    else if(gexR<-.15){
+      const cands=direction==='put'?sorted.filter(s=>s.strike<spot&&s.net_gex>mx*.10).sort((a,b)=>b.strike-a.strike):sorted.filter(s=>s.strike>spot&&s.net_gex>mx*.10).sort((a,b)=>a.strike-b.strike);
+      if(cands.length){adj=cands[0].strike;tag='+Gamma (shifted)';tagCls='gw';conf='HIGH (adj)'}
+      else{tag='⚠ −Gamma';tagCls='pw';conf='LOW'}
+    }else{tag=`~${(Math.abs(strike-spot)/spot*100).toFixed(2)}% OTM`}
+    if(Math.abs(adj-king.strike)<=step){tag+=' (👑 King)';tagCls='kn'}
+    return{strike:adj,tag,tagCls,conf,orig:strike};
+  }
+
+  function estPrem(strike, type) {
+    const s=sorted.reduce((b,c)=>Math.abs(c.strike-strike)<Math.abs(b.strike-strike)?c:b);
+    const bid=type==='call'?(s.call_bid||0):(s.put_bid||0);
+    const ask=type==='call'?(s.call_ask||0):(s.put_ask||0);
+    if(bid>0&&ask>0)return `$${bid.toFixed(2)}–$${ask.toFixed(2)}`;
+    if(ask>0)return `~$${ask.toFixed(2)}`;
+    return null;
+  }
+
+  function driftComm() {
+    const dist=Math.abs(kd).toFixed(1),dir=kd>0?'above':'below',pct=Math.abs(kdPct).toFixed(2);
+    let c=`<strong>👑 King ${fp(king.strike)}</strong> — ${dist}pts ${dir} (${pct}%). `;
+    if(Math.abs(kdPct)<.05) c+=`ON the king. <em>Strong pin.</em> Ideal for ICs.`;
+    else if(Math.abs(kdPct)<.15) c+=kd>0?`Slight upward pull. <em>Buy dips, sell at king.</em>`:`Slight downward pull. <em>Sell rips, cover at king.</em>`;
+    else c+=kd>0?`Strong upward gravity. <em>Bullish — buy calls targeting king.</em>`:`Strong downward gravity. <em>Bearish — buy puts targeting king.</em>`;
+    if(posAbove[0]&&posBelow[0]) c+=` Range: ${fp(posBelow[0].strike)}–${fp(posAbove[0].strike)}.`;
+    return c;
+  }
+
+  // ═══ TIME CHECK: After 12PM ET (9AM PST), only safe-to-hold strategies ═══
+  const nowET = new Date().toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'numeric',hour12:false});
+  const [etH,etM] = nowET.split(':').map(Number);
+  const etMins = etH*60+etM;
+  const lateSession = etMins >= 720; // 12:00 PM ET = 9:00 AM PST
+
+  // Spread width for debit spreads already set above
+
+  let strategies = [];
+
+  // ═══ +GAMMA → SELL PREMIUM (CONSERVATIVE 0DTE) ═══
+  if (profile === 'positive') {
+    if(!lateSession){
+      // Iron Condor — only before 9AM PST
+      const rawSP = getDeltaStrike('put', 0.10);
+      const rawSC = getDeltaStrike('call', 0.10);
+      const valP = gexValidate(rawSP,'put'), valC = gexValidate(rawSC,'call');
+      const sp = valP.strike, sc = valC.strike;
+      const lp = sp-WING, lc = sc+WING;
+      const sPutN = sorted.reduce((b,c)=>Math.abs(c.strike-sp)<Math.abs(b.strike-sp)?c:b);
+      const sCallN = sorted.reduce((b,c)=>Math.abs(c.strike-sc)<Math.abs(b.strike-sc)?c:b);
+      const lpN = sorted.reduce((b,c)=>Math.abs(c.strike-lp)<Math.abs(b.strike-lp)?c:b);
+      const lcN = sorted.reduce((b,c)=>Math.abs(c.strike-lc)<Math.abs(b.strike-lc)?c:b);
+      const pCr = ((sPutN.put_bid||0)+(sPutN.put_ask||0))/2-((lpN.put_bid||0)+(lpN.put_ask||0))/2;
+      const cCr = ((sCallN.call_bid||0)+(sCallN.call_ask||0))/2-((lcN.call_bid||0)+(lcN.call_ask||0))/2;
+      const totCr = pCr+cCr;
+      const premEst = totCr>.10?`~$${totCr.toFixed(2)}/ct ($${(totCr*100).toFixed(0)} per IC)`:`Target ⅓ of $${WING} wing`;
+      strategies.push({
+        name:'Iron Condor (0DTE)',type:'ic',
+        rationale:`<strong>Conservative 0DTE:</strong> 10Δ shorts, $${WING} wings. +Gamma = dealers dampen vol.`,
+        legs:[
+          {action:'BUY',type:'PUT',strike:lp,tag:`Wing ($${WING})`,tagCls:'sp'},
+          {action:'SELL',type:'PUT',strike:sp,tag:valP.tag,tagCls:valP.tagCls,note:sp!==valP.orig?`(shifted from ${fp(valP.orig)})`:'(~10Δ)'},
+          {action:'SELL',type:'CALL',strike:sc,tag:valC.tag,tagCls:valC.tagCls,note:sc!==valC.orig?`(shifted from ${fp(valC.orig)})`:'(~10Δ)'},
+          {action:'BUY',type:'CALL',strike:lc,tag:`Wing ($${WING})`,tagCls:'sp'},
+        ],
+        expectedPremium:premEst,maxProfit:totCr>.10?`$${(totCr*100).toFixed(0)}`:'Credit received',
+        maxRisk:totCr>.10?`$${((WING-totCr)*100).toFixed(0)}`:`$${WING*100} minus credit`,
+        target:`Stay between ${fp(sp)} – ${fp(sc)}`,
+        why:[driftComm(),`Close by 3:45pm. Stop = credit per side.`],
+      });
+    }
+
+    // Butterfly — allowed any time (safe to hold)
+    if(Math.abs(kdPct)<.25){
+      const ctr=rnd(king.strike);
+      strategies.push({name:'Butterfly (Pin)',type:'bf',
+        rationale:`King near spot + +gamma = pin probability.${lateSession?' Safe to hold to expiry.':''}`,
+        legs:[
+          {action:'BUY',type:'CALL',strike:ctr-WING,tag:'Lower',tagCls:'sp'},
+          {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn',qty:2},
+          {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Upper',tagCls:'sp'},
+        ],
+        expectedPremium:'~$1-$3 debit',maxProfit:`$${WING*100} minus debit`,maxRisk:'Debit paid',target:`Pin ${fp(ctr)}`,
+        why:[driftComm(),lateSession?`Late session: butterfly is defined-risk, safe to hold.`:`Enter after 2pm. Small size — lottery ticket.`],
+      });
+    }
+
+    // Conservative call/put — allowed any time
+    if(kd>spot*.001){
+      const cs=rnd(spot),cP=estPrem(cs,'call');
+      strategies.push({name:'Buy Call (Drift)',type:'ds',
+        rationale:`King above = upward magnet. Conservative single leg.`,
+        legs:[{action:'BUY',type:'CALL',strike:cs,tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
+        expectedPremium:cP?`Cost: ${cP}`:'Check chain',maxProfit:'Unlimited',maxRisk:'Premium paid',target:`Rally to ${fp(king.strike)}`,
+        why:[driftComm(),`Take profit 50-100%. Cut at 50% loss.`],
+      });
+    }
+  }
+
+  // ═══ −GAMMA → DIRECTIONAL ═══
+  else if (profile === 'negative') {
+    if(kd>0){
+      if(!lateSession){
+        // Call Debit Spread — only before 9AM PST, tight $10/$3 width
+        const buyStrike=rnd(spot);
+        const sellStrike=rnd(buyStrike+SPREAD_WIDTH);
+        const buyPrem=estPrem(buyStrike,'call');
+        strategies.push({name:'Call Debit Spread',type:'ds',
+          rationale:`−Gamma + king above. $${SPREAD_WIDTH}-wide debit spread for defined risk.`,
+          legs:[
+            {action:'BUY',type:'CALL',strike:buyStrike,tag:'Near ATM',tagCls:'sp',note:'(~50Δ)'},
+            {action:'SELL',type:'CALL',strike:sellStrike,tag:'OTM',tagCls:'sp',note:`$${SPREAD_WIDTH} wide`}
+          ],
+          expectedPremium:buyPrem?`Debit: ${buyPrem}`:'Verify',
+          maxProfit:`$${(SPREAD_WIDTH*100).toFixed(0)} minus debit`,maxRisk:'Debit paid',
+          target:`Rally to ${fp(sellStrike)}+`,
+          why:[driftComm(),`<span class="pur">−Gamma = DON'T sell ICs.</span> Buy direction.`,`Take profit 50-75%. Cut at 50% loss.`],
+        });
+      }
+      // Buy Call — allowed any time (conservative single leg)
+      const cP2=estPrem(rnd(spot),'call');
+      strategies.push({name:`Buy Call${lateSession?' (Conservative)':''}`,type:'ds',
+        rationale:`−Gamma + king above. ${lateSession?'Late session — single leg only, defined risk.':'Momentum play.'}`,
+        legs:[{action:'BUY',type:'CALL',strike:rnd(spot),tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
+        expectedPremium:cP2?`Cost: ${cP2}`:'Check chain',maxProfit:'Unlimited',maxRisk:'Premium',target:`${fp(king.strike)}+`,
+        why:[driftComm(),lateSession?`Late session: single leg = defined risk. Set hard stop.`:`Trail stop at 50% gains.`],
+      });
+    }else if(kd<0){
+      if(!lateSession){
+        // Put Debit Spread — only before 9AM PST, tight $10/$3 width
+        const buyStrike=rnd(spot);
+        const sellStrike=rnd(buyStrike-SPREAD_WIDTH);
+        const buyPrem=estPrem(buyStrike,'put');
+        strategies.push({name:'Put Debit Spread',type:'ds',
+          rationale:`−Gamma + king below. $${SPREAD_WIDTH}-wide debit spread for defined risk.`,
+          legs:[
+            {action:'BUY',type:'PUT',strike:buyStrike,tag:'Near ATM',tagCls:'sp',note:'(~50Δ)'},
+            {action:'SELL',type:'PUT',strike:sellStrike,tag:'OTM',tagCls:'sp',note:`$${SPREAD_WIDTH} wide`}
+          ],
+          expectedPremium:buyPrem?`Debit: ${buyPrem}`:'Verify',
+          maxProfit:`$${(SPREAD_WIDTH*100).toFixed(0)} minus debit`,maxRisk:'Debit paid',
+          target:`Drop to ${fp(sellStrike)}`,
+          why:[driftComm(),`Take profit 50-75%. Cut at 50% loss.`],
+        });
+      }
+      // Buy Put — allowed any time
+      const pP=estPrem(rnd(spot),'put');
+      strategies.push({name:`Buy Put${lateSession?' (Conservative)':''}`,type:'ds',
+        rationale:`−Gamma + king below. ${lateSession?'Late session — single leg only.':'Momentum play.'}`,
+        legs:[{action:'BUY',type:'PUT',strike:rnd(spot),tag:'ATM',tagCls:'sp',note:'(~50Δ)'}],
+        expectedPremium:pP?`Cost: ${pP}`:'Check chain',maxProfit:'Substantial',maxRisk:'Premium',target:`${fp(king.strike)}`,
+        why:[driftComm(),lateSession?`Late session: single leg = defined risk. Set hard stop.`:`Trail stop at 50% gains.`],
+      });
+    }
+
+    // Butterfly — allowed any time for −gamma too
+    if(Math.abs(kdPct)<.3){
+      const ctr=rnd(king.strike);
+      strategies.push({name:'Butterfly (King Target)',type:'bf',
+        rationale:`King at ${fp(ctr)}. Low cost lottery for pin.${lateSession?' Safe defined-risk play.':''}`,
+        legs:[
+          {action:'BUY',type:'CALL',strike:ctr-WING,tag:'Lower',tagCls:'sp'},
+          {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn',qty:2},
+          {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Upper',tagCls:'sp'},
+        ],
+        expectedPremium:'~$1-$3 debit',maxProfit:`$${WING*100} minus debit`,maxRisk:'Debit paid',target:`Pin ${fp(ctr)}`,
+        why:[driftComm()],
+      });
+    }
+  }
+
+  // ═══ NEUTRAL ═══
+  else {
+    const ctr=rnd(king.strike);
+    strategies.push({name:'Iron Butterfly (½ Size)',type:'bf',
+      rationale:`Neutral. King at ${fp(ctr)} weak magnet. Half size, tight stops.`,
+      legs:[
+        {action:'BUY',type:'PUT',strike:ctr-WING,tag:'Put wing',tagCls:'sp'},
+        {action:'SELL',type:'PUT',strike:ctr,tag:'👑 King',tagCls:'kn'},
+        {action:'SELL',type:'CALL',strike:ctr,tag:'👑 King',tagCls:'kn'},
+        {action:'BUY',type:'CALL',strike:ctr+WING,tag:'Call wing',tagCls:'sp'},
+      ],
+      expectedPremium:'Check chain (ATM)',maxProfit:'Credit',maxRisk:`$${WING*100} minus credit`,target:`Pin ${fp(ctr)}`,
+      why:[driftComm(),`25% profit target. Stop at 1× credit. Half size.`],
+    });
+  }
+
+  return strategies;
+}
+
+// ═══ KING HISTORY + VOLUME SURGE — per-panel (not global bar) ═══
+function getTrackingHtml(sym) {
+  if (!D || !D[sym]) return '';
+  const d = D[sym];
+  let html = '';
+
+  // King history
+  const kh = d.king_history || [];
+  if (kh.length >= 2) {
+    const first = kh[0], last = kh[kh.length-1];
+    const mins = Math.round((new Date(last.timestamp)-new Date(first.timestamp))/60000);
+    const hrs = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins}m`;
+    const delta = last.strike - first.strike;
+    const dir = delta>0?'↑':delta<0?'↓':'→';
+    html += `<div style="padding:2px 14px;font-size:8px;color:var(--king);border-bottom:1px solid var(--border)">👑 King: ${fp(first.strike)} → ${fp(last.strike)} (${delta>0?'+':''}${delta.toFixed(0)}pts ${dir}) ${hrs}`;
+    if (kh.length > 2) html += ` · ${kh.map(k=>fp(k.strike)).join('→')}`;
+    html += `</div>`;
+  }
+
+  // Volume surges
+  const vs = d.volume_surges || [];
+  if (vs.length > 0) {
+    html += `<div style="padding:2px 14px;font-size:8px;color:var(--cyan);border-bottom:1px solid var(--border)">📈 `;
+    html += vs.slice(0,3).map(v=>
+      `${fp(v.strike)} +${v.delta.toLocaleString()} (${v.pct>0?'+':''}${v.pct}%)`
+    ).join(' · ');
+    html += `</div>`;
+  }
+
+  return html;
+}
+
+// ═══ STRATEGY TOGGLE ═══
+let stratVisible = false;
+function toggleStrats() {
+  stratVisible = !stratVisible;
+  const sw = document.getElementById('sw'), btn = document.getElementById('stratBtn');
+  if (stratVisible) { sw.classList.add('vis'); btn.textContent='📊 Strategy ▴'; renderStrats(); }
+  else { sw.classList.remove('vis'); btn.textContent='📊 Strategy ▾'; }
+}
+
+function renderStrats() {
+  const sw = document.getElementById('sw');
+  if (!D||!stratVisible) { sw.classList.remove('vis'); sw.innerHTML=''; return; }
+  sw.innerHTML=''; sw.classList.add('vis');
+
+  const syms = Object.keys(D).sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0);
+  syms.forEach(sym => {
+    const sd = D[sym]; if(!sd) return;
+    const strats = generateStrategy(sd);
+    if (!strats||!strats.length) return;
+    const s = strats[0];
+    const card = document.createElement('div'); card.className='strat-card';
+    const legsH = s.legs.map(l=>`<div class="strat-leg"><span class="strat-leg-action ${l.action.toLowerCase()}">${l.action}</span><span class="strat-leg-type">${l.type}</span><span class="strat-leg-strike">${fp(l.strike)}${l.qty?' ×'+l.qty:''}${l.note?' <span style="color:var(--dim);font-size:9px">'+l.note+'</span>':''}</span><span class="strat-leg-tag ${l.tagCls}">${l.tag}</span></div>`).join('');
+    const whyH = s.why.map(w=>`<div style="margin:4px 0">→ ${w}</div>`).join('');
+    const altH = strats.length>1?'<div style="padding:8px 16px;border-top:1px solid var(--border);font-size:9px;color:var(--dim)"><strong style="color:var(--text)">Alt:</strong> '+strats.slice(1).map(a=>`<span style="margin-left:6px;padding:2px 6px;background:rgba(255,255,255,.03);border-radius:3px">${a.name}</span>`).join('')+'</div>':'';
+    card.innerHTML=`<div class="strat-hdr"><span class="strat-sym">${sym} · $${fp(sd.spot)}</span><span class="strat-type-badge ${s.type}">${s.name}</span></div><div class="strat-body"><div class="strat-rationale">${s.rationale}</div><div class="strat-legs"><div class="strat-legs-title">Legs</div>${legsH}</div><div class="strat-details"><div class="strat-detail"><div class="strat-detail-label">Premium</div><div class="strat-detail-val" style="color:var(--cyan);font-size:10px">${s.expectedPremium||'—'}</div></div><div class="strat-detail"><div class="strat-detail-label">Max Profit</div><div class="strat-detail-val profit">${s.maxProfit}</div></div><div class="strat-detail"><div class="strat-detail-label">Max Risk</div><div class="strat-detail-val risk">${s.maxRisk}</div></div><div class="strat-detail"><div class="strat-detail-label">Target</div><div class="strat-detail-val">${s.target}</div></div></div><div class="strat-why">${whyH}</div></div>${altH}<div class="strat-disclaimer">⚠ Not financial advice. Verify on live chain.</div>`;
+    sw.appendChild(card);
+  });
+
+  // Confluence
+  if(syms.length>=3){
+    const profs=syms.map(s=>{const d=D[s];const m=Math.max(...d.strikes.map(x=>Math.abs(x.net_gex)),1);return d.total_net_gex>m*.1?'pos':d.total_net_gex<-m*.1?'neg':'neu'});
+    const all=profs.every(p=>p===profs[0]);
+    const cc=document.createElement('div');cc.style.cssText='width:100%;padding:8px 12px;border-radius:6px;font-size:10px;margin-top:4px';
+    if(all){cc.style.background='rgba(34,197,94,.08)';cc.style.color='var(--green)';cc.innerHTML=`✅ <strong>Full confluence</strong> — All ${profs[0]==='pos'?'+gamma':profs[0]==='neg'?'−gamma':'neutral'}.`}
+    else{cc.style.background='rgba(251,191,36,.08)';cc.style.color='var(--yellow)';cc.innerHTML=`⚠ <strong>Mixed signals</strong> — Reduce size.`}
+    sw.appendChild(cc);
+  }
+}
+
+// ─── Recs ───
+function genRec(d){
+  const{spot,strikes,total_net_gex}=d;if(!strikes||!strikes.length)return{summary:'No data',bias:'neutral',action_items:[]};
+  const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
+  const king=strikes.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b);
+  const posA=strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.15).sort((a,b)=>a.strike-b.strike);
+  const posB=strikes.filter(s=>s.strike<spot&&s.net_gex>mx*.15).sort((a,b)=>b.strike-a.strike);
+  const profile=total_net_gex>mx*.1?'positive':total_net_gex<-mx*.1?'negative':'neutral';
+  const bias=profile==='positive'?'range':profile==='negative'?'trend':'chop';
+  const kd=king.strike-spot;
+  const items=[];
+  if(Math.abs(kd/spot*100)>.02)items.push(`DRIFT: ${king.strike.toFixed(1)} (${kd>0?'above':'below'})`);
+  else items.push(`PIN: ${king.strike.toFixed(1)}`);
+  if(posB[0])items.push(`SUPPORT: ${posB[0].strike.toFixed(1)}`);
+  if(posA[0])items.push(`RESISTANCE: ${posA[0].strike.toFixed(1)}`);
+  const hi=posA[0]?.strike||(kd>0?king.strike:spot+20),lo=posB[0]?.strike||(kd<0?king.strike:spot-20);
+  let summary;
+  if(profile==='positive'&&Math.abs(kd/spot*100)<.15)summary=`PIN & CHOP — King ${king.strike.toFixed(1)}. Fade ${lo.toFixed(1)}–${hi.toFixed(1)}.`;
+  else if(profile==='positive')summary=`DRIFT TO KING — Magnet ${king.strike.toFixed(1)}.`;
+  else if(profile==='negative'&&kd>0)summary=`BULLISH MOMENTUM — King UP to ${king.strike.toFixed(1)}.`;
+  else if(profile==='negative'&&kd<0)summary=`BEARISH MOMENTUM — King DOWN to ${king.strike.toFixed(1)}.`;
+  else summary=`CHOPPY — King ${king.strike.toFixed(1)}.`;
+  return{summary,bias,king_node:{strike:king.strike},expected_range:{low:lo,high:hi},action_items:items};
+}
+
+function renderRecs(){
+  const rw=document.getElementById('rw');if(!D){rw.classList.remove('vis');return}
+  rw.innerHTML='';rw.classList.add('vis');
+  getVisibleSyms().forEach(sym=>{
+    const d=D[sym],r=d.recommendation||genRec(d);
+    const spot=d.spot, strikes=d.strikes||[];
+    const sorted=[...strikes].sort((a,b)=>a.strike-b.strike);
+    const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
+    const king=strikes.reduce((b,s)=>(s.total_gamma||Math.abs(s.net_gex))>(b.total_gamma||Math.abs(b.net_gex))?s:b,strikes[0]);
+    const kingD=king?king.strike-spot:0;
+    const kingPct=spot?((kingD/spot)*100).toFixed(2):0;
+    const gw=d.gamma_wall||0, pw=d.put_wall||0;
+    const net=d.total_net_gex||0;
+
+    // Gamma profile
+    const isNeg=net<-mx*.05, isPos=net>mx*.05;
+    const gpClass=isNeg?'neg':isPos?'pos':'neu';
+    const gpLabel=isNeg?'−Gamma (Momentum)':isPos?'+Gamma (Mean Revert)':'Neutral (Choppy)';
+
+    // Bias
+    const bias=r.bias||'chop';
+
+    // Build rich commentary
+    let commentary='';
+    if(isNeg && kingD>0){
+      commentary=`<strong>−Gamma + King above</strong> = dealers amplify upward moves. Expect <span class="hl">bullish momentum toward ${fp(king.strike)}</span>. Buy dips, don't fade. Debit call spreads favored.`;
+    } else if(isNeg && kingD<0){
+      commentary=`<strong>−Gamma + King below</strong> = dealers amplify downward moves. Expect <span class="hl">bearish momentum toward ${fp(king.strike)}</span>. Sell rips, buy put spreads. Do NOT sell premium here.`;
+    } else if(isNeg && Math.abs(kingD)<spot*.001){
+      commentary=`<strong>−Gamma + King at spot</strong> = explosive either direction. <span class="hl">Wait for break</span>, then ride momentum. Straddles or strangles if IV is low.`;
+    } else if(isPos && Math.abs(kingD)<spot*.002){
+      commentary=`<strong>+Gamma + King at spot</strong> = <span class="hl">pin & chop</span>. Dealers suppress moves both ways. Sell premium: iron condors, butterflies centered on ${fp(king.strike)}.`;
+    } else if(isPos && kingD>0){
+      commentary=`<strong>+Gamma + King above</strong> = slow grind up toward <span class="hl">${fp(king.strike)}</span>. Dealers dampen selloffs. Sell put spreads below, or drift-to-king butterflies.`;
+    } else if(isPos && kingD<0){
+      commentary=`<strong>+Gamma + King below</strong> = slow grind down toward <span class="hl">${fp(king.strike)}</span>. Dealers dampen rallies. Sell call spreads above, or drift-to-king butterflies.`;
+    } else {
+      commentary=`<strong>Mixed gamma</strong> — no strong dealer bias. <span class="hl">Reduce size</span>, wait for clearer setup. King at ${fp(king?king.strike:0)}.`;
+    }
+
+    // Directional line
+    const dirLine = kingD>0 
+      ? `👑 King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--green)">above</span> spot (${kingPct}%). Drift target ↑`
+      : kingD<0
+      ? `👑 King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--red)">below</span> spot (${kingPct}%). Drift target ↓`
+      : `👑 King ${fp(king.strike)} — AT spot. Pin expected.`;
+
+    // Support/resistance
+    const posAbove=sorted.filter(s=>s.strike>spot&&s.net_gex>mx*.12).slice(0,1);
+    const posBelow=sorted.filter(s=>s.strike<spot&&s.net_gex>mx*.12).reverse().slice(0,1);
+    const resist=posAbove.length?fp(posAbove[0].strike):(gw?fp(gw):'—');
+    const support=posBelow.length?fp(posBelow[0].strike):(pw?fp(pw):'—');
+
+    // King distance line
+    const kingDistLine = kingD>0 
+      ? `↑ $${Math.abs(kingD).toFixed(2)} (${kingPct}%) above spot`
+      : kingD<0
+      ? `↓ $${Math.abs(kingD).toFixed(2)} (${Math.abs(kingPct)}%) below spot`
+      : `At spot`;
+
+    // King tracking history
+    let kingTrackHtml = '';
+    const kh = d.king_history || [];
+    if (kh.length >= 2) {
+      const first = kh[0], last = kh[kh.length-1];
+      const mins = Math.round((new Date(last.timestamp)-new Date(first.timestamp))/60000);
+      const hrs = mins >= 60 ? `${Math.floor(mins/60)}h${mins%60}m` : `${mins}m`;
+      const delta = last.strike - first.strike;
+      const dir = delta>0?'↑':delta<0?'↓':'→';
+      kingTrackHtml = `👑 King: ${fp(first.strike)} → ${fp(last.strike)} (${delta>0?'+':''}${delta.toFixed(0)}pts ${dir}) ${hrs}`;
+      if (kh.length > 2) kingTrackHtml += ` · ${kh.map(k=>fp(k.strike)).join('→')}`;
+    }
+
+    const c=document.createElement('div');c.className=`rec ${bias}`;
+    c.innerHTML=`<div class="rec-sym">${sym} $${fp(spot)} <span class="rec-badge ${bias}">${bias.toUpperCase()}</span></div>`+
+      `<div class="rec-sum">${r.summary||''}</div>`+
+      `<div class="rec-gamma ${gpClass}">${commentary}<br><span style="font-size:10px;color:var(--dim);margin-top:2px;display:inline-block">${dirLine}</span>`+
+      `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:var(--king)">${kingDistLine}</div>`+
+      `${kingTrackHtml?`<div style="font-size:10px;color:var(--dim);margin-top:2px">${kingTrackHtml}</div>`:''}`+
+      `</div>`+
+      `<div class="rec-lvls">`+
+        `<span class="rec-lv king">👑 King: ${fp(king?king.strike:0)}</span>`+
+        `<span class="rec-lv gp">${gpLabel}</span>`+
+        `<span class="rec-lv" style="background:rgba(251,191,36,.08);color:var(--yellow);border:1px solid rgba(251,191,36,.15)">Sup: ${support}</span>`+
+        `<span class="rec-lv" style="background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.15)">Res: ${resist}</span>`+
+      `</div>`;
+    rw.appendChild(c);
+  });
+}
+
+// ─── Heatmap panel ───
+function renderPanel(d){
+  const{symbol,spot,strikes,total_net_gex,gamma_wall,put_wall}=d;
+  const n=+document.getElementById('ns').value;
+  const sorted=[...strikes].sort((a,b)=>a.strike-b.strike);
+  if(!sorted.length)return document.createElement('div');
+  const ci=sorted.reduce((b,s,i)=>Math.abs(s.strike-spot)<Math.abs(sorted[b].strike-spot)?i:b,0);
+  const vis=sorted.slice(Math.max(0,ci-n),Math.min(sorted.length,ci+n+1)).reverse();
+  const mx=Math.max(...vis.map(s=>Math.abs(s.net_gex)),1);
+  const ss=sorted[ci]?.strike;
+  const ks=vis.reduce((b,s)=>(s.total_gamma||Math.abs(s.net_gex))>(b.total_gamma||Math.abs(b.net_gex))?s:b).strike;
+  const pc=total_net_gex>mx*.05?'pos':total_net_gex<-mx*.05?'neg':'neu';
+  const pl=pc==='pos'?'+Gamma':pc==='neg'?'−Gamma':'Neutral';
+  const pd=pc==='pos'?'Vol↓ Mean revert':pc==='neg'?'Vol↑ Momentum':'Choppy';
+  const kingD=ks-spot,kingP=((kingD/spot)*100).toFixed(2);
+
+  // Item 14: % day change for spot
+  const openSnap=openingGEX[symbol];
+  let dayChgHtml='';
+  if(openSnap && openSnap._openSpot){
+    const dayChg=((spot-openSnap._openSpot)/openSnap._openSpot*100);
+    const sign=dayChg>=0?'+':'';
+    const clr=dayChg>=0?'var(--green)':'var(--red)';
+    dayChgHtml=`<span style="font-size:14px;color:${clr};margin-left:8px;font-weight:600">${sign}${dayChg.toFixed(2)}%</span>`;
+  }
+
+  const trackHtml = getTrackingHtml(symbol);
+
+  const p=document.createElement('div');p.className='panel';
+  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}${dayChgHtml}</span></div>`+
+    `<div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div>`+
+    `<div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:11px;color:var(--dim)">${pd}</span></div>`+
+    `<div class="klevels"><span class="klev kn">👑 ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div>`+
+    `<div class="strikes" id="s-${symbol}"></div>`;
+  const cont=p.querySelector(`#s-${symbol}`);
+
+  // Volume surge strikes to highlight
+  const surgeStrikes = new Set((d.volume_surges||[]).map(v=>v.strike));
+
+  vis.forEach(s=>{
+    const iS=s.strike===ss,iK=s.strike===ks,iV=surgeStrikes.has(s.strike);
+    const co=gc(s.net_gex,mx,iK);const tco=tc(s.net_gex,mx,iK);
+    // Item 5: % change since open — show NEXT TO strike label
+    let chgTag='';
+    if(openSnap){
+      const openVal=openSnap[s.strike];
+      if(openVal && Math.abs(openVal)>1000){
+        const pctChg=((s.net_gex-openVal)/Math.abs(openVal))*100;
+        if(Math.abs(pctChg)>=25){
+          const sign=pctChg>0?'+':'';
+          const clr=pctChg>0?'#4ade80':'#f87171';
+          chgTag=` <span style="font-size:10px;color:${clr};font-weight:700">${sign}${pctChg.toFixed(0)}%</span>`;
+        }
+      }
+    }
+    // Item 10: bar width proportional to GEX magnitude, always from left
+    const barPct=Math.max(5,Math.min(100,Math.round(Math.abs(s.net_gex)/mx*100)));
+
+    // Item 11: King row styled via CSS .sr.king
+    const row=document.createElement('div');
+    row.className='sr'+(iS?' spot':'')+(iK?' king':'');
+    if(iV) row.style.borderRight='3px solid var(--cyan)';
+
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${fp(s.strike)}${chgTag}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
+    row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
+    cont.appendChild(row);
+  });
+  return p;
+}
+
+function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');const d=s.strike-spot,c=ct(s.net_gex,mx);document.getElementById('tt').textContent=(iK?'👑 ':'')+sym+' — $'+fp(s.strike);document.getElementById('tb').innerHTML=`<div class="tip-r"><span class="tip-l">Net GEX</span><span class="tip-v">${fg(s.net_gex)}</span></div><div class="tip-r"><span class="tip-l">Call GEX</span><span class="tip-v" style="color:#fde68a">${fg(s.call_gex)}</span></div><div class="tip-r"><span class="tip-l">Put GEX</span><span class="tip-v" style="color:#d8b4fe">${fg(s.put_gex)}</span></div><div class="tip-d"></div><div class="tip-r"><span class="tip-l">Call OI</span><span class="tip-v">${(s.call_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put OI</span><span class="tip-v">${(s.put_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Call Vol</span><span class="tip-v">${(s.call_volume||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put Vol</span><span class="tip-v">${(s.put_volume||0).toLocaleString()}</span></div>${s.call_bid?`<div class="tip-r"><span class="tip-l">Call Bid/Ask</span><span class="tip-v">$${s.call_bid.toFixed(2)}/$${s.call_ask.toFixed(2)}</span></div>`:''}${s.put_bid?`<div class="tip-r"><span class="tip-l">Put Bid/Ask</span><span class="tip-v">$${s.put_bid.toFixed(2)}/$${s.put_ask.toFixed(2)}</span></div>`:''}<div class="tip-r"><span class="tip-l">From Spot</span><span class="tip-v">${d>=0?'+':''}${d.toFixed(1)} (${((d/spot)*100).toFixed(2)}%)</span></div><div class="tip-d"></div><div class="tip-b">${bh(c,iK)}</div>`;t.classList.add('vis');moveTip(e)}
+function moveTip(e){const t=document.getElementById('tip');const x=e.clientX+16,y=e.clientY-10;t.style.left=(x+t.offsetWidth>window.innerWidth?e.clientX-t.offsetWidth-16:x)+'px';t.style.top=(y+t.offsetHeight>window.innerHeight?window.innerHeight-t.offsetHeight-8:y)+'px'}
+function hideTip(){document.getElementById('tip').classList.remove('vis')}
+
+// ═══ IWM TOGGLE ═══
+let showIWM = false;
+function toggleIWM(){
+  showIWM = !showIWM;
+  document.getElementById('iwmBtn').textContent = showIWM ? 'IWM: ON' : 'IWM: OFF';
+  document.getElementById('iwmBtn').style.opacity = showIWM ? '1' : '0.5';
+  rerender();
+}
+
+function getVisibleSyms(){
+  if(!D) return [];
+  return Object.keys(D).filter(s=> showIWM || s!=='IWM').sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0);
+}
+
+function rerender(){if(!D)return;renderRecs();if(stratVisible)renderStrats();const c=document.getElementById('hc');c.innerHTML='';
+  getVisibleSyms().forEach(s=>c.appendChild(renderPanel(D[s])));updateTimestamp()}
+
+function updateTimestamp(){
+  const now=new Date();
+  const local=now.toLocaleTimeString([],{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+  document.getElementById('st').textContent=local;
+  updateMarketSession();
+}
+
+// ═══ MARKET SESSION INDICATOR ═══
+function updateMarketSession(){
+  const now=new Date();
+  const etStr=now.toLocaleString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'numeric',hour12:false});
+  const [h,m]=etStr.split(':').map(Number);
+  const mins=h*60+m;
+  const el=document.getElementById('mktSession');
+  const dow=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'})).getDay();
+  if(dow===0||dow===6){el.textContent='WEEKEND';el.className='market-session closed';return}
+  if(mins>=240&&mins<570){el.textContent='PRE-MARKET';el.className='market-session pre'}
+  else if(mins>=570&&mins<600){el.textContent='🔔 OPENING';el.className='market-session open'}
+  else if(mins>=600&&mins<900){el.textContent='MARKET OPEN';el.className='market-session open'}
+  else if(mins>=900&&mins<960){el.textContent='⚡ POWER HOUR';el.className='market-session power'}
+  else if(mins>=960&&mins<1200){el.textContent='AFTER HOURS';el.className='market-session closed'}
+  else{el.textContent='CLOSED';el.className='market-session closed'}
+}
+
+// ═══ COUNTDOWN TIMER ═══
+const FETCH_INTERVAL_MS = 5*60*1000;
+let lastFetchTime = null;
+let countdownInterval = null;
+function startCountdown(){
+  if(countdownInterval)clearInterval(countdownInterval);
+  lastFetchTime=Date.now();
+  countdownInterval=setInterval(()=>{
+    const elapsed=Date.now()-lastFetchTime;
+    const remaining=Math.max(0,FETCH_INTERVAL_MS-elapsed);
+    const secs=Math.ceil(remaining/1000);
+    const mm=Math.floor(secs/60),ss=secs%60;
+    const el=document.getElementById('countdown');
+    if(remaining<=0){el.textContent='Updating...'}
+    else{el.textContent=`Next update in ${mm}:${ss.toString().padStart(2,'0')}`}
+  },1000);
+}
+
+// ═══ COLOR GUIDE TOGGLE ═══
+function toggleColorGuide(){
+  const d=document.getElementById('legend-detail');
+  d.style.display=d.style.display==='none'?'block':'none';
+}
+
+// ═══ AUTO-RELOAD ═══
+let autoFile=null,autoInterval=null;
+function loadFile(e){const f=e.target.files[0];if(!f)return;autoFile=f;readAndRender(f);startAutoReload()}
+function readAndRender(f){const r=new FileReader();r.onload=ev=>{try{const nd=JSON.parse(ev.target.result);const nt=nd[Object.keys(nd)[0]]?.timestamp;const ot=D?.[Object.keys(D||{})[0]]?.timestamp;if(nt!==ot||!D){D=nd;document.getElementById('sd').className='status-dot live';rerender()}}catch(e){console.error(e)}};r.readAsText(f)}
+function startAutoReload(){if(autoInterval)clearInterval(autoInterval);autoInterval=setInterval(()=>{if(autoFile)readAndRender(autoFile)},30000);document.getElementById('st').textContent='Auto-reload ON (30s)'}
+function stopAutoReload(){if(autoInterval){clearInterval(autoInterval);autoInterval=null}document.getElementById('st').textContent='Auto-reload OFF'}
+
+// ═══ SERVER AUTO-FETCH (every 5 min) ═══
+let serverInterval = null;
+let fetchAttempts = 0;
+async function fetchFromServer() {
+  try {
+    const resp = await fetch('/api/gex');
+    if (!resp.ok) {
+      fetchAttempts++;
+      if (fetchAttempts <= 2) document.getElementById('st').textContent = `Server error (${resp.status}) — retrying...`;
+      return;
+    }
+    const newD = await resp.json();
+    if (newD && Object.keys(newD).length > 0) {
+      const newTs = newD[Object.keys(newD)[0]]?.timestamp;
+      const oldTs = D?.[Object.keys(D||{})[0]]?.timestamp;
+      if (newTs !== oldTs || !D) {
+        D = newD;
+        // Save opening GEX snapshot (first fetch of day = baseline for % change)
+        if(Object.keys(openingGEX).length===0){
+          Object.keys(newD).forEach(sym=>{
+            openingGEX[sym]={_openSpot:newD[sym].spot};
+            (newD[sym].strikes||[]).forEach(s=>{openingGEX[sym][s.strike]=s.net_gex});
+          });
+        }
+        document.getElementById('sd').className = 'status-dot live';
+        // Show last updated time
+        try{
+          const ts=new Date(newTs);
+          const ago=Math.round((Date.now()-ts.getTime())/60000);
+          if(ago>60) document.getElementById('st').textContent = `Last: ${ts.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
+          else document.getElementById('st').textContent = `Live · ${ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+        }catch(e){ document.getElementById('st').textContent = 'Live'; }
+        rerender();
+        startCountdown();
+        fetchAttempts = 0;
+      }
+    } else {
+      fetchAttempts++;
+      if (!D) {
+        document.getElementById('st').textContent = 'Waiting for data (market may be closed)';
+      }
+      // Never clear existing data — keep showing last fetch
+    }
+  } catch(e) {
+    fetchAttempts++;
+    if (fetchAttempts <= 2) document.getElementById('st').textContent = 'Connecting to server...';
+    else document.getElementById('st').textContent = 'Server unreachable — retrying...';
+  }
+}
+
+function startServerFetch() {
+  fetchFromServer();
+  if (serverInterval) clearInterval(serverInterval);
+  serverInterval = setInterval(fetchFromServer, 5 * 60 * 1000);
+  document.getElementById('st').textContent = 'Connecting...';
+}
+
+// ═══ MODE DETECTION ═══
+updateMarketSession();
+setInterval(updateMarketSession, 60000);
+if (window.location.protocol !== 'file:') {
+  // Only auto-fetch if already authenticated (session restored)
+  if(sessionStorage.getItem('gex_auth')==='1') startServerFetch();
+} else {
+  document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ═══ GEX LIVE VIEW (inline, toggled within the page)  ═══
+// ═══════════════════════════════════════════════════════════
+let liveMode=false, liveData=null, liveSym='SPX', liveExp='ALL', liveFetchInt=null;
+
+function toggleLiveView(){
+  liveMode=!liveMode;
+  const btn=document.getElementById('liveBtn');
+  const heatmapEls=['rw','sw','hc','sb'];
+  const liveEl=document.getElementById('gexLive');
+  const legendEl=document.querySelector('.legend');
+  const legendDetail=document.getElementById('legend-detail');
+  if(liveMode){
+    btn.style.background='var(--accent)';btn.style.color='#fff';btn.textContent='🔥 Heatmap';
+    heatmapEls.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});
+    if(legendEl)legendEl.style.display='none';
+    if(legendDetail)legendDetail.style.display='none';
+    liveEl.style.display='flex';
+    fetchLiveData();
+    if(!liveFetchInt)liveFetchInt=setInterval(fetchLiveData,60*1000);
+  }else{
+    btn.style.background='rgba(83,109,254,.12)';btn.style.color='var(--accent)';btn.textContent='📊 GEX Live';
+    heatmapEls.forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=''});
+    if(legendEl)legendEl.style.display='';
+    liveEl.style.display='none';
+    if(liveFetchInt){clearInterval(liveFetchInt);liveFetchInt=null}
+  }
+}
+
+async function fetchLiveData(){
+  try{
+    const r=await fetch('/api/gex-all');
+    if(r.ok){
+      const d=await r.json();
+      if(d&&Object.keys(d).length){liveData=d;renderLiveSymTabs();renderLive()}
+    }
+  }catch(e){console.error('GEX-ALL fetch:',e)}
+}
+
+function renderLiveSymTabs(){
+  const c=document.getElementById('liveSymTabs');c.innerHTML='';
+  if(!liveData)return;
+  Object.keys(liveData).forEach(sym=>{
+    const t=document.createElement('div');t.className='live-sym-tab'+(sym===liveSym?' active':'');
+    t.textContent=sym;t.onclick=()=>{liveSym=sym;liveExp='ALL';renderLiveSymTabs();renderLive()};
+    c.appendChild(t);
+  });
+}
+
+function renderLive(){
+  if(!liveData||!liveData[liveSym])return;
+  const sd=liveData[liveSym];
+  const spot=sd.spot;
+  const expData=sd.exp_data||{};
+
+  // Expiry tabs
+  const et=document.getElementById('liveExpTabs');et.innerHTML='';
+  const exps=sd.expirations||[];
+
+  // "ALL" tab first
+  const allTab=document.createElement('div');allTab.className='live-exp-tab'+(liveExp==='ALL'?' active':'');
+  allTab.innerHTML='Σ ALL';allTab.onclick=()=>{liveExp='ALL';renderLive()};
+  et.appendChild(allTab);
+
+  exps.forEach(exp=>{
+    const ed=expData[exp];if(!ed)return;
+    const t=document.createElement('div');t.className='live-exp-tab'+(liveExp===exp?' active':'');
+    const dte=ed.dte;
+    let label=exp.slice(5); // MM-DD
+    if(dte===0)label=`<span style="color:var(--king)">${label}</span> <span style="font-size:8px;opacity:.7">0DTE</span>`;
+    else if(dte<=7)label+=` <span style="font-size:8px;opacity:.7">${dte}d</span>`;
+    else label+=` <span style="font-size:8px;opacity:.7">${dte}d</span>`;
+    t.innerHTML=label;
+    t.onclick=()=>{liveExp=exp;renderLive()};
+    et.appendChild(t);
+  });
+
+  // Get the selected expiry data
+  const selected=expData[liveExp];
+  if(!selected||!selected.strikes||!selected.strikes.length){
+    document.getElementById('liveRows').innerHTML='<div style="padding:40px;text-align:center;color:var(--dim)">No data for this expiration</div>';
+    return;
+  }
+
+  const strikes=selected.strikes;
+  const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
+  const byStrike=[...strikes].sort((a,b)=>b.strike-a.strike);
+  const nearSpot=strikes.reduce((b,s)=>Math.abs(s.strike-spot)<Math.abs(b.strike-spot)?s:b);
+  const kingStrike=selected.king_strike||0;
+  const gwStrike=selected.gamma_wall||0;
+  const pwStrike=selected.put_wall||0;
+  const totalGex=selected.total_net_gex||0;
+
+  // Render rows
+  const wrap=document.getElementById('liveRows');wrap.innerHTML='';
+  let spotRow=null;
+
+  byStrike.forEach(s=>{
+    const row=document.createElement('div');row.className='live-row';
+    const isSpot=s.strike===nearSpot.strike;
+    const isKing=Math.abs(s.strike-kingStrike)<0.01;
+    if(isSpot){row.classList.add('is-spot');spotRow=row}
+    if(isKing)row.classList.add('is-king');
+
+    const pct=Math.max(1,Math.abs(s.net_gex)/mx*45);
+    const isPos=s.net_gex>=0;
+    const netOI=(s.call_oi||0)-(s.put_oi||0);
+    const netVol=(s.call_volume||0)-(s.put_volume||0);
+
+    let tags='';
+    if(isSpot)tags+=`<span class="live-tag spot-tag">● $${spot.toFixed(1)}</span>`;
+    if(isKing)tags+=`<span class="live-tag king-tag" style="left:auto;right:0">👑 KING</span>`;
+    if(Math.abs(s.strike-gwStrike)<0.01&&!isKing)tags+=`<span class="live-tag gw-tag" style="left:auto;right:0">CR</span>`;
+    if(Math.abs(s.strike-pwStrike)<0.01)tags+=`<span class="live-tag pw-tag">PS</span>`;
+
+    const fk=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(1)+'M':a>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)};
+
+    row.innerHTML=
+      `<div class="live-str">${s.strike.toFixed(s.strike%1?1:0)}</div>`+
+      `<div class="live-bar-area"><div class="live-bar-center"></div><div class="live-bar ${isPos?'pos':'neg'}" style="width:${pct}%"></div>${tags}</div>`+
+      `<div class="live-oi" style="color:${netOI>=0?'var(--green)':'var(--red)'}">${fk(netOI)}</div>`+
+      `<div class="live-vol" style="color:${netVol>=0?'var(--green)':'var(--red)'}">${fk(netVol)}</div>`+
+      `<div class="live-str">${s.strike.toFixed(s.strike%1?1:0)}</div>`;
+
+    wrap.appendChild(row);
+  });
+
+  if(spotRow)setTimeout(()=>spotRow.scrollIntoView({block:'center'}),50);
+
+  // Sidebar
+  renderLiveSidebar(sd,selected,strikes,mx);
+}
+
+function renderLiveSidebar(sd,selected,strikes,mx){
+  const sb=document.getElementById('liveSidebar');
+  const spot=sd.spot;
+  const totalGex=selected.total_net_gex||0;
+  const kingStrike=selected.king_strike||0;
+  const gwStrike=selected.gamma_wall||0;
+  const pwStrike=selected.put_wall||0;
+
+  const fk=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(2)+'M':a>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)};
+  const fp2=v=>v.toFixed(2);
+  const pctF=(val)=>{const p=((val-spot)/spot*100);return{cls:p>=0?'color:var(--green)':'color:var(--red)',txt:(p>=0?'+':'')+p.toFixed(2)+'%'}};
+
+  const isPos=totalGex>mx*.05,isNeg=totalGex<-mx*.05;
+  const gpCls=isPos?'var(--green)':isNeg?'var(--red)':'var(--yellow)';
+  const gpSign=isPos?'+':isNeg?'−':'○';
+  const gpLabel=isPos?'Positive Gamma':isNeg?'Negative Gamma':'Neutral';
+  const aboveKing=spot>kingStrike;
+  let gpDesc=isPos?(aboveKing?'Above CR → mean revert / squeeze':'Below king → drift toward king')
+    :isNeg?(aboveKing?'Above king → momentum continuation':'Below CR → dealer amplification')
+    :'Mixed positioning — reduce size';
+
+  const tCV=strikes.reduce((s,x)=>s+(x.call_volume||0),0);
+  const tPV=strikes.reduce((s,x)=>s+(x.put_volume||0),0);
+  const tCO=strikes.reduce((s,x)=>s+(x.call_oi||0),0);
+  const tPO=strikes.reduce((s,x)=>s+(x.put_oi||0),0);
+  const totVol=tCV+tPV||1;
+  const totOI=tCO+tPO||1;
+
+  sb.innerHTML=
+    `<div class="sb-sec">`+
+      `<div style="display:flex;gap:8px;margin-bottom:4px">`+
+        `<div style="flex:1;text-align:center"><div class="sb-ttl">GEX</div><div style="font-size:16px;font-weight:700;color:${totalGex>=0?'var(--green)':'var(--red)'}">${fk(totalGex)}</div></div>`+
+        `<div style="flex:1;text-align:center"><div class="sb-ttl">Expiry</div><div style="font-size:13px;font-weight:600;color:var(--bright)">${selected.expiration==='ALL'?'Σ All':selected.expiration.slice(5)}${selected.dte>=0?' <span style="font-size:10px;color:var(--dim)">'+selected.dte+'d</span>':''}</div></div>`+
+      `</div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Gamma Profile</div>`+
+      `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">`+
+        `<div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;background:${isPos?'rgba(0,200,83,.15)':isNeg?'rgba(255,23,68,.15)':'rgba(255,214,0,.15)'};color:${gpCls}">${gpSign}</div>`+
+        `<div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:${gpCls}">${gpLabel}</div>`+
+      `</div>`+
+      `<div style="font-size:10px;color:var(--dim)">${gpDesc}</div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Key GEX Levels</div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:var(--king)"></div><div class="kl-nm">PS</div><div class="kl-pr">${pwStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(pwStrike).cls}">${pctF(pwStrike).txt}</div></div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:var(--dim)"></div><div class="kl-nm">${liveSym}</div><div class="kl-pr">$${fp2(spot)}</div><div class="kl-pct" style="color:var(--dim)">spot</div></div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:var(--green)"></div><div class="kl-nm">CR</div><div class="kl-pr">${gwStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(gwStrike).cls}">${pctF(gwStrike).txt}</div></div>`+
+      `<div class="kl-row"><div class="kl-dot" style="background:#ff5252"></div><div class="kl-nm">👑 King</div><div class="kl-pr">${kingStrike.toFixed(1)}</div><div class="kl-pct" style="${pctF(kingStrike).cls}">${pctF(kingStrike).txt}</div></div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Chain Activity</div>`+
+      `<div style="text-align:center;font-size:13px;font-weight:700;color:${tPV>tCV?'var(--red)':'var(--green)'};margin-bottom:4px">${tPV>tCV?'PUTS':'CALLS'}</div>`+
+      `<div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin:6px 0"><div style="height:100%;width:${Math.round(tPV/totVol*100)}%;background:var(--red);border-radius:3px"></div></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--red)">PUTS</span><span style="color:var(--dim)">BALANCED</span><span style="color:var(--green)">CALLS</span></div>`+
+    `</div>`+
+    `<div class="sb-sec">`+
+      `<div class="sb-ttl">Volume</div>`+
+      `<div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:flex;margin:6px 0"><div style="height:100%;width:${Math.round(tCV/totVol*100)}%;background:var(--green)"></div><div style="height:100%;width:${Math.round(tPV/totVol*100)}%;background:var(--red)"></div></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--green)">${fk(tCV)} Call</span><span style="color:var(--red)">${fk(tPV)} Put</span></div>`+
+      `<div class="sb-ttl" style="margin-top:8px">Open Interest</div>`+
+      `<div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:flex;margin:6px 0"><div style="height:100%;width:${Math.round(tCO/totOI*100)}%;background:var(--green)"></div><div style="height:100%;width:${Math.round(tPO/totOI*100)}%;background:var(--red)"></div></div>`+
+      `<div style="display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--green)">${fk(tCO)} Call</span><span style="color:var(--red)">${fk(tPO)} Put</span></div>`+
+    `</div>`;
+}
+</script>
+</body></html>
