@@ -1649,7 +1649,7 @@ function renderOdtePanel(d) {
   const flipLevel = vis.find(s => Math.abs(s.net_gex) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
 
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;max-width:900px';
+  wrap.style.cssText = 'display:grid;grid-template-columns:minmax(0,1.3fr) 420px 280px;gap:14px;align-items:start';
 
   // ── LEFT: heatmap ──
   const leftCol = document.createElement('div');
@@ -1804,8 +1804,81 @@ function renderOdtePanel(d) {
     rightCol.appendChild(card('📈 Volume Surges', vsHtml));
   }
 
+  // ── RIGHT 2: Top Movers ──
+  const moversCol = document.createElement('div');
+  moversCol.style.cssText = 'display:flex;flex-direction:column;gap:10px';
+
+  // Build top movers from strikes data
+  const openSnap2 = openingGEX[symbol];
+  let increasing = [], decreasing = [];
+
+  if (openSnap2) {
+    sorted.forEach(s => {
+      const openVal = openSnap2[s.strike];
+      if (!openVal || Math.abs(openVal) < 5000) return;
+      const pctChg = ((s.net_gex - openVal) / Math.abs(openVal)) * 100;
+      const delta = s.net_gex - openVal;
+      const distPct = ((s.strike - spot) / spot * 100);
+      const entry = { strike: s.strike, pctChg, delta, net_gex: s.net_gex, distPct };
+      if (pctChg >= 2) increasing.push(entry);
+      else if (pctChg <= -2) decreasing.push(entry);
+    });
+    increasing.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    decreasing.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  }
+
+  function moverRow(e, isInc) {
+    const color = isInc ? '#4ade80' : '#f87171';
+    const bg = isInc ? 'rgba(74,222,128,0.07)' : 'rgba(248,113,113,0.07)';
+    const sign = e.pctChg >= 0 ? '+' : '';
+    const distSign = e.distPct >= 0 ? '+' : '';
+    return `<div style="display:flex;align-items:center;padding:6px 10px;border-radius:6px;background:${bg};margin-bottom:4px;gap:8px">
+      <span style="font-size:13px;font-weight:700;color:var(--bright);min-width:60px">$${fp(e.strike)}</span>
+      <span style="font-size:12px;font-weight:800;color:${color};background:${isInc?'rgba(74,222,128,0.15)':'rgba(248,113,113,0.15)'};padding:2px 7px;border-radius:4px;min-width:48px;text-align:center">${sign}${e.pctChg.toFixed(0)}%</span>
+      <span style="font-size:11px;color:var(--dim);margin-left:auto">${distSign}${e.distPct.toFixed(1)}%</span>
+    </div>`;
+  }
+
+  let moversHtml = '';
+  if (increasing.length) {
+    moversHtml += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <span style="font-size:12px">↗</span>
+      <span style="font-size:12px;font-weight:700;color:#4ade80">Exposure Increasing</span>
+    </div>`;
+    moversHtml += increasing.slice(0, 8).map((e, i) =>
+      `<div style="display:flex;align-items:center;padding:6px 10px;border-radius:6px;background:rgba(74,222,128,0.06);margin-bottom:4px;gap:8px">
+        <span style="font-size:11px;color:var(--dim);min-width:16px">${i+1}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--bright);min-width:60px">$${fp(e.strike)}</span>
+        <span style="font-size:12px;font-weight:800;color:#4ade80;background:rgba(74,222,128,0.15);padding:2px 7px;border-radius:4px;min-width:44px;text-align:center">+${e.pctChg.toFixed(0)}%</span>
+        <span style="font-size:11px;color:var(--dim);margin-left:auto">${fg(e.delta)}</span>
+      </div>`
+    ).join('');
+  }
+
+  if (decreasing.length) {
+    moversHtml += `<div style="display:flex;align-items:center;gap:6px;margin:12px 0 8px">
+      <span style="font-size:12px">↘</span>
+      <span style="font-size:12px;font-weight:700;color:#f87171">Exposure Decreasing</span>
+    </div>`;
+    moversHtml += decreasing.slice(0, 8).map((e, i) =>
+      `<div style="display:flex;align-items:center;padding:6px 10px;border-radius:6px;background:rgba(248,113,113,0.06);margin-bottom:4px;gap:8px">
+        <span style="font-size:11px;color:var(--dim);min-width:16px">${i+1}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--bright);min-width:60px">$${fp(e.strike)}</span>
+        <span style="font-size:12px;font-weight:800;color:#f87171;background:rgba(248,113,113,0.15);padding:2px 7px;border-radius:4px;min-width:44px;text-align:center">${e.pctChg.toFixed(0)}%</span>
+        <span style="font-size:11px;color:var(--dim);margin-left:auto">${fg(e.delta)}</span>
+      </div>`
+    ).join('');
+  }
+
+  if (!moversHtml) {
+    moversHtml = `<div style="text-align:center;color:var(--dim);font-size:12px;padding:20px 0">No opening data yet.<br>Movers appear after first fetch cycle.</div>`;
+  }
+
+  moversCol.appendChild(card('⚡ Top Movers', moversHtml));
+
   wrap.appendChild(leftCol);
   wrap.appendChild(rightCol);
+  wrap.appendChild(moversCol);
   return wrap;
 }
 
