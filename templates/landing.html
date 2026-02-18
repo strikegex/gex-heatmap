@@ -810,6 +810,73 @@ footer {
   opacity: 0.3;
   margin: 0;
 }
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav {
+    padding: 14px 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .nav-links { display: none; }
+  .nav-cta { gap: 8px; }
+  .btn-ghost, .btn-primary { padding: 8px 14px; font-size: 11px; }
+
+  .hero {
+    flex-direction: column;
+    padding: 100px 20px 60px;
+    gap: 40px;
+  }
+  .hero-left { flex: none; width: 100%; }
+  .hero-title { font-size: 64px; }
+  .hero-title .dim-line { font-size: 32px; }
+  .hero-stats { gap: 20px; flex-wrap: wrap; }
+
+  .hero-right { width: 100%; }
+  .heatmap-grid { grid-template-columns: 44px repeat(8, 1fr); }
+  .heatmap-grid > div:nth-child(n+10):nth-child(-n+13),
+  .heatmap-grid > div:nth-child(n+23):nth-child(-n+26) { display: none; }
+
+  section { padding: 60px 20px; }
+  .section-title { font-size: 40px; }
+
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-block { padding: 32px 24px; }
+
+  .how {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    padding: 60px 20px;
+  }
+
+  .pricing-grid { grid-template-columns: 1fr; }
+  .pricing-card { padding: 36px 24px; }
+  .pricing-card.featured { border-top: 2px solid var(--green); }
+  .price-amount { font-size: 52px; }
+
+  footer {
+    padding: 32px 20px;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  .footer-links { gap: 20px; flex-wrap: wrap; justify-content: center; }
+
+  .terminal { font-size: 11px; }
+  .terminal-body { padding: 14px; }
+
+  .hero-actions { flex-direction: column; }
+  .btn-hero, .btn-hero-ghost { text-align: center; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 52px; }
+  .hero-title .dim-line { font-size: 26px; }
+  .section-title { font-size: 34px; }
+  .pricing-name { font-size: 28px; }
+  .price-amount { font-size: 44px; }
+}
+
 </style>
 </head>
 <body>
@@ -819,7 +886,7 @@ footer {
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">STRIKE<span>GEX</span></div>
+  <img src="/static/strikegex-logo.png" alt="StrikeGEX" style="height:36px;object-fit:contain;">
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
     <li><a href="#how">How It Works</a></li>
@@ -843,7 +910,7 @@ footer {
     </h1>
 
     <p class="hero-desc">
-      See where dealers are positioned. Identify gamma walls, king strikes, and key levels before they matter. Real-time options market analysis built for serious traders.
+      See where dealers are positioned. Identify gamma walls, king strikes, and key levels before they matter. Real-time options market analysis built for serious traders. Covering 300+ symbols with a sharp focus on SPX, SPY, and QQQ 0DTE.
     </p>
 
     <div class="hero-actions">
@@ -855,7 +922,7 @@ footer {
 
     <div class="hero-stats">
       <div class="stat-item">
-        <div class="stat-val">4</div>
+        <div class="stat-val">300+</div>
         <div class="stat-label">Symbols</div>
       </div>
       <div class="stat-item">
@@ -888,7 +955,7 @@ footer {
         <div class="ticker-item"><span class="ticker-sym">SPX</span><span class="ticker-price">5,921.50</span><span class="ticker-gex-pos">ΓΣ +$4.21B</span></div>
         <div class="ticker-item"><span class="ticker-sym">SPY</span><span class="ticker-price">591.87</span><span class="ticker-gex-pos">ΓΣ +$1.08B</span></div>
         <div class="ticker-item"><span class="ticker-sym">QQQ</span><span class="ticker-price">508.44</span><span class="ticker-gex-neg">ΓΣ −$0.34B</span></div>
-        <div class="ticker-item"><span class="ticker-sym">IWM</span><span class="ticker-price">217.32</span><span class="ticker-gex-pos">ΓΣ +$0.22B</span></div>
+        <div class="ticker-item"><span class="ticker-sym">+300</span><span class="ticker-price" style="color:#4a6580">symbols</span></div>
       </div>
     </div>
   </div>
@@ -1026,7 +1093,7 @@ footer {
         <li><strong>Live GEX Heatmap</strong> — all expirations</li>
         <li><strong>StrikeMap</strong> — multi-expiry gamma grid</li>
         <li><strong>King Strike + GEX Walls</strong></li>
-        <li>SPX · SPY · QQQ · IWM coverage</li>
+        <li>SPX · SPY · QQQ 0DTE focused</li>
         <li>Updates every 5 minutes</li>
         <li>Cancel anytime</li>
       </ul>
@@ -1047,7 +1114,7 @@ footer {
         <li><strong>Live GEX Heatmap</strong> — all expirations</li>
         <li><strong>StrikeMap</strong> — multi-expiry gamma grid</li>
         <li><strong>King Strike + GEX Walls</strong></li>
-        <li>SPX · SPY · QQQ · IWM coverage</li>
+        <li>SPX · SPY · QQQ 0DTE focused</li>
         <li>Priority support</li>
       </ul>
       <a href="https://whop.com/strikegex-com-115d/strikegex-pro-access" target="_blank" class="btn-pricing btn-pricing-filled">Get Access →</a>
@@ -1066,7 +1133,7 @@ footer {
         <li><strong>Live GEX Heatmap</strong> — all expirations</li>
         <li><strong>StrikeMap</strong> — multi-expiry gamma grid</li>
         <li><strong>King Strike + GEX Walls</strong></li>
-        <li>SPX · SPY · QQQ · IWM coverage</li>
+        <li>SPX · SPY · QQQ 0DTE focused</li>
         <li>Best value — 4 months free</li>
       </ul>
       <a href="https://whop.com/strikegex-com-115d/strikegex-pro-access" target="_blank" class="btn-pricing btn-pricing-outline">Get Access →</a>
@@ -1079,7 +1146,7 @@ footer {
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">STRIKE<span>GEX</span></div>
+  <img src="/static/strikegex-logo.png" alt="StrikeGEX" style="height:30px;object-fit:contain;opacity:0.85;">
   <ul class="footer-links">
     <li><a href="https://strikegex.com">Login</a></li>
     <li><a href="#pricing">Pricing</a></li>
@@ -1203,11 +1270,7 @@ setInterval(() => {
     ">✕</button>
 
     <!-- Logo -->
-    <div style="
-      font-family:'Big Shoulders Display',sans-serif;
-      font-size:28px;font-weight:900;
-      margin-bottom:6px;letter-spacing:1px;
-    ">STRIKE<span style="color:#00ff78">GEX</span></div>
+    <img src="/static/strikegex-logo.png" alt="StrikeGEX" style="height:40px;object-fit:contain;margin-bottom:6px;">
 
     <div style="
       font-family:'JetBrains Mono',monospace;
