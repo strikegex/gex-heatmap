@@ -454,6 +454,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 </div><!-- end appWrap -->
 
 <script>
+var userTier = 'free'; // declared first to avoid hoisting issues
 let D=null;
 let openingGEX={}; // Store first fetch of day as baseline
 
@@ -801,7 +802,7 @@ function getTrackingHtml(sym) {
 
 // ═══ STRATEGY TOGGLE ═══
 let stratVisible = false;
-let userTier = 'free'; // set on login: 'free' | 'approved'
+// userTier declared at top of script
 
 function stratClick(){
   if(userTier !== 'approved'){
