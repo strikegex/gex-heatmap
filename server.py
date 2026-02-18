@@ -39,8 +39,31 @@ APP_KEY = os.environ.get("SCHWAB_APP_KEY", "")
 APP_SECRET = os.environ.get("SCHWAB_APP_SECRET", "")
 CALLBACK_URL = os.environ.get("SCHWAB_CALLBACK_URL", "https://127.0.0.1:8182/")
 TOKEN_PATH = os.environ.get("SCHWAB_TOKEN_PATH", "schwab_token.json")
-FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "300"))  # 5 min default
-SYMBOLS = os.environ.get("SYMBOLS", "SPX,SPY,QQQ,IWM").split(",")
+FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "1800"))  # 30 min default
+
+# Full symbol list — env var overrides if set
+_DEFAULT_SYMBOLS = (
+    "SPX,SPY,QQQ,IWM,DIA,"
+    "AAPL,MSFT,NVDA,GOOGL,AMZN,META,TSLA,AVGO,ORCL,"
+    "AMD,INTC,QCOM,TXN,MU,AMAT,LRCX,KLAC,MRVL,ADI,MCHP,ON,MPWR,"
+    "NFLX,DIS,CMCSA,T,VZ,TMUS,CHTR,"
+    "JPM,BAC,WFC,GS,MS,C,BLK,SCHW,AXP,V,MA,COF,USB,PNC,TFC,FITB,KEY,RF,CFG,HBAN,"
+    "UNH,JNJ,LLY,ABBV,MRK,PFE,TMO,DHR,ABT,AMGN,GILD,REGN,VRTX,MRNA,BMY,CVS,HUM,CI,ELV,"
+    "XOM,CVX,COP,SLB,EOG,MPC,PSX,VLO,OXY,BKR,HAL,DVN,HES,APA,MRO,EQT,"
+    "WMT,HD,COST,TGT,LOW,MCD,SBUX,NKE,LULU,TJX,ROST,DLTR,DG,KR,YUM,CMG,DPZ,"
+    "CAT,BA,HON,UPS,RTX,LMT,GE,DE,MMM,EMR,ETN,PH,ROK,ITW,GD,NOC,TDG,CARR,OTIS,"
+    "LIN,APD,ECL,SHW,FCX,NUE,STLD,CF,MOS,ALB,"
+    "AMT,PLD,EQIX,CCI,SPG,O,DLR,VICI,EXR,PSA,"
+    "XLK,XLF,XLE,XLV,XLI,XLY,XLC,XLB,XLRE,XLU,XLP,"
+    "GLD,SLV,TLT,HYG,LQD,EEM,EFA,VNQ,ARKK,SOXX,SMH,XBI,IBB,KRE,XRT,IAU,USO,"
+    "UBER,SNAP,COIN,HOOD,SOFI,AFRM,SHOP,MELI,BABA,JD,PDD,"
+    "PLTR,DDOG,NET,SNOW,MDB,CRWD,ZS,PANW,FTNT,NOW,CRM,ADBE,INTU,WDAY,VEEV,HUBS,TEAM,ZM,"
+    "ABNB,BKNG,EXPE,MAR,HLT,RCL,CCL,NCLH,DAL,UAL,AAL,LUV,"
+    "PYPL,SQ,ANET,SMCI,HPE,DELL,WDC,STX,"
+    "RIVN,F,GM,NIO"
+)
+SYMBOLS = os.environ.get("SYMBOLS", _DEFAULT_SYMBOLS).split(",")
+SYMBOLS = [s.strip() for s in SYMBOLS if s.strip()]
 
 # ─── Decode token from env EVERY startup (Railway filesystem is ephemeral) ───
 TOKEN_B64 = os.environ.get("SCHWAB_TOKEN_B64", "")
@@ -111,7 +134,9 @@ def fetch_loop():
 
             data = {}
             all_data = {}
-            for sym in SYMBOLS:
+            total_syms = len(SYMBOLS)
+            print(f"  📡 Fetching {total_syms} symbols...")
+            for i, sym in enumerate(SYMBOLS):
                 try:
                     data[sym] = gf.fetch_gex(client, sym, history)
                 except Exception as e:
@@ -120,6 +145,17 @@ def fetch_loop():
                     all_data[sym] = gf.fetch_gex_all_expirations(client, sym)
                 except Exception as e:
                     print(f"  ⚠️ {sym} ALL-EXP: {e}")
+                # Save progress incrementally so data is available mid-fetch
+                if data:
+                    with fetch_lock:
+                        gex_data = dict(data)
+                        if all_data:
+                            gex_all_data = dict(all_data)
+                        last_fetch = datetime.now().isoformat()
+                # Rate limit: 0.5s between symbols to avoid Schwab throttling
+                time.sleep(0.5)
+                if (i + 1) % 20 == 0:
+                    print(f"  ⏳ Progress: {i+1}/{total_syms} symbols fetched")
 
             if data:
                 gf.save_history(history)
