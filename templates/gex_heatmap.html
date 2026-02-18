@@ -455,6 +455,14 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     </div>
     <div id="odteDropdown" style="display:none;position:absolute;top:auto;z-index:999;background:#1a1f2e;border:1px solid var(--border);border-radius:8px;max-height:260px;overflow-y:auto;min-width:200px;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.6)"></div>
     <div id="odteSymInfo" style="font-size:12px;color:var(--dim)"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
+      <label style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Strikes</label>
+      <select id="odteNs" onchange="if(odteCurrentSym)loadOdteSym(odteCurrentSym)"
+        style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:6px;cursor:pointer">
+        <option value="15" selected>15</option>
+        <option value="30">30</option>
+      </select>
+    </div>
     <!-- legend -->
     <div style="display:flex;align-items:center;gap:10px;font-size:10px;padding:0 8px;margin-left:auto">
       <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#50d28a"></div><span style="color:#8ab030">+Gamma</span></div>
@@ -1605,13 +1613,12 @@ function loadOdteSym(sym) {
 
 function renderOdtePanel(d) {
   const {symbol, spot, strikes, total_net_gex, gamma_wall, put_wall, recommendation} = d;
-  // Use more strikes for the expanded view
+  const odteStrikeCount = parseInt(document.getElementById('odteNs').value || '15');
   const sorted = [...strikes].sort((a, b) => a.strike - b.strike);
   if (!sorted.length) return document.createElement('div');
 
   const ci = sorted.reduce((b, s, i) => Math.abs(s.strike - spot) < Math.abs(sorted[b].strike - spot) ? i : b, 0);
-  // Show more strikes in 0DTE view — use 40 instead of ns
-  const n = 40;
+  const n = odteStrikeCount;
   const vis = sorted.slice(Math.max(0, ci - n), Math.min(sorted.length, ci + n + 1)).reverse();
   const mx = Math.max(...vis.map(s => Math.abs(s.net_gex)), 1);
   const ss = sorted[ci]?.strike;
@@ -1619,8 +1626,8 @@ function renderOdtePanel(d) {
   const pc = total_net_gex > mx * .05 ? 'pos' : total_net_gex < -mx * .05 ? 'neg' : 'neu';
   const pl = pc === 'pos' ? '+Gamma' : pc === 'neg' ? '−Gamma' : 'Neutral';
   const surgeStrikes = new Set((d.volume_surges || []).map(v => v.strike));
-
   const openSnap = openingGEX[symbol];
+
   let dayChgHtml = '';
   if (openSnap && openSnap._openSpot) {
     const dayChg = ((spot - openSnap._openSpot) / openSnap._openSpot * 100);
@@ -1629,33 +1636,39 @@ function renderOdtePanel(d) {
     dayChgHtml = `<span style="font-size:16px;color:${clr};margin-left:10px;font-weight:600">${sign}${dayChg.toFixed(2)}%</span>`;
   }
 
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start';
+  // Compute price reaction zones
+  const aboveSpot = vis.filter(s => s.strike > spot).sort((a,b) => a.strike - b.strike);
+  const belowSpot = vis.filter(s => s.strike <= spot).sort((a,b) => b.strike - a.strike);
+  const topResistance = aboveSpot.filter(s => s.net_gex > 0).slice(0, 3);
+  const topSupport = belowSpot.filter(s => s.net_gex < 0).slice(0, 3);
+  const callWall = aboveSpot.reduce((b, s) => (s.call_gex || 0) > (b.call_gex || 0) ? s : b, aboveSpot[0] || {});
+  const putWall = belowSpot.reduce((b, s) => Math.abs(s.put_gex || 0) > Math.abs(b.put_gex || 0) ? s : b, belowSpot[0] || {});
+  const flipLevel = vis.find(s => Math.abs(s.net_gex) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
 
-  // Left: big heatmap
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start';
+
+  // ── LEFT: heatmap ──
   const leftCol = document.createElement('div');
   leftCol.style.cssText = 'background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden';
 
-  // Header
   leftCol.innerHTML = `
-    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:var(--bright)">${symbol}</span>
-      <span style="font-size:22px;font-weight:700;color:var(--text)">$${fp(spot)}${dayChgHtml}</span>
-      <span class="gbadge ${pc}" style="font-size:12px;padding:4px 12px">${pl}</span>
-      <span style="font-size:12px;color:var(--dim);margin-left:auto">Net GEX: ${fg(total_net_gex)}</span>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:800;color:var(--bright)">${symbol}</span>
+      <span style="font-size:18px;font-weight:700;color:var(--text)">$${fp(spot)}${dayChgHtml}</span>
+      <span class="gbadge ${pc}" style="font-size:11px;padding:3px 10px">${pl}</span>
+      <span style="font-size:11px;color:var(--dim);margin-left:auto">0DTE · Net GEX: ${fg(total_net_gex)}</span>
     </div>
-    <div style="padding:10px 18px;border-bottom:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap">
+    <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:14px;flex-wrap:wrap">
       <span style="font-size:12px"><span style="color:var(--dim)">👑 King</span> <span style="color:var(--yellow);font-weight:700">$${fp(ks)}</span></span>
       <span style="font-size:12px"><span style="color:var(--dim)">Γ Wall</span> <span style="color:var(--green);font-weight:700">$${fp(gamma_wall)}</span></span>
       <span style="font-size:12px"><span style="color:var(--dim)">P Wall</span> <span style="color:var(--purple);font-weight:700">$${fp(put_wall)}</span></span>
       <span style="font-size:12px"><span style="color:var(--dim)">Spot</span> <span style="color:var(--bright);font-weight:700">$${fp(spot)}</span></span>
-      ${d.expirations ? `<span style="font-size:12px;color:var(--dim);margin-left:auto">${d.expirations.length} expirations</span>` : ''}
     </div>
   `;
 
-  // Strike rows — bigger
   const strikesDiv = document.createElement('div');
-  strikesDiv.style.cssText = 'padding:8px 0;max-height:calc(100vh - 280px);overflow-y:auto';
+  strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto';
 
   vis.forEach(s => {
     const iS = s.strike === ss, iK = s.strike === ks, iV = surgeStrikes.has(s.strike);
@@ -1671,20 +1684,19 @@ function renderOdtePanel(d) {
         if (Math.abs(pctChg) >= 25) {
           const sign = pctChg > 0 ? '+' : '';
           const clr = pctChg > 0 ? '#4ade80' : '#f87171';
-          chgTag = ` <span style="font-size:11px;color:${clr};font-weight:700">${sign}${pctChg.toFixed(0)}%</span>`;
+          chgTag = ` <span style="font-size:10px;color:${clr};font-weight:700">${sign}${pctChg.toFixed(0)}%</span>`;
         }
       }
     }
 
     const row = document.createElement('div');
-    row.style.cssText = `position:relative;display:flex;align-items:center;padding:5px 18px;min-height:34px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.03);${iK ? 'background:rgba(251,191,36,0.06);border-left:3px solid var(--yellow)' : iS ? 'background:rgba(99,102,241,0.08);border-left:3px solid var(--accent)' : 'border-left:3px solid transparent'}`;
+    row.style.cssText = `position:relative;display:flex;align-items:center;padding:5px 16px;min-height:32px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.03);${iK ? 'background:rgba(251,191,36,0.07);border-left:3px solid var(--yellow)' : iS ? 'background:rgba(99,102,241,0.09);border-left:3px solid var(--accent)' : 'border-left:3px solid transparent'}`;
     if (iV) row.style.borderRight = '3px solid var(--cyan)';
 
     row.innerHTML = `
-      <div style="position:absolute;left:0;top:0;bottom:0;width:${barPct}%;background:rgb(${co.r},${co.g},${co.b});opacity:0.35;pointer-events:none"></div>
-      <span style="position:relative;min-width:70px;font-size:15px;font-weight:700;color:${iK ? 'var(--yellow)' : iS ? 'var(--accent)' : 'var(--text)'}">${fp(s.strike)}${chgTag}</span>
+      <div style="position:absolute;left:0;top:0;bottom:0;width:${barPct}%;background:rgb(${co.r},${co.g},${co.b});opacity:0.3;pointer-events:none"></div>
+      <span style="position:relative;min-width:65px;font-size:14px;font-weight:700;color:${iK ? 'var(--yellow)' : iS ? 'var(--accent)' : 'var(--text)'}">${fp(s.strike)}${chgTag}</span>
       <span style="position:relative;flex:1;font-size:14px;font-weight:600;color:${tco};text-align:right">${fg(s.net_gex)}${iK ? ' 👑' : ''}${iV ? ' 📈' : ''}</span>
-      <span style="position:relative;min-width:90px;font-size:11px;color:var(--dim);text-align:right;margin-left:12px">C:${(s.call_oi||0).toLocaleString()} P:${(s.put_oi||0).toLocaleString()}</span>
     `;
     row.onmouseenter = e => showTip(e, s, symbol, spot, mx, iK);
     row.onmousemove = moveTip;
@@ -1694,62 +1706,94 @@ function renderOdtePanel(d) {
 
   leftCol.appendChild(strikesDiv);
 
-  // Right: info panel
+  // ── RIGHT: deep info ──
   const rightCol = document.createElement('div');
-  rightCol.style.cssText = 'display:flex;flex-direction:column;gap:12px';
+  rightCol.style.cssText = 'display:flex;flex-direction:column;gap:10px';
 
-  // Recommendation card
-  const rec = d.recommendation;
-  if (rec) {
-    const recCard = document.createElement('div');
-    recCard.style.cssText = 'background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px';
-    recCard.innerHTML = `
-      <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Recommendation</div>
-      <div style="font-size:14px;font-weight:700;color:var(--bright);margin-bottom:8px">${rec.summary || ''}</div>
-      <div style="font-size:12px;color:var(--text);line-height:1.6">${rec.rationale || ''}</div>
-    `;
-    rightCol.appendChild(recCard);
+  function card(title, html) {
+    const c = document.createElement('div');
+    c.style.cssText = 'background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px';
+    c.innerHTML = `<div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600">${title}</div>${html}`;
+    return c;
   }
 
-  // Key levels card
-  const levCard = document.createElement('div');
-  levCard.style.cssText = 'background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px';
-  levCard.innerHTML = `
-    <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Key Levels</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--dim)">👑 King Node</span>
-        <span style="font-size:15px;font-weight:700;color:var(--yellow)">$${fp(ks)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--dim)">Γ Gamma Wall</span>
-        <span style="font-size:15px;font-weight:700;color:var(--green)">$${fp(gamma_wall)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--dim)">P Put Wall</span>
-        <span style="font-size:15px;font-weight:700;color:var(--purple)">$${fp(put_wall)}</span>
-      </div>
-      <div style="height:1px;background:var(--border);margin:4px 0"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--dim)">Net GEX</span>
-        <span style="font-size:13px;font-weight:700;color:${pc === 'pos' ? 'var(--green)' : pc === 'neg' ? 'var(--red)' : 'var(--dim)'}">${fg(total_net_gex)}</span>
-      </div>
-    </div>
-  `;
-  rightCol.appendChild(levCard);
+  function row2(label, val, color='var(--bright)') {
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <span style="font-size:12px;color:var(--dim)">${label}</span>
+      <span style="font-size:14px;font-weight:700;color:${color}">${val}</span>
+    </div>`;
+  }
 
-  // Volume surges
+  // 1. Price Behavior
+  const posNeg = pc === 'pos' ? 'positive' : pc === 'neg' ? 'negative' : 'neutral';
+  const behavior = pc === 'pos'
+    ? `Dealers are <b style="color:var(--green)">long gamma</b> — they sell rallies and buy dips, suppressing volatility. Expect price to <b style="color:var(--yellow)">pin near $${fp(ks)}</b> (King). Range: $${fp(put_wall)}–$${fp(gamma_wall)}.`
+    : pc === 'neg'
+    ? `Dealers are <b style="color:var(--red)">short gamma</b> — they amplify moves, buying strength and selling weakness. Expect <b style="color:var(--red)">trending / volatile</b> price action. Breakouts tend to extend.`
+    : `Gamma is <b style="color:var(--dim)">near neutral</b> — dealer hedging is balanced. Price can move freely in either direction without strong mean-reversion or momentum bias.`;
+
+  rightCol.appendChild(card('💡 Price Behavior', `<div style="font-size:12px;color:var(--text);line-height:1.7">${behavior}</div>`));
+
+  // 2. Key Levels
+  const distToKing = ks - spot;
+  const distPct = ((Math.abs(distToKing) / spot) * 100).toFixed(2);
+  rightCol.appendChild(card('🎯 Key Levels',
+    row2('👑 King Node', `$${fp(ks)}`, 'var(--yellow)') +
+    row2('Γ Gamma Wall', `$${fp(gamma_wall)}`, 'var(--green)') +
+    row2('P Put Wall', `$${fp(put_wall)}`, 'var(--purple)') +
+    row2('Net GEX', fg(total_net_gex), pc === 'pos' ? 'var(--green)' : pc === 'neg' ? 'var(--red)' : 'var(--dim)') +
+    `<div style="height:1px;background:var(--border);margin:6px 0"></div>` +
+    `<div style="font-size:11px;color:var(--dim)">King is <b style="color:var(--text)">${distToKing > 0 ? '▲' : '▼'} $${Math.abs(distToKing).toFixed(1)} (${distPct}%)</b> ${distToKing > 0 ? 'above' : 'below'} spot</div>`
+  ));
+
+  // 3. Resistance & Support
+  let resSupHtml = '';
+  if (topResistance.length) {
+    resSupHtml += `<div style="font-size:11px;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Resistance ▲</div>`;
+    topResistance.forEach(s => {
+      const dist = ((s.strike - spot) / spot * 100).toFixed(1);
+      resSupHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:700;color:var(--green)">$${fp(s.strike)}</span>
+        <span style="font-size:11px;color:var(--dim)">+${dist}% · ${fg(s.net_gex)}</span>
+      </div>`;
+    });
+  }
+  if (topSupport.length) {
+    resSupHtml += `<div style="font-size:11px;color:var(--dim);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Support ▼</div>`;
+    topSupport.forEach(s => {
+      const dist = ((spot - s.strike) / spot * 100).toFixed(1);
+      resSupHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:700;color:var(--purple)">$${fp(s.strike)}</span>
+        <span style="font-size:11px;color:var(--dim)">-${dist}% · ${fg(s.net_gex)}</span>
+      </div>`;
+    });
+  }
+  if (flipLevel) {
+    resSupHtml += `<div style="height:1px;background:var(--border);margin:8px 0"></div>
+    <div style="font-size:11px;color:var(--dim)">Gamma flip near <b style="color:var(--cyan)">$${fp(flipLevel.strike)}</b></div>`;
+  }
+  if (resSupHtml) rightCol.appendChild(card('📊 Resistance & Support', resSupHtml));
+
+  // 4. Recommendation
+  const rec = d.recommendation;
+  if (rec) {
+    rightCol.appendChild(card('📋 Strategy',
+      `<div style="font-size:13px;font-weight:700;color:var(--bright);margin-bottom:8px">${rec.summary || ''}</div>` +
+      `<div style="font-size:12px;color:var(--text);line-height:1.6">${rec.rationale || ''}</div>`
+    ));
+  }
+
+  // 5. Volume Surges
   if (d.volume_surges && d.volume_surges.length) {
-    const vsCard = document.createElement('div');
-    vsCard.style.cssText = 'background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px';
-    vsCard.innerHTML = `<div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">📈 Volume Surges</div>` +
-      d.volume_surges.slice(0, 5).map(v =>
-        `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:13px;font-weight:700;color:var(--cyan)">$${fp(v.strike)}</span>
-          <span style="font-size:11px;color:var(--dim)">${v.direction || ''} surge</span>
-        </div>`
-      ).join('');
-    rightCol.appendChild(vsCard);
+    let vsHtml = d.volume_surges.slice(0, 4).map(v => {
+      const dist = ((v.strike - spot) / spot * 100);
+      const sign = dist >= 0 ? '+' : '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:700;color:var(--cyan)">$${fp(v.strike)}</span>
+        <span style="font-size:11px;color:var(--dim)">${sign}${dist.toFixed(1)}% from spot</span>
+      </div>`;
+    }).join('');
+    rightCol.appendChild(card('📈 Volume Surges', vsHtml));
   }
 
   wrap.appendChild(leftCol);
