@@ -321,7 +321,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="tab active" onclick="switchTab('live')">🗺️ StrikeMap</div>
   <div class="tab" onclick="switchTab('heatmap')">🔥 HeatMap 0DTE</div>
 </div>
-<div class="ctrl" id="ctrlBar">
+<div class="ctrl" id="ctrlBar" style="display:none">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
   <div class="ctrl-g"><button onclick="stratClick()" id="stratBtn" title="Requires account approval">📊 Strategy 🔒</button></div>
   <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px;opacity:0.5">IWM: OFF</button></div>
@@ -330,7 +330,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
   </div>
 </div>
-<div class="legend" id="legendBar">
+<div class="legend" id="legendBar" style="display:none">
   <span class="legend-t">Legend:</span>
   <div class="legend-i"><div class="lsw y"></div><span style="color:var(--yellow)">+Gamma</span></div>
   <div class="legend-i"><div class="lsw p"></div><span style="color:var(--purple)">−Gamma</span></div>
