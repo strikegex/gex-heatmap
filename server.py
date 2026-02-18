@@ -150,6 +150,10 @@ def index():
 def app_page():
     return send_from_directory("templates", "gex_heatmap.html")
 
+@app.route("/static/<path:filename>")
+def static_files(filename):
+    return send_from_directory("templates", filename)
+
 
 # ─── User database (in production, use a real DB) ───
 # ─── Admin credentials (internal access) ───
