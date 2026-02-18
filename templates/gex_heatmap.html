@@ -1075,9 +1075,10 @@ function toggleIWM(){
   rerender();
 }
 
+const HEATMAP_SYMS = ['SPX','SPY','QQQ'];
 function getVisibleSyms(){
   if(!D) return [];
-  return Object.keys(D).filter(s=> showIWM || s!=='IWM').sort((a,b)=>a==='SPX'?-1:b==='SPX'?1:0);
+  return HEATMAP_SYMS.filter(s => D[s]);
 }
 
 function rerender(){
