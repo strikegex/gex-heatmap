@@ -572,23 +572,26 @@ if(sessionStorage.getItem('gex_auth')==='1'){ userTier = sessionStorage.getItem(
 
 // ═══ COLOR — solid saturated like reference tool ═══
 function gc(n,m,k){
-  // King keeps underlying GEX color — NO override
+  // Positive GEX = green (matches HeatMap), Negative GEX = purple
   const r=n/m,a=Math.min(Math.abs(r),1);
-  if(a<.01)return{r:30,g:60,b:55};
+  if(a<.01)return{r:20,g:40,b:45};
   if(r>0){
+    // Green — same as HeatMap positive
     const t=Math.pow(a,0.5);
     return{r:Math.round(30+190*t),g:Math.round(80+100*t),b:Math.round(55-35*t)};
   }
+  // Purple — same as HeatMap negative
   const t=Math.pow(a,0.5);
   return{r:Math.round(25+70*t),g:Math.round(50+10*t),b:Math.round(70+110*t)};
 }
 function tc(n,m,k){
-  if(k)return'#ff4444'; // King text RED
+  if(k)return'#fbbf24';
   const r=n/m,a=Math.abs(r);
   if(a<.01)return'#556';
   if(a>.3)return'#fff';
   return r>0?'#e8e8d0':'#d0d0e8';
 }
+
 function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
 function bh(c,k){if(k)return'<strong>👑 King</strong> — Max Gamma · Price Magnet';if(c==='positive')return'<strong>+Gamma</strong> — Dealers Short · Mean Reversion';if(c==='negative')return'<strong>−Gamma</strong> — Dealers Long · Momentum';return'<strong>Neutral</strong> — Choppy'}
 function fg(v){const a=Math.abs(v);const s=v<0?'-':'';if(a>=1e9)return s+'$'+(a/1e9).toFixed(1)+'B';if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';if(a>=1e3)return s+'$'+(a/1e3).toFixed(1)+'K';return s+'$'+a.toFixed(0)}
@@ -1646,7 +1649,7 @@ function renderOdtePanel(d) {
   const flipLevel = vis.find(s => Math.abs(s.net_gex) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
 
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start';
+  wrap.style.cssText = 'display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;max-width:900px';
 
   // ── LEFT: heatmap ──
   const leftCol = document.createElement('div');
@@ -1668,7 +1671,7 @@ function renderOdtePanel(d) {
   `;
 
   const strikesDiv = document.createElement('div');
-  strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto';
+  strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto;max-width:100%';
 
   vis.forEach(s => {
     const iS = s.strike === ss, iK = s.strike === ks, iV = surgeStrikes.has(s.strike);
@@ -1690,14 +1693,9 @@ function renderOdtePanel(d) {
     }
 
     const row = document.createElement('div');
-    row.style.cssText = `position:relative;display:flex;align-items:center;padding:5px 16px;min-height:32px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.03);${iK ? 'background:rgba(251,191,36,0.07);border-left:3px solid var(--yellow)' : iS ? 'background:rgba(99,102,241,0.09);border-left:3px solid var(--accent)' : 'border-left:3px solid transparent'}`;
+    row.className = 'sr' + (iS ? ' spot' : '') + (iK ? ' king' : '');
     if (iV) row.style.borderRight = '3px solid var(--cyan)';
-
-    row.innerHTML = `
-      <div style="position:absolute;left:0;top:0;bottom:0;width:${barPct}%;background:rgb(${co.r},${co.g},${co.b});opacity:0.3;pointer-events:none"></div>
-      <span style="position:relative;min-width:65px;font-size:14px;font-weight:700;color:${iK ? 'var(--yellow)' : iS ? 'var(--accent)' : 'var(--text)'}">${fp(s.strike)}${chgTag}</span>
-      <span style="position:relative;flex:1;font-size:14px;font-weight:600;color:${tco};text-align:right">${fg(s.net_gex)}${iK ? ' 👑' : ''}${iV ? ' 📈' : ''}</span>
-    `;
+    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
     row.onmouseenter = e => showTip(e, s, symbol, spot, mx, iK);
     row.onmousemove = moveTip;
     row.onmouseleave = hideTip;
@@ -1785,14 +1783,24 @@ function renderOdtePanel(d) {
 
   // 5. Volume Surges
   if (d.volume_surges && d.volume_surges.length) {
-    let vsHtml = d.volume_surges.slice(0, 4).map(v => {
+    let vsHtml = d.volume_surges.slice(0, 5).map(v => {
       const dist = ((v.strike - spot) / spot * 100);
-      const sign = dist >= 0 ? '+' : '';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:13px;font-weight:700;color:var(--cyan)">$${fp(v.strike)}</span>
-        <span style="font-size:11px;color:var(--dim)">${sign}${dist.toFixed(1)}% from spot</span>
+      const distSign = dist >= 0 ? '+' : '';
+      const pct = v.pct || 0;
+      const pctColor = pct >= 200 ? '#f87171' : pct >= 100 ? '#fb923c' : '#67e8f9';
+      const arrow = pct >= 0 ? '▲' : '▼';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;padding:5px 8px;background:rgba(103,232,249,0.05);border-radius:6px;border-left:3px solid ${pctColor}">
+        <div>
+          <span style="font-size:13px;font-weight:700;color:var(--bright)">$${fp(v.strike)}</span>
+          <span style="font-size:10px;color:var(--dim);margin-left:6px">${distSign}${dist.toFixed(1)}% from spot</span>
+        </div>
+        <div style="text-align:right">
+          <span style="font-size:13px;font-weight:700;color:${pctColor}">${arrow}${Math.abs(pct).toFixed(0)}%</span>
+          <div style="font-size:10px;color:var(--dim)">${(v.curr_vol||0).toLocaleString()} vol</div>
+        </div>
       </div>`;
     }).join('');
+    vsHtml += `<div style="font-size:10px;color:var(--dim);margin-top:6px">% change vs prior snapshot</div>`;
     rightCol.appendChild(card('📈 Volume Surges', vsHtml));
   }
 
