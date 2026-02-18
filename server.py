@@ -144,6 +144,10 @@ def fetch_loop():
 
 @app.route("/")
 def index():
+    return send_from_directory("templates", "landing.html")
+
+@app.route("/app")
+def app_page():
     return send_from_directory("templates", "gex_heatmap.html")
 
 
