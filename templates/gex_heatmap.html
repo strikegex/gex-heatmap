@@ -1649,7 +1649,7 @@ function renderOdtePanel(d) {
   const flipLevel = vis.find(s => Math.abs(s.net_gex) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
 
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:grid;grid-template-columns:minmax(0,1.3fr) 420px 280px;gap:14px;align-items:start';
+  wrap.style.cssText = 'display:grid;grid-template-columns:minmax(0,1.1fr) 420px 420px;gap:14px;align-items:start';
 
   // ── LEFT: heatmap ──
   const leftCol = document.createElement('div');
