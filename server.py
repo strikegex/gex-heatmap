@@ -152,7 +152,7 @@ def app_page():
 
 @app.route("/static/<path:filename>")
 def static_files(filename):
-    return send_from_directory("templates", filename)
+    return send_from_directory("static", filename)
 
 
 # ─── User database (in production, use a real DB) ───
