@@ -3,7 +3,8 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GEX Heatmap + Strategy</title>
+<title>StrikeGEX - Visualize Market Direction</title>
+<link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,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">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -284,8 +285,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="login-box">
     <h2><em>Strike</em>GEX</h2>
     <p>Restricted access. Enter your credentials.</p>
-    <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
-    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+    <input type="text" id="loginUser" placeholder="Email or username" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Password or license key" autocomplete="current-password">
     <button class="login-btn" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="loginErr">Invalid username or password</div>
   </div>
@@ -318,11 +319,11 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 </div>
 <div class="tabs">
   <div class="tab active" onclick="switchTab('live')">🗺️ StrikeMap</div>
-  <div class="tab" onclick="switchTab('heatmap')">🔥 HeatMap</div>
+  <div class="tab" onclick="switchTab('heatmap')">🔥 HeatMap 0DTE</div>
 </div>
 <div class="ctrl" id="ctrlBar">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
-  <div class="ctrl-g"><button onclick="toggleStrats()" id="stratBtn">📊 Strategy</button></div>
+  <div class="ctrl-g"><button onclick="stratClick()" id="stratBtn" title="Requires account approval">📊 Strategy 🔒</button></div>
   <div class="ctrl-g"><button onclick="toggleIWM()" id="iwmBtn" style="font-size:10px;opacity:0.5">IWM: OFF</button></div>
   <div class="ctrl-g"><button onclick="toggleColorGuide()" id="cgBtn" style="font-size:9px;padding:3px 8px">? Guide</button></div>
   <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
@@ -375,14 +376,20 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div id="gexLive" style="display:flex;flex:1;flex-direction:column;overflow:hidden;min-height:0">
     <!-- Toolbar: symbol search + current symbol display -->
     <div style="display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--panel);gap:10px;flex-shrink:0;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 10px">
-        <span style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Symbol</span>
-        <input id="liveSymInput" type="text" value="SPX" maxlength="6"
-          style="background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);width:70px;text-transform:uppercase"
-          placeholder="SPX" oninput="this.value=this.value.toUpperCase()"
-          onkeydown="if(event.key==='Enter')setLiveSym(this.value.trim())">
-        <button onclick="setLiveSym(document.getElementById('liveSymInput').value.trim())"
-          style="background:var(--accent);border:none;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;cursor:pointer;letter-spacing:.3px">GO</button>
+      <div style="display:flex;align-items:center;gap:8px;position:relative">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--accent);border-radius:8px;padding:6px 14px;box-shadow:0 0 12px rgba(100,180,100,0.2)">
+          <span style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:600">Symbol</span>
+          <input id="liveSymInput" type="text" value="SPX" maxlength="10"
+            style="background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:var(--bright);width:90px;text-transform:uppercase"
+            placeholder="SPX" 
+            oninput="this.value=this.value.toUpperCase();filterSymDropdown(this.value)"
+            onfocus="showSymDropdown()"
+            onkeydown="handleSymKey(event)">
+          <button onclick="setLiveSym(document.getElementById('liveSymInput').value.trim())"
+            style="background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:800;padding:6px 16px;border-radius:6px;cursor:pointer;letter-spacing:.5px;transition:opacity .15s"
+            onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">GO</button>
+        </div>
+        <div id="symDropdown" style="display:none;position:absolute;top:100%;left:0;z-index:999;background:#1a1f2e;border:1px solid var(--border);border-radius:8px;max-height:260px;overflow-y:auto;min-width:200px;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,.6)"></div>
       </div>
       <div id="liveSymInfo" style="font-size:11px;color:var(--dim)"></div>
       <!-- Legend -->
@@ -480,6 +487,8 @@ function doLogin(){
     .then(r=>r.json()).then(d=>{
       if(d.ok){
         sessionStorage.setItem('gex_auth','1');
+        userTier = d.tier || 'free';
+        sessionStorage.setItem('gex_tier', userTier);
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
         startServerFetch(); fetchLiveData();
@@ -501,7 +510,7 @@ document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPass').focus()});
 
 // Check session on load
-if(sessionStorage.getItem('gex_auth')==='1'){
+if(sessionStorage.getItem('gex_auth')==='1'){ userTier = sessionStorage.getItem('gex_tier') || 'free';
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('appWrap').style.display='';
 }
@@ -792,6 +801,44 @@ function getTrackingHtml(sym) {
 
 // ═══ STRATEGY TOGGLE ═══
 let stratVisible = false;
+let userTier = 'free'; // set on login: 'free' | 'approved'
+
+function stratClick(){
+  if(userTier !== 'approved'){
+    showUpgradeModal();
+    return;
+  }
+  toggleStrats();
+}
+
+function showUpgradeModal(){
+  const existing = document.getElementById('upgradeModal');
+  if(existing){ existing.style.display='flex'; return; }
+  const m = document.createElement('div');
+  m.id = 'upgradeModal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+  m.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:32px;max-width:380px;text-align:center">
+      <div style="font-size:28px;margin-bottom:12px">🔒</div>
+      <div style="font-size:18px;font-weight:700;color:var(--bright);margin-bottom:8px">Strategy Access Required</div>
+      <div style="font-size:13px;color:var(--dim);margin-bottom:20px;line-height:1.6">
+        The Strategy panel is available to approved members only.<br>
+        Upgrade your account to unlock GEX-based trade recommendations.
+      </div>
+      <a href="mailto:support@strikegex.com?subject=Strategy Access Request" 
+         style="display:inline-block;background:var(--accent);color:#fff;font-weight:700;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:13px;margin-bottom:12px">
+        Request Access
+      </a>
+      <br>
+      <button onclick="document.getElementById('upgradeModal').style.display='none'"
+        style="background:transparent;border:none;color:var(--dim);font-size:12px;cursor:pointer;margin-top:8px">
+        Close
+      </button>
+    </div>`;
+  document.body.appendChild(m);
+  m.onclick = e => { if(e.target===m) m.style.display='none'; };
+}
+
 function toggleStrats() {
   stratVisible = !stratVisible;
   const sw = document.getElementById('sw'), btn = document.getElementById('stratBtn');
@@ -1410,5 +1457,66 @@ function renderLiveHeatmap(){
   }, 80);
 }
 
+
+// ── SYMBOL LIST & DROPDOWN ──────────────────────────────────────
+const ALL_SYMBOLS = ['SPX', 'SPY', 'QQQ', 'IWM', 'DIA', 'VIX', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'GOOG', 'AMZN', 'META', 'TSLA', 'AVGO', 'ORCL', 'AMD', 'INTC', 'QCOM', 'TXN', 'MU', 'AMAT', 'LRCX', 'KLAC', 'MRVL', 'NXPI', 'ADI', 'MCHP', 'ON', 'SWKS', 'QRVO', 'MPWR', 'ENTG', 'COHR', 'WOLF', 'NFLX', 'DIS', 'CMCSA', 'T', 'VZ', 'TMUS', 'CHTR', 'PARA', 'WBD', 'FOXA', 'JPM', 'BAC', 'WFC', 'GS', 'MS', 'C', 'BLK', 'SCHW', 'AXP', 'V', 'MA', 'COF', 'USB', 'PNC', 'TFC', 'FITB', 'KEY', 'RF', 'CFG', 'HBAN', 'UNH', 'JNJ', 'LLY', 'ABBV', 'MRK', 'PFE', 'TMO', 'DHR', 'ABT', 'AMGN', 'GILD', 'REGN', 'VRTX', 'MRNA', 'BMY', 'CVS', 'HUM', 'CI', 'ELV', 'CNC', 'XOM', 'CVX', 'COP', 'SLB', 'EOG', 'MPC', 'PSX', 'VLO', 'OXY', 'BKR', 'HAL', 'DVN', 'FANG', 'HES', 'APA', 'MRO', 'PXD', 'CTRA', 'EQT', 'RRC', 'WMT', 'HD', 'COST', 'TGT', 'LOW', 'MCD', 'SBUX', 'NKE', 'LULU', 'TJX', 'ROST', 'DLTR', 'DG', 'KR', 'SYY', 'YUM', 'CMG', 'DPZ', 'QSR', 'CAT', 'BA', 'HON', 'UPS', 'RTX', 'LMT', 'GE', 'DE', 'MMM', 'EMR', 'ETN', 'PH', 'ROK', 'ITW', 'GD', 'NOC', 'TDG', 'CARR', 'OTIS', 'XYL', 'LIN', 'APD', 'ECL', 'SHW', 'FCX', 'NUE', 'STLD', 'CF', 'MOS', 'ALB', 'AMT', 'PLD', 'EQIX', 'CCI', 'SPG', 'O', 'DLR', 'VICI', 'EXR', 'PSA', 'XLK', 'XLF', 'XLE', 'XLV', 'XLI', 'XLY', 'XLC', 'XLB', 'XLRE', 'XLU', 'XLP', 'GLD', 'SLV', 'TLT', 'HYG', 'LQD', 'EEM', 'EFA', 'VNQ', 'ARKK', 'SOXX', 'SMH', 'XBI', 'IBB', 'KRE', 'XRT', 'IAU', 'USO', 'UNG', 'UBER', 'LYFT', 'SNAP', 'PINS', 'RBLX', 'U', 'COIN', 'HOOD', 'SOFI', 'AFRM', 'SHOP', 'MELI', 'SE', 'BABA', 'JD', 'PDD', 'TCEHY', 'PLTR', 'DDOG', 'NET', 'SNOW', 'MDB', 'CRWD', 'ZS', 'PANW', 'S', 'FTNT', 'NOW', 'CRM', 'ADBE', 'INTU', 'WDAY', 'VEEV', 'HUBS', 'TEAM', 'ZM', 'ABNB', 'BKNG', 'EXPE', 'MAR', 'HLT', 'RCL', 'CCL', 'NCLH', 'DAL', 'UAL', 'AAL', 'LUV', 'PYPL', 'SQ', 'ADYEY', 'ANET', 'SMCI', 'HPE', 'HPQ', 'DELL', 'WDC', 'STX', 'RIVN', 'LCID', 'F', 'GM', 'STLA', 'TM', 'HMC', 'NIO', 'LI', 'XPEV'];
+let symDropdownActive = -1;
+let symDropdownFiltered = [...ALL_SYMBOLS];
+
+function showSymDropdown() {
+  filterSymDropdown(document.getElementById('liveSymInput').value);
+}
+
+function filterSymDropdown(val) {
+  const dd = document.getElementById('symDropdown');
+  const q = val.toUpperCase().trim();
+  symDropdownFiltered = q ? ALL_SYMBOLS.filter(s => s.startsWith(q)) : ALL_SYMBOLS;
+  if (!symDropdownFiltered.length) { dd.style.display='none'; return; }
+  dd.innerHTML = symDropdownFiltered.slice(0, 50).map((s,i) =>
+    `<div onclick="pickSym('${s}')" 
+      style="padding:8px 14px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--bright);transition:background .1s"
+      onmouseover="this.style.background='rgba(100,200,100,.12)';symDropdownActive=${i}"
+      onmouseout="this.style.background=''"
+    >${s}</div>`
+  ).join('');
+  dd.style.display = 'block';
+  symDropdownActive = -1;
+}
+
+function pickSym(sym) {
+  document.getElementById('liveSymInput').value = sym;
+  document.getElementById('symDropdown').style.display = 'none';
+  setLiveSym(sym);
+}
+
+function handleSymKey(e) {
+  const dd = document.getElementById('symDropdown');
+  const items = dd.querySelectorAll('div');
+  if (e.key === 'ArrowDown') {
+    symDropdownActive = Math.min(symDropdownActive+1, items.length-1);
+    items.forEach((el,i) => el.style.background = i===symDropdownActive ? 'rgba(100,200,100,.18)' : '');
+    e.preventDefault();
+  } else if (e.key === 'ArrowUp') {
+    symDropdownActive = Math.max(symDropdownActive-1, -1);
+    items.forEach((el,i) => el.style.background = i===symDropdownActive ? 'rgba(100,200,100,.18)' : '');
+    e.preventDefault();
+  } else if (e.key === 'Enter') {
+    if (symDropdownActive >= 0 && items[symDropdownActive]) {
+      pickSym(symDropdownFiltered[symDropdownActive]);
+    } else {
+      setLiveSym(document.getElementById('liveSymInput').value.trim());
+      dd.style.display = 'none';
+    }
+  } else if (e.key === 'Escape') {
+    dd.style.display = 'none';
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#symDropdown') && e.target.id !== 'liveSymInput') {
+    document.getElementById('symDropdown').style.display = 'none';
+  }
+});
 </script>
 </body></html>
