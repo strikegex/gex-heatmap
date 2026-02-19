@@ -210,7 +210,7 @@ def calculate_gex(chain, spot):
 
 def calculate_gex_per_expiry(chain, spot):
     """Calculate GEX broken out by expiration date. Returns {exp_date: {strike: data}}
-    Uses net gamma formula: OI * gamma * multiplier (matches Python reference heatmap).
+    Uses dollar GEX formula: OI * gamma * spot^2 * 0.01 * multiplier.
     Calls contribute positive gamma, puts contribute negative gamma.
     """
     today = date.today()
@@ -238,8 +238,7 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                # Net gamma: OI * gamma * multiplier (no spot scaling)
-                gex = oi * gamma * CONTRACT_MULTIPLIER
+                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
@@ -267,8 +266,7 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                # Net gamma: OI * gamma * multiplier (puts subtract)
-                gex = oi * gamma * CONTRACT_MULTIPLIER
+                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
