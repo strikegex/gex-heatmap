@@ -440,7 +440,19 @@ def fetch_gex_all_expirations(client, symbol, num_strikes=40):
         cum_filtered = []
 
     cum_total = sum(s["net_gex"] for s in cum_filtered)
-    cum_king = max(cum_filtered, key=lambda s: abs(s.get("call_gex",0)) + abs(s.get("put_gex",0))) if cum_filtered else None
+    # King = strike with highest abs(net_gex) in ANY single expiry (not cumulative sum)
+    best_strike = None
+    best_val = 0
+    for exp_d2, ed2 in per_exp.items():
+        for strike2, sdata in ed2.items():
+            av = abs(sdata.get("net_gex", 0))
+            if av > best_val:
+                best_val = av
+                best_strike = strike2
+    # Find that strike in cum_filtered for the king object
+    cum_king = next((s for s in cum_filtered if s["strike"] == best_strike), None)
+    if cum_king is None and cum_filtered:
+        cum_king = max(cum_filtered, key=lambda s: abs(s["net_gex"]))
 
     exp_data["ALL"] = {
         "expiration": "ALL",
