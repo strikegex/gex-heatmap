@@ -159,7 +159,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr{display:flex;align-items:center;height:36px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
 .sr:hover{outline:1px solid rgba(255,255,255,.15);z-index:1}
 .sr.spot{outline:2px solid #fff;z-index:2}
-.sr.king{outline:none;z-index:5;border:4px solid #ff0000;box-shadow:0 0 16px rgba(255,0,0,.5),inset 0 0 8px rgba(255,0,0,.15);border-radius:4px;margin:2px 0}
+.sr.king{outline:none;z-index:5;border:3px solid rgba(255,68,68,0.9);box-shadow:0 0 12px rgba(255,0,0,.4);border-radius:3px;margin:1px 0;background:rgba(255,68,68,0.08)}
 .sr-bg{position:absolute;top:0;bottom:0;transition:opacity .15s}
 .sr:hover .sr-bg{opacity:.85}
 .sr-lbl{width:110px;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:flex-end;gap:4px;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
@@ -1468,9 +1468,15 @@ function renderLiveHeatmap(){
   // Find spot row
   const nearSpot = allStrikes.reduce((b,s) => Math.abs(s-spot) < Math.abs(b-spot) ? s : b, allStrikes[0]);
 
-  // King strike (from ALL or first exp)
-  const allED = expData['ALL'] || expData[filteredExps[0]];
-  const kingStrike = allED ? (allED.king_strike || 0) : 0;
+  // King = strike with highest abs(net_gex) in ANY single expiry cell
+  let kingStrike = 0, kingVal = 0;
+  filteredExps.forEach(exp => {
+    const ed = expData[exp];
+    if(ed && ed.strikes) ed.strikes.forEach(s => {
+      const av = Math.abs(s.net_gex);
+      if(av > kingVal){ kingVal = av; kingStrike = s.strike; }
+    });
+  });
 
   // Update info bar
   infoEl.textContent = `${liveSym} · Spot $${spot.toFixed(2)} · ${filteredExps.length} expirations · ${allStrikes.length} strikes`;
@@ -1705,10 +1711,15 @@ function renderOdtePanel(d) {
       }
     }
 
+    // For king row: use gross gamma for bar width to reflect true concentration
+    const grossGamma = Math.abs(s.call_gex||0) + Math.abs(s.put_gex||0);
+    const grossMax = Math.max(...vis.map(x => Math.abs(x.call_gex||0) + Math.abs(x.put_gex||0)), 1);
+    const kingBarPct = iK ? Math.max(10, Math.min(100, Math.round(grossGamma / grossMax * 100))) : barPct;
+
     const row = document.createElement('div');
     row.className = 'sr' + (iS ? ' spot' : '') + (iK ? ' king' : '');
     if (iV) row.style.borderRight = '3px solid var(--cyan)';
-    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
+    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${kingBarPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
     row.onmouseenter = e => showTip(e, s, symbol, spot, mx, iK);
     row.onmousemove = moveTip;
     row.onmouseleave = hideTip;
