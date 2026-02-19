@@ -1336,14 +1336,13 @@ async function fetchLiveData(){
   }catch(e){console.error('GEX-ALL fetch:',e)}
 }
 
-// ── Color scale: negative=purple, zero=black, positive=green ──
+// ── Color scale matching reference: teal base, yellow=positive peak, purple=negative peak ──
 function gexColor(v, mx){
-  if(mx===0) return '#0a0e0a';
+  if(mx===0) return 'rgb(0,160,150)'; // teal = zero
 
-  // Use sqrt scaling so mid-range values get real color (not just outliers)
-  // This matches the reference images where most cells show visible color
   const sign = v >= 0 ? 1 : -1;
-  const t = Math.sqrt(Math.min(1, Math.abs(v) / mx)); // 0..1, sqrt-compressed
+  const raw = Math.min(1, Math.abs(v) / mx);
+  const t = Math.pow(raw, 0.6); // compression: mid-range gets visible color
 
   function lerp(a, b, f){ return Math.round(a + (b-a)*f); }
   function colorAt(stops, f){
@@ -1356,24 +1355,23 @@ function gexColor(v, mx){
   }
 
   if(sign >= 0){
-    // black → vivid teal → bright green → lime → hot yellow
+    // teal(zero) → green → lime → hot yellow
     const stops = [
-      [10,  25,  15],   // 0.0  near-black
-      [0,  140,  90],   // 0.25 vivid teal
-      [20, 210,  60],   // 0.5  bright green
-      [120,240,  10],   // 0.75 lime
-      [230,255,   0],   // 1.0  hot yellow-green
+      [0,  160, 150],   // 0.0  vivid teal = zero
+      [20, 200,  80],   // 0.4  green
+      [180,230,  10],   // 0.75 lime-yellow
+      [255,220,   0],   // 1.0  hot yellow
     ];
     const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
   } else {
-    // black → vivid purple → bright magenta-purple → hot violet
+    // teal(zero) → blue-teal → purple → hot violet
     const stops = [
-      [10,   8,  20],   // 0.0  near-black
-      [80,   5, 140],   // 0.25 vivid purple
-      [150,   5, 210],  // 0.5  bright purple
-      [200,  10, 240],  // 0.75 hot violet
-      [230,  20, 255],  // 1.0  max magenta-violet
+      [0,  160, 150],   // 0.0  vivid teal = zero
+      [30,  60, 160],   // 0.35 blue-teal
+      [100,  5, 180],   // 0.65 purple
+      [190,  5, 230],   // 0.85 bright violet
+      [220, 10, 255],   // 1.0  hot magenta-violet
     ];
     const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
