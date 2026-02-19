@@ -586,24 +586,36 @@ if(sessionStorage.getItem('gex_auth')==='1'){ userTier = sessionStorage.getItem(
 
 // ═══ COLOR — solid saturated like reference tool ═══
 function gc(n,m,k){
-  // Positive GEX = green (matches HeatMap), Negative GEX = purple
-  const r=n/m,a=Math.min(Math.abs(r),1);
-  if(a<.01)return{r:20,g:40,b:45};
-  if(r>0){
-    // Green — same as HeatMap positive
-    const t=Math.pow(a,0.5);
-    return{r:Math.round(30+190*t),g:Math.round(80+100*t),b:Math.round(55-35*t)};
-  }
-  // Purple — same as HeatMap negative
-  const t=Math.pow(a,0.5);
-  return{r:Math.round(25+70*t),g:Math.round(50+10*t),b:Math.round(70+110*t)};
+  // Viridis colormap matching StrikeMap — single continuous scale
+  // Maps n in [-m, +m] to viridis [0.0, 1.0]
+  if(m===0) return{r:33,g:145,b:140};
+  const t = Math.max(0, Math.min(1, (n / m + 1) / 2));
+  const viridis = [
+    [68,   1,  84],  // 0.00
+    [72,  36, 117],  // 0.10
+    [65,  68, 135],  // 0.20
+    [53,  95, 141],  // 0.30
+    [42, 120, 142],  // 0.40
+    [33, 145, 140],  // 0.50
+    [34, 168, 132],  // 0.60
+    [68, 191, 112],  // 0.70
+    [122,209,  81],  // 0.80
+    [189,223,  38],  // 0.90
+    [253,231,  37],  // 1.00
+  ];
+  function lerp(a,b,f){return Math.round(a+(b-a)*f)}
+  const nn = viridis.length - 1;
+  const i = Math.min(nn-1, Math.floor(t * nn));
+  const frac = t * nn - i;
+  return{r:lerp(viridis[i][0],viridis[i+1][0],frac),g:lerp(viridis[i][1],viridis[i+1][1],frac),b:lerp(viridis[i][2],viridis[i+1][2],frac)};
 }
 function tc(n,m,k){
   if(k)return'#fbbf24';
-  const r=n/m,a=Math.abs(r);
-  if(a<.01)return'#556';
-  if(a>.3)return'#fff';
-  return r>0?'#e8e8d0':'#d0d0e8';
+  if(m===0) return'rgba(255,255,255,.7)';
+  const t = (n / m + 1) / 2;
+  if(t > 0.78) return'rgba(0,0,0,.8)';
+  if(t > 0.65) return'rgba(0,0,0,.6)';
+  return'rgba(255,255,255,.85)';
 }
 
 function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
