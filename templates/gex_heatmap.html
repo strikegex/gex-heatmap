@@ -262,7 +262,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .lhm-row td:hover{filter:brightness(1.4)}
 .lhm-row td.strike-col{position:sticky;left:0;z-index:10;background:var(--bg);font-size:10px;font-weight:600;color:var(--dim);border-right:1px solid var(--border);text-align:center;padding:0 2px;min-width:44px;max-width:44px}
 .lhm-row.is-spot td.strike-col{color:#fff;background:rgba(255,255,255,.07)}
-.lhm-row.is-king td.strike-col{color:var(--king)}
+.lhm-row.is-king td.strike-col{color:var(--king);font-weight:800}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
 
 /* ═══ LOGIN OVERLAY ═══ */
@@ -361,10 +361,18 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
       <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ⚪ Reduce size. Wait for clearer setup. Can flip +/− without warning.</div>
     </div>
     <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Max Absolute Gamma</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> The strike with the LARGEST absolute gamma exposure. Most dealer hedging activity.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Acts as a <em>price magnet</em>. Spot drifts toward king throughout the day, especially during 0DTE. Think gravity.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> 👑 This is your TARGET. Center butterflies here. King above spot → bullish drift. Below → bearish. At spot → pin, ideal for ICs.</div>
+      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Two Definitions (by tab)</div>
+      <div style="margin-bottom:8px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #f87171">
+        <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:3px">🔥 HeatMap &amp; 0DTE — Max Net Gamma (Directional)</div>
+        <div style="color:var(--text);font-size:11px">Strike with highest <strong>absolute net GEX</strong> (call − put). Indicates where dealers hedge most directionally. Acts as a <em>price magnet</em> — spot drifts toward it throughout the day.</div>
+        <div style="color:var(--dim);font-size:10px;margin-top:3px">King above spot → bullish drift. Below → bearish. At spot → pin zone.</div>
+      </div>
+      <div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #fbbf24">
+        <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">🗺️ StrikeMap — Max Gross Gamma (Concentration)</div>
+        <div style="color:var(--text);font-size:11px">Strike with highest <strong>total gamma exposure</strong> (|call GEX| + |put GEX|). Ignores direction — shows where the most open interest is concentrated across all expirations.</div>
+        <div style="color:var(--dim);font-size:10px;margin-top:3px">Strong support/resistance zone. Price often stalls or reverses here regardless of direction.</div>
+      </div>
+      <div style="color:var(--text);margin-top:8px;font-size:11px"><strong>Strategy:</strong> Use HeatMap King as your drift target. Use StrikeMap King (red border row) as your key S/R level for multi-expiry positioning.</div>
     </div>
   </div>
 </div>
@@ -1059,7 +1067,7 @@ function renderPanel(d){
   const vis=sorted.slice(Math.max(0,ci-n),Math.min(sorted.length,ci+n+1)).reverse();
   const mx=Math.max(...vis.map(s=>Math.abs(s.net_gex)),1);
   const ss=sorted[ci]?.strike;
-  const ks=vis.reduce((b,s)=>(s.total_gamma||Math.abs(s.net_gex))>(b.total_gamma||Math.abs(b.net_gex))?s:b).strike;
+  const ks=vis.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b).strike;
   const pc=total_net_gex>mx*.05?'pos':total_net_gex<-mx*.05?'neg':'neu';
   const pl=pc==='pos'?'+Gamma':pc==='neg'?'−Gamma':'Neutral';
   const pd=pc==='pos'?'Vol↓ Mean revert':pc==='neg'?'Vol↑ Momentum':'Choppy';
@@ -1625,7 +1633,7 @@ function renderOdtePanel(d) {
   const vis = sorted.slice(Math.max(0, ci - n), Math.min(sorted.length, ci + n + 1)).reverse();
   const mx = Math.max(...vis.map(s => Math.abs(s.net_gex)), 1);
   const ss = sorted[ci]?.strike;
-  const ks = vis.reduce((b, s) => (s.total_gamma || Math.abs(s.net_gex)) > (b.total_gamma || Math.abs(b.net_gex)) ? s : b).strike;
+  const ks = vis.reduce((b, s) => Math.abs(s.net_gex) > Math.abs(b.net_gex) ? s : b).strike;
   const pc = total_net_gex > mx * .05 ? 'pos' : total_net_gex < -mx * .05 ? 'neg' : 'neu';
   const pl = pc === 'pos' ? '+Gamma' : pc === 'neg' ? '−Gamma' : 'Neutral';
   const surgeStrikes = new Set((d.volume_surges || []).map(v => v.strike));
