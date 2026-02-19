@@ -59,7 +59,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .legend-t{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
 .legend-i{display:flex;align-items:center;gap:4px;font-size:9px}
 .lsw{width:11px;height:11px;border-radius:2px;flex-shrink:0}
-.lsw.y{background:#8ab030}.lsw.p{background:#4040b0}.lsw.g{background:#1e4040}
+.lsw.y{background:#7dd030}.lsw.p{background:#7a04a0}.lsw.g{background:rgb(30,62,62)}
 .lsw.k{background:var(--king);position:relative}
 .lsw.k::after{content:"👑";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px}
 .legend-d{color:var(--dim);font-size:8px}
@@ -404,9 +404,9 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
       <!-- Legend -->
       <div style="display:flex;align-items:center;gap:10px;font-size:10px;padding:0 8px">
         <span style="color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.5px">Legend:</span>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#50d28a"></div><span style="color:#8ab030">+Gamma</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#9010c8"></div><span style="color:#9060d0">−Gamma</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#1e4040"></div><span style="color:var(--dim)">Neutral</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:rgb(122,209,30)"></div><span style="color:#7dd030">+Gamma</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:rgb(122,4,150)"></div><span style="color:#bb23b9">−Gamma</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:rgb(30,62,62)"></div><span style="color:var(--dim)">Neutral</span></div>
         <div style="display:flex;align-items:center;gap:4px"><span>🔥</span><span style="color:var(--king)">👑 King</span></div>
       </div>
       <button onclick="toggleColorGuide()" style="font-size:9px;padding:3px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">? Guide</button>
@@ -1344,11 +1344,14 @@ async function fetchLiveData(){
 
 // ── Color scale matching reference: teal base, yellow=positive peak, purple=negative peak ──
 function gexColor(v, mx){
-  if(mx===0) return 'rgb(0,128,128)';
+  // Viridis-style diverging colormap matching Python reference heatmap
+  // Maps value to a continuous scale: negative(magenta/purple) → zero(dark teal) → positive(green→yellow)
+  if(mx===0) return 'rgb(30,62,62)';
 
-  // Linear scaling — small values stay near teal, only large ones get full color
+  // Use sqrt scaling for better contrast on mid-range values
   const sign = v >= 0 ? 1 : -1;
-  const t = Math.min(1, Math.abs(v) / mx); // pure linear, no compression
+  const rawT = Math.min(1, Math.abs(v) / mx);
+  const t = Math.sqrt(rawT); // sqrt compression: 25% of max → shows as 50% color
 
   function lerp(a, b, f){ return Math.round(a + (b-a)*f); }
   function colorAt(stops, f){
@@ -1361,22 +1364,24 @@ function gexColor(v, mx){
   }
 
   if(sign >= 0){
-    // teal → green → yellow-green → yellow (muted, matches reference)
+    // Viridis positive: dark teal → teal-green → green → lime → yellow
     const stops = [
-      [0,  128, 128],   // 0.0  teal = zero
-      [0,  180,  90],   // 0.4  green
-      [120,200,  10],   // 0.75 yellow-green
-      [220,200,   0],   // 1.0  yellow
+      [30,  62,  62],   // 0.0  dark teal (zero/baseline)
+      [32, 115,  78],   // 0.25 teal-green
+      [53, 168,  60],   // 0.50 green
+      [122,209,  30],   // 0.75 lime-green
+      [253,231,  37],   // 1.0  viridis yellow (max positive)
     ];
     const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
   } else {
-    // teal → blue → indigo → purple (muted, matches reference)
+    // Viridis negative: dark teal → blue-teal → indigo → purple → magenta
     const stops = [
-      [0,  128, 128],   // 0.0  teal = zero
-      [20,  60, 160],   // 0.4  blue
-      [80,  10, 180],   // 0.7  indigo-purple
-      [160,  0, 200],   // 1.0  purple (NOT neon magenta)
+      [30,  62,  62],   // 0.0  dark teal (zero/baseline)
+      [43,  42, 108],   // 0.25 dark indigo
+      [68,   1, 137],   // 0.50 deep purple (viridis ~0.25)
+      [122,  4, 150],   // 0.75 purple-magenta
+      [187, 35, 185],   // 1.0  bright magenta (max negative)
     ];
     const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
@@ -1386,8 +1391,8 @@ function gexColor(v, mx){
 function textColor(v, mx){
   if(mx===0) return 'rgba(255,255,255,.35)';
   const t = Math.sqrt(Math.min(1, Math.abs(v) / mx));
-  if(t < 0.12) return 'rgba(255,255,255,.3)';
-  if(t < 0.30) return 'rgba(255,255,255,.75)';
+  if(t < 0.15) return 'rgba(255,255,255,.30)';
+  if(t < 0.35) return 'rgba(255,255,255,.65)';
   return '#fff';
 }
 
@@ -1463,7 +1468,7 @@ function renderLiveHeatmap(){
     const ed = expData[exp];
     if(!ed || !ed.strikes){ expMax[exp] = 1; return; }
     let vals = ed.strikes.map(s => Math.abs(s.net_gex)).filter(v => v > 0).sort((a,b) => a-b);
-    expMax[exp] = vals.length ? vals[Math.floor(vals.length * 0.90)] : 1;
+    expMax[exp] = vals.length ? vals[Math.floor(vals.length * 0.95)] : 1;
   });
   // Global fallback (unused directly but kept for reference)
   const globalMax = Math.max(...Object.values(expMax));
@@ -1520,7 +1525,7 @@ function renderLiveHeatmap(){
     filteredExps.forEach(exp => {
       const v = lookup[exp][strike];
       if(v === undefined || v === 0){
-        html += `<td style="background:#050a0b;color:rgba(255,255,255,.1)">–</td>`;
+        html += `<td style="background:rgb(30,62,62);color:rgba(255,255,255,.15)">–</td>`;
       } else {
         const colMax = expMax[exp] || globalMax;
         const bg = gexColor(v, colMax);
