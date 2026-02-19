@@ -1085,7 +1085,7 @@ function renderPanel(d){
   const vis=sorted.slice(Math.max(0,ci-n),Math.min(sorted.length,ci+n+1)).reverse();
   const mx=Math.max(...vis.map(s=>Math.abs(s.net_gex)),1);
   const ss=sorted[ci]?.strike;
-  const ks=vis.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b).strike;
+  const ks=vis.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b).strike;
   const pc=total_net_gex>mx*.05?'pos':total_net_gex<-mx*.05?'neg':'neu';
   const pl=pc==='pos'?'+Gamma':pc==='neg'?'−Gamma':'Neutral';
   const pd=pc==='pos'?'Vol↓ Mean revert':pc==='neg'?'Vol↑ Momentum':'Choppy';
