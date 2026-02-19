@@ -1344,11 +1344,11 @@ async function fetchLiveData(){
 
 // ── Color scale matching reference: teal base, yellow=positive peak, purple=negative peak ──
 function gexColor(v, mx){
-  if(mx===0) return 'rgb(0,160,150)'; // teal = zero
+  if(mx===0) return 'rgb(0,128,128)';
 
+  // Linear scaling — small values stay near teal, only large ones get full color
   const sign = v >= 0 ? 1 : -1;
-  const raw = Math.min(1, Math.abs(v) / mx);
-  const t = Math.pow(raw, 0.6); // compression: mid-range gets visible color
+  const t = Math.min(1, Math.abs(v) / mx); // pure linear, no compression
 
   function lerp(a, b, f){ return Math.round(a + (b-a)*f); }
   function colorAt(stops, f){
@@ -1361,23 +1361,22 @@ function gexColor(v, mx){
   }
 
   if(sign >= 0){
-    // teal(zero) → green → lime → hot yellow
+    // teal → green → yellow-green → yellow (muted, matches reference)
     const stops = [
-      [0,  160, 150],   // 0.0  vivid teal = zero
-      [20, 200,  80],   // 0.4  green
-      [180,230,  10],   // 0.75 lime-yellow
-      [255,220,   0],   // 1.0  hot yellow
+      [0,  128, 128],   // 0.0  teal = zero
+      [0,  180,  90],   // 0.4  green
+      [120,200,  10],   // 0.75 yellow-green
+      [220,200,   0],   // 1.0  yellow
     ];
     const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
   } else {
-    // teal(zero) → blue-teal → purple → hot violet
+    // teal → blue → indigo → purple (muted, matches reference)
     const stops = [
-      [0,  160, 150],   // 0.0  vivid teal = zero
-      [30,  60, 160],   // 0.35 blue-teal
-      [100,  5, 180],   // 0.65 purple
-      [190,  5, 230],   // 0.85 bright violet
-      [220, 10, 255],   // 1.0  hot magenta-violet
+      [0,  128, 128],   // 0.0  teal = zero
+      [20,  60, 160],   // 0.4  blue
+      [80,  10, 180],   // 0.7  indigo-purple
+      [160,  0, 200],   // 1.0  purple (NOT neon magenta)
     ];
     const [r,g,b] = colorAt(stops, t);
     return `rgb(${r},${g},${b})`;
