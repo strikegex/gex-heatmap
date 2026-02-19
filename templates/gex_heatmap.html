@@ -1456,27 +1456,33 @@ function renderLiveHeatmap(){
     if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = s.net_gex; });
   });
 
-  // Use 95th percentile as color scale max — prevents one outlier crushing all other colors
-  let allVals = [];
+  // Per-column color scale max (95th pct per expiry) — each column gets its own scale
+  // This prevents one expiry's huge values from washing out other columns
+  const expMax = {};
   filteredExps.forEach(exp => {
     const ed = expData[exp];
-    if(ed && ed.strikes) ed.strikes.forEach(s => { if(s.net_gex !== 0) allVals.push(Math.abs(s.net_gex)); });
+    if(!ed || !ed.strikes){ expMax[exp] = 1; return; }
+    let vals = ed.strikes.map(s => Math.abs(s.net_gex)).filter(v => v > 0).sort((a,b) => a-b);
+    expMax[exp] = vals.length ? vals[Math.floor(vals.length * 0.90)] : 1;
   });
-  allVals.sort((a,b) => a-b);
-  const globalMax = allVals.length ? allVals[Math.floor(allVals.length * 0.95)] : 1;
+  // Global fallback (unused directly but kept for reference)
+  const globalMax = Math.max(...Object.values(expMax));
 
   // Find spot row
   const nearSpot = allStrikes.reduce((b,s) => Math.abs(s-spot) < Math.abs(b-spot) ? s : b, allStrikes[0]);
 
-  // King = strike with highest abs(net_gex) in ANY single expiry cell
+  // King = max abs(net_gex) in 0DTE column only (nearest expiry if no 0DTE)
   let kingStrike = 0, kingVal = 0;
-  filteredExps.forEach(exp => {
-    const ed = expData[exp];
-    if(ed && ed.strikes) ed.strikes.forEach(s => {
+  // Find 0DTE expiry first
+  const odteExp = filteredExps.find(exp => expData[exp] && expData[exp].dte === 0);
+  const nearestExp = filteredExps.filter(e => e !== 'ALL').sort((a,b) => (expData[a]?.dte||99) - (expData[b]?.dte||99))[0];
+  const kingExp = odteExp || nearestExp;
+  if(kingExp && expData[kingExp]?.strikes){
+    expData[kingExp].strikes.forEach(s => {
       const av = Math.abs(s.net_gex);
       if(av > kingVal){ kingVal = av; kingStrike = s.strike; }
     });
-  });
+  }
 
   // Update info bar
   infoEl.textContent = `${liveSym} · Spot $${spot.toFixed(2)} · ${filteredExps.length} expirations · ${allStrikes.length} strikes`;
@@ -1516,8 +1522,9 @@ function renderLiveHeatmap(){
       if(v === undefined || v === 0){
         html += `<td style="background:#050a0b;color:rgba(255,255,255,.1)">–</td>`;
       } else {
-        const bg = gexColor(v, globalMax);
-        const fg = textColor(v, globalMax);
+        const colMax = expMax[exp] || globalMax;
+        const bg = gexColor(v, colMax);
+        const fg = textColor(v, colMax);
         html += `<td style="background:${bg};color:${fg}" title="${strike} ${exp}: ${fmtGex(v)}">${fmtGex(v)}</td>`;
       }
     });
