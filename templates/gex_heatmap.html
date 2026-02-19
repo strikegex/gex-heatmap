@@ -59,7 +59,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .legend-t{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
 .legend-i{display:flex;align-items:center;gap:4px;font-size:9px}
 .lsw{width:11px;height:11px;border-radius:2px;flex-shrink:0}
-.lsw.y{background:rgb(253,231,37)}.lsw.p{background:rgb(68,1,84)}.lsw.g{background:rgb(33,145,140)}
+.lsw.y{background:rgb(189,223,38)}.lsw.p{background:rgb(68,1,84)}.lsw.g{background:rgb(33,145,140)}
 .lsw.k{background:var(--king);position:relative}
 .lsw.k::after{content:"👑";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px}
 .legend-d{color:var(--dim);font-size:8px}
@@ -586,35 +586,28 @@ if(sessionStorage.getItem('gex_auth')==='1'){ userTier = sessionStorage.getItem(
 
 // ═══ COLOR — solid saturated like reference tool ═══
 function gc(n,m,k){
-  // Viridis colormap matching StrikeMap — single continuous scale
-  // Maps n in [-m, +m] to viridis [0.0, 1.0]
-  if(m===0) return{r:33,g:145,b:140};
-  const t = Math.max(0, Math.min(1, (n / m + 1) / 2));
-  const viridis = [
-    [68,   1,  84],  // 0.00
-    [72,  36, 117],  // 0.10
-    [65,  68, 135],  // 0.20
-    [53,  95, 141],  // 0.30
-    [42, 120, 142],  // 0.40
-    [33, 145, 140],  // 0.50
-    [34, 168, 132],  // 0.60
-    [68, 191, 112],  // 0.70
-    [122,209,  81],  // 0.80
-    [189,223,  38],  // 0.90
-    [253,231,  37],  // 1.00
+  // Viridis colormap — maps n from [-m, +m] onto viridis using actual data range
+  // For bar charts, m = max(abs(net_gex)), so range is [-m, +m]
+  if(m===0) return{r:68,g:1,b:84};
+  const dataMin = -m, dataMax = m;
+  const range = dataMax - dataMin;
+  const t = Math.max(0, Math.min(1, (n - dataMin) / range));
+  const V = [
+    [68,   1,  84],[72,  36, 117],[65,  68, 135],[53,  95, 141],[42, 120, 142],
+    [33, 145, 140],[34, 168, 132],[68, 191, 112],[122,209,  81],[189,223,  38],[253,231,  37]
   ];
   function lerp(a,b,f){return Math.round(a+(b-a)*f)}
-  const nn = viridis.length - 1;
+  const nn = V.length - 1;
   const i = Math.min(nn-1, Math.floor(t * nn));
   const frac = t * nn - i;
-  return{r:lerp(viridis[i][0],viridis[i+1][0],frac),g:lerp(viridis[i][1],viridis[i+1][1],frac),b:lerp(viridis[i][2],viridis[i+1][2],frac)};
+  return{r:lerp(V[i][0],V[i+1][0],frac),g:lerp(V[i][1],V[i+1][1],frac),b:lerp(V[i][2],V[i+1][2],frac)};
 }
 function tc(n,m,k){
   if(k)return'#fbbf24';
   if(m===0) return'rgba(255,255,255,.7)';
-  const t = (n / m + 1) / 2;
-  if(t > 0.78) return'rgba(0,0,0,.8)';
-  if(t > 0.65) return'rgba(0,0,0,.6)';
+  const t = (n / m + 1) / 2; // maps [-m,+m] to [0,1]
+  if(t > 0.82) return'rgba(0,0,0,.75)';
+  if(t > 0.68) return'rgba(0,0,0,.55)';
   return'rgba(255,255,255,.85)';
 }
 
@@ -1354,51 +1347,44 @@ async function fetchLiveData(){
   }catch(e){console.error('GEX-ALL fetch:',e)}
 }
 
-// ── Color scale matching reference: teal base, yellow=positive peak, purple=negative peak ──
-function gexColor(v, mx){
-  // TRUE matplotlib viridis colormap — single continuous scale
-  // Maps v in [-mx, +mx] to viridis [0.0, 1.0]
-  // -max → dark purple (viridis 0.0)
-  //  0   → teal (viridis 0.5)
-  // +max → yellow (viridis 1.0)
-  if(mx===0) return 'rgb(33,145,140)';
+// ── Color scale: TRUE matplotlib viridis mapped over actual data [min, max] ──
+function gexColor(v, dataMin, dataMax){
+  // Maps v in [dataMin, dataMax] linearly onto viridis [0.0, 1.0]
+  // dataMin → dark purple (viridis 0.0)
+  // dataMax → yellow (viridis 1.0)
+  // Zero falls wherever it naturally sits in the data range (NOT forced to 0.5)
+  const range = dataMax - dataMin;
+  if(range === 0) return 'rgb(68,1,84)';
+  const t = Math.max(0, Math.min(1, (v - dataMin) / range));
 
-  // Normalize to 0..1 where 0 = -mx, 0.5 = 0, 1.0 = +mx
-  const t = Math.max(0, Math.min(1, (v / mx + 1) / 2));
-
-  // Viridis colormap stops (sampled from matplotlib)
-  const viridis = [
-    [68,   1,  84],  // 0.00 - dark purple (most negative)
+  const V = [
+    [68,   1,  84],  // 0.00
     [72,  36, 117],  // 0.10
     [65,  68, 135],  // 0.20
     [53,  95, 141],  // 0.30
     [42, 120, 142],  // 0.40
-    [33, 145, 140],  // 0.50 - teal (zero)
+    [33, 145, 140],  // 0.50
     [34, 168, 132],  // 0.60
     [68, 191, 112],  // 0.70
     [122,209,  81],  // 0.80
     [189,223,  38],  // 0.90
-    [253,231,  37],  // 1.00 - yellow (most positive)
+    [253,231,  37],  // 1.00
   ];
-
   function lerp(a, b, f){ return Math.round(a + (b-a)*f); }
-  const n = viridis.length - 1;
+  const n = V.length - 1;
   const i = Math.min(n-1, Math.floor(t * n));
   const frac = t * n - i;
-  const r = lerp(viridis[i][0], viridis[i+1][0], frac);
-  const g = lerp(viridis[i][1], viridis[i+1][1], frac);
-  const b = lerp(viridis[i][2], viridis[i+1][2], frac);
-  return `rgb(${r},${g},${b})`;
+  return `rgb(${lerp(V[i][0],V[i+1][0],frac)},${lerp(V[i][1],V[i+1][1],frac)},${lerp(V[i][2],V[i+1][2],frac)})`;
 }
 
-function textColor(v, mx){
-  if(mx===0) return 'rgba(255,255,255,.7)';
-  // Viridis: dark purple (neg) → teal (zero) → yellow (pos)
-  // White text works on dark purple and teal; dark text needed on bright yellow/lime
-  const t = (v / mx + 1) / 2; // 0..1 like gexColor
-  if(t > 0.78) return 'rgba(0,0,0,.8)'; // dark text on yellow/lime
-  if(t > 0.65) return 'rgba(0,0,0,.6)'; // dark text on green
-  return 'rgba(255,255,255,.85)'; // white text on purple/teal
+function textColor(v, dataMin, dataMax){
+  const range = dataMax - dataMin;
+  if(range === 0) return 'rgba(255,255,255,.7)';
+  const t = (v - dataMin) / range; // 0..1
+  // Dark text on bright yellow/lime, white on dark purple/teal
+  if(t > 0.82) return 'rgba(0,0,0,.75)';
+  if(t > 0.68) return 'rgba(0,0,0,.55)';
+  return 'rgba(255,255,255,.85)';
 }
 
 function fmtGex(v){
@@ -1466,27 +1452,17 @@ function renderLiveHeatmap(){
     if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = s.net_gex; });
   });
 
-  // Global symmetric color scale — single max across ALL expirations
-  // This matches the Python reference heatmap which uses one colorbar for the entire grid
-  let globalMax = 1;
+  // Compute actual data [min, max] across all visible cells for viridis mapping
+  // This matches Python matplotlib which maps the real data range onto viridis [0,1]
+  let dataMin = 0, dataMax = 0;
   filteredExps.forEach(exp => {
     const ed = expData[exp];
     if(!ed || !ed.strikes) return;
     ed.strikes.forEach(s => {
-      const av = Math.abs(s.net_gex);
-      if(av > globalMax) globalMax = av;
+      if(s.net_gex < dataMin) dataMin = s.net_gex;
+      if(s.net_gex > dataMax) dataMax = s.net_gex;
     });
   });
-  // Use 95th percentile as cap to prevent extreme outliers from washing everything out
-  const allVals = [];
-  filteredExps.forEach(exp => {
-    const ed = expData[exp];
-    if(ed && ed.strikes) ed.strikes.forEach(s => { if(s.net_gex !== 0) allVals.push(Math.abs(s.net_gex)); });
-  });
-  allVals.sort((a,b) => a-b);
-  const pctMax = allVals.length ? allVals[Math.floor(allVals.length * 0.97)] : globalMax;
-  // Use 97th percentile — values above this still get max color
-  globalMax = pctMax || globalMax;
 
   // Find spot row
   const nearSpot = allStrikes.reduce((b,s) => Math.abs(s-spot) < Math.abs(b-spot) ? s : b, allStrikes[0]);
@@ -1540,10 +1516,12 @@ function renderLiveHeatmap(){
     filteredExps.forEach(exp => {
       const v = lookup[exp][strike];
       if(v === undefined || v === 0){
-        html += `<td style="background:rgb(33,145,140);color:rgba(255,255,255,.15)">–</td>`;
+        // Zero/empty → map 0 onto viridis using the same scale as data cells
+        const bg = gexColor(0, dataMin, dataMax);
+        html += `<td style="background:${bg};color:rgba(255,255,255,.15)">–</td>`;
       } else {
-        const bg = gexColor(v, globalMax);
-        const fg = textColor(v, globalMax);
+        const bg = gexColor(v, dataMin, dataMax);
+        const fg = textColor(v, dataMin, dataMax);
         html += `<td style="background:${bg};color:${fg}" title="${strike} ${exp}: ${fmtGex(v)}">${fmtGex(v)}</td>`;
       }
     });
