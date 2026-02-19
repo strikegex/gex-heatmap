@@ -201,9 +201,9 @@ def calculate_gex(chain, spot):
                     strikes[strike]["put_bid"] = float(c.get("bid", 0) or 0)
                     strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
 
-    # total_gamma = abs(net_gex) — king is the strike with highest absolute net GEX
+    # total_gamma = call_gex + abs(put_gex) — king is the strike with highest gross gamma exposure
     for s in strikes.values():
-        s["total_gamma"] = abs(s["net_gex"])
+        s["total_gamma"] = abs(s.get("call_gex", 0)) + abs(s.get("put_gex", 0))
 
     return strikes
 
@@ -269,10 +269,10 @@ def calculate_gex_per_expiry(chain, spot):
                 strikes[strike]["put_oi"] += oi
                 strikes[strike]["put_volume"] += vol
 
-    # Set total_gamma
+    # Set total_gamma = gross gamma (call + put), ignoring direction
     for exp_strikes in per_exp.values():
         for s in exp_strikes.values():
-            s["total_gamma"] = abs(s["net_gex"])
+            s["total_gamma"] = abs(s.get("call_gex", 0)) + abs(s.get("put_gex", 0))
 
     return per_exp
 
@@ -406,7 +406,7 @@ def fetch_gex_all_expirations(client, symbol, num_strikes=40):
             filtered = []
 
         total = sum(s["net_gex"] for s in filtered)
-        king = max(filtered, key=lambda s: abs(s["net_gex"])) if filtered else None
+        king = max(filtered, key=lambda s: abs(s.get("call_gex",0)) + abs(s.get("put_gex",0))) if filtered else None
 
         exp_data[exp_d] = {
             "expiration": exp_d,
@@ -430,7 +430,7 @@ def fetch_gex_all_expirations(client, symbol, num_strikes=40):
                 )
             for k in ("net_gex","call_gex","put_gex","call_oi","put_oi","call_volume","put_volume"):
                 all_strikes[strike][k] += data.get(k, 0)
-            all_strikes[strike]["total_gamma"] = abs(all_strikes[strike]["net_gex"])
+            all_strikes[strike]["total_gamma"] = abs(all_strikes[strike].get("call_gex",0)) + abs(all_strikes[strike].get("put_gex",0))
 
     cum_list = sorted(all_strikes.values(), key=lambda x: x["strike"])
     if cum_list:
@@ -440,7 +440,7 @@ def fetch_gex_all_expirations(client, symbol, num_strikes=40):
         cum_filtered = []
 
     cum_total = sum(s["net_gex"] for s in cum_filtered)
-    cum_king = max(cum_filtered, key=lambda s: abs(s["net_gex"])) if cum_filtered else None
+    cum_king = max(cum_filtered, key=lambda s: abs(s.get("call_gex",0)) + abs(s.get("put_gex",0))) if cum_filtered else None
 
     exp_data["ALL"] = {
         "expiration": "ALL",
