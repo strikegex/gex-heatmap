@@ -586,29 +586,33 @@ if(sessionStorage.getItem('gex_auth')==='1'){ userTier = sessionStorage.getItem(
 
 // ═══ COLOR — solid saturated like reference tool ═══
 function gc(n,m,k){
-  // Viridis colormap — maps n from [-m, +m] onto viridis using actual data range
-  // For bar charts, m = max(abs(net_gex)), so range is [-m, +m]
-  if(m===0) return{r:68,g:1,b:84};
-  const dataMin = -m, dataMax = m;
-  const range = dataMax - dataMin;
-  const t = Math.max(0, Math.min(1, (n - dataMin) / range));
-  const V = [
-    [68,   1,  84],[72,  36, 117],[65,  68, 135],[53,  95, 141],[42, 120, 142],
-    [33, 145, 140],[34, 168, 132],[68, 191, 112],[122,209,  81],[189,223,  38],[253,231,  37]
-  ];
+  // Owls Capital style: green(positive), dark red/warm(negative), yellow(king)
+  if(k) return{r:251,g:191,b:36}; // king = gold/yellow
+  if(m===0) return{r:15,g:23,b:28};
+  const a = Math.min(1, Math.abs(n/m));
+  const t = Math.pow(a, 0.55); // slight sqrt for better mid-range visibility
   function lerp(a,b,f){return Math.round(a+(b-a)*f)}
-  const nn = V.length - 1;
-  const i = Math.min(nn-1, Math.floor(t * nn));
-  const frac = t * nn - i;
-  return{r:lerp(V[i][0],V[i+1][0],frac),g:lerp(V[i][1],V[i+1][1],frac),b:lerp(V[i][2],V[i+1][2],frac)};
+  if(n >= 0){
+    // Positive: dark → teal → green (Owls style)
+    const r = lerp(12, 30, t);
+    const g = lerp(28, 185, t);
+    const b = lerp(35, 95, t);
+    return{r,g,b};
+  } else {
+    // Negative: dark → dark warm red/maroon (Owls style)
+    const r = lerp(18, 140, t);
+    const g = lerp(22, 35, t);
+    const b = lerp(30, 45, t);
+    return{r,g,b};
+  }
 }
 function tc(n,m,k){
-  if(k)return'#fbbf24';
-  if(m===0) return'rgba(255,255,255,.7)';
-  const t = (n / m + 1) / 2; // maps [-m,+m] to [0,1]
-  if(t > 0.82) return'rgba(0,0,0,.75)';
-  if(t > 0.68) return'rgba(0,0,0,.55)';
-  return'rgba(255,255,255,.85)';
+  if(k) return'#1a1a1a'; // dark text on yellow king
+  if(m===0) return'rgba(255,255,255,.5)';
+  const a = Math.abs(n/m);
+  if(a < 0.03) return'rgba(255,255,255,.35)';
+  if(a < 0.15) return'rgba(255,255,255,.6)';
+  return'#fff';
 }
 
 function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
@@ -1068,7 +1072,7 @@ function renderRecs(){
   });
 }
 
-// ─── Heatmap panel ───
+// ─── Heatmap panel (Owls Capital style) ───
 function renderPanel(d){
   const{symbol,spot,strikes,total_net_gex,gamma_wall,put_wall}=d;
   const n=+document.getElementById('ns').value;
@@ -1078,39 +1082,52 @@ function renderPanel(d){
   const vis=sorted.slice(Math.max(0,ci-n),Math.min(sorted.length,ci+n+1)).reverse();
   const mx=Math.max(...vis.map(s=>Math.abs(s.net_gex)),1);
   const ss=sorted[ci]?.strike;
-  const ks=vis.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b).strike;
+  // King = max total_gamma (gross gamma concentration)
+  const kingObj=vis.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b);
+  const ks=kingObj.strike;
+  const kingGex=kingObj.total_gamma||0;
   const pc=total_net_gex>mx*.05?'pos':total_net_gex<-mx*.05?'neg':'neu';
-  const pl=pc==='pos'?'+Gamma':pc==='neg'?'−Gamma':'Neutral';
-  const pd=pc==='pos'?'Vol↓ Mean revert':pc==='neg'?'Vol↑ Momentum':'Choppy';
-  const kingD=ks-spot,kingP=((kingD/spot)*100).toFixed(2);
+  const kingD=ks-spot;
+  const kingDir=kingD>=0?'above':'below';
+  const kingDistPct=((Math.abs(kingD)/spot)*100).toFixed(2);
 
-  // Item 14: % day change for spot
+  // Day change
   const openSnap=openingGEX[symbol];
   let dayChgHtml='';
   if(openSnap && openSnap._openSpot){
     const dayChg=((spot-openSnap._openSpot)/openSnap._openSpot*100);
     const sign=dayChg>=0?'+':'';
     const clr=dayChg>=0?'var(--green)':'var(--red)';
-    dayChgHtml=`<span style="font-size:14px;color:${clr};margin-left:8px;font-weight:600">${sign}${dayChg.toFixed(2)}%</span>`;
+    const dolChg=spot-openSnap._openSpot;
+    const dolSign=dolChg>=0?'+':'';
+    dayChgHtml=`<div style="font-size:13px;color:${clr};font-weight:600">${dolSign}$${Math.abs(dolChg).toFixed(2)} (${sign}${dayChg.toFixed(2)}%)</div>`;
   }
 
   const trackHtml = getTrackingHtml(symbol);
 
   const p=document.createElement('div');p.className='panel';
-  p.innerHTML=`<div class="panel-hdr"><span class="panel-sym">${symbol}</span><span class="panel-price">$${fp(spot)}${dayChgHtml}</span></div>`+
-    `<div class="panel-sub"><span>Net GEX: ${fg(total_net_gex)}</span><span>${d.expirations?d.expirations.length+' exp':''}</span></div>`+
-    `<div class="panel-gp"><span class="gbadge ${pc}">${pl}</span><span style="font-size:11px;color:var(--dim)">${pd}</span></div>`+
-    `<div class="klevels"><span class="klev kn">👑 ${fp(ks)}</span><span class="klev gw">Γ ${fp(gamma_wall)}</span><span class="klev pw">P ${fp(put_wall)}</span><span class="klev sp">● ${fp(spot)}</span></div>`+
-    `<div class="strikes" id="s-${symbol}"></div>`;
+  // Owls-style header: Symbol + Price on top, king info + distance below
+  p.innerHTML=`
+    <div style="padding:10px 14px 6px;display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--border)">
+      <span style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:var(--bright)">${symbol}</span>
+      <span style="font-size:20px;font-weight:700;color:var(--text)">$${fp(spot)}</span>
+      ${dayChgHtml}
+    </div>
+    <div style="padding:6px 14px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--dim)">${fp(ks)}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--bright)">${fg(kingGex)}</span>
+      <span style="font-size:11px;color:var(--dim)">↗ $${Math.abs(kingD).toFixed(2)} (${kingDistPct}%) ${kingDir} spot</span>
+    </div>
+    <div class="strikes" id="s-${symbol}"></div>`;
   const cont=p.querySelector(`#s-${symbol}`);
 
-  // Volume surge strikes to highlight
+  // Volume surge strikes
   const surgeStrikes = new Set((d.volume_surges||[]).map(v=>v.strike));
 
   vis.forEach(s=>{
     const iS=s.strike===ss,iK=s.strike===ks,iV=surgeStrikes.has(s.strike);
     const co=gc(s.net_gex,mx,iK);const tco=tc(s.net_gex,mx,iK);
-    // Item 5: % change since open — show NEXT TO strike label
+    // % change since open
     let chgTag='';
     if(openSnap){
       const openVal=openSnap[s.strike];
@@ -1123,15 +1140,18 @@ function renderPanel(d){
         }
       }
     }
-    // Item 10: bar width proportional to GEX magnitude, always from left
     const barPct=Math.max(5,Math.min(100,Math.round(Math.abs(s.net_gex)/mx*100)));
 
-    // Item 11: King row styled via CSS .sr.king
     const row=document.createElement('div');
     row.className='sr'+(iS?' spot':'')+(iK?' king':'');
     if(iV) row.style.borderRight='3px solid var(--cyan)';
 
-    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
+    // Spot row gets ▶ marker, King gets ★
+    const strikeLabel = iS ? `${fp(s.strike)} ▶` : fp(s.strike);
+    const kingMarker = iK ? ' ★' : '';
+    const surgeMarker = iV ? ' 📈' : '';
+
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${chgTag}${strikeLabel}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${kingMarker}${surgeMarker}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
   });
