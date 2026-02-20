@@ -58,14 +58,14 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .ctrl-g{display:flex;align-items:center;gap:6px}
 
 /* ═══ LEGEND — compact inline ═══ */
-.legend{display:flex;gap:12px;padding:4px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
-.legend-t{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
-.legend-i{display:flex;align-items:center;gap:4px;font-size:9px}
+.legend{display:flex;gap:14px;padding:6px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
+.legend-t{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.legend-i{display:flex;align-items:center;gap:5px;font-size:12px}
 .lsw{width:11px;height:11px;border-radius:2px;flex-shrink:0}
 .lsw.y{background:rgb(189,223,38)}.lsw.p{background:rgb(68,1,84)}.lsw.g{background:rgb(33,145,140)}
 .lsw.k{background:var(--king);position:relative}
 .lsw.k::after{content:"👑";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7px}
-.legend-d{color:var(--dim);font-size:8px}
+.legend-d{color:var(--dim);font-size:10px}
 
 .sample-banner{display:none;padding:5px 24px;background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.15);font-size:10px;color:var(--yellow);text-align:center}
 .sample-banner.vis{display:block}
@@ -326,19 +326,19 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="tab" onclick="switchTab('odte')">🎯 0DTE</div>
   <div class="tab" onclick="switchTab('chart')">📈 Chart</div>
 </div>
-<div class="ctrl" id="ctrlBar" style="display:none">
-  <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
-  <div class="ctrl-g" style="margin-left:auto"><label>Strikes:</label>
-    <select id="ns" onchange="rerender()"><option value="15" selected="">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option></select>
-  </div>
-</div>
 <div class="legend" id="legendBar" style="display:none">
   <span class="legend-t">Legend:</span>
   <div class="legend-i"><div class="lsw y"></div><span style="color:var(--yellow)">+Gamma</span></div>
   <div class="legend-i"><div class="lsw p"></div><span style="color:var(--purple)">−Gamma</span></div>
   <div class="legend-i"><div class="lsw g"></div><span style="color:var(--dim)">Neutral</span></div>
   <div class="legend-i"><div class="lsw k"></div><span style="color:var(--king)">👑 King</span></div>
-  <div class="legend-i" style="margin-left:8px"><button onclick="toggleColorGuide()" style="font-size:9px;padding:3px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">? Guide</button></div>
+  <div class="legend-i" style="margin-left:8px"><button onclick="toggleColorGuide()" style="font-size:10px;padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">? Guide</button></div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+    <span style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Strikes:</span>
+    <select id="ns" onchange="rerender()" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:4px;cursor:pointer">
+      <option value="15" selected>15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option>
+    </select>
+  </div>
 </div>
 <div id="legend-detail" style="display:none;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--panel);font-size:10px;line-height:1.8">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
@@ -404,14 +404,14 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
       </div>
       <div id="liveSymInfo" style="font-size:11px;color:var(--dim)"></div>
       <!-- Legend -->
-      <div style="display:flex;align-items:center;gap:10px;font-size:10px;padding:0 8px">
-        <span style="color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.5px">Legend:</span>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:rgb(253,231,37)"></div><span style="color:rgb(253,231,37)">+Gamma</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:rgb(68,1,84)"></div><span style="color:rgb(160,80,200)">−Gamma</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:rgb(33,145,140)"></div><span style="color:var(--dim)">Neutral</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><span>🔥</span><span style="color:var(--king)">👑 King</span></div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;padding:0 8px">
+        <span style="color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Legend:</span>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:rgb(253,231,37)"></div><span style="color:rgb(253,231,37)">+Gamma</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:rgb(68,1,84)"></div><span style="color:rgb(160,80,200)">−Gamma</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:rgb(33,145,140)"></div><span style="color:var(--dim)">Neutral</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><span>🔥</span><span style="color:var(--king)">👑 King</span></div>
       </div>
-      <button onclick="toggleColorGuide()" style="font-size:9px;padding:3px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">? Guide</button>
+      <button onclick="toggleColorGuide()" style="font-size:10px;padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">? Guide</button>
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
         <span style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Range:</span>
         <select id="liveDteRange" onchange="renderLiveHeatmap()"
@@ -475,16 +475,16 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     </div>
     <div style="margin-left:8px"><button onclick="stratClick()" id="stratBtn" title="Requires account approval" style="background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:600;padding:5px 14px;border-radius:6px;cursor:pointer">📊 Strategy 🔒</button></div>
     <!-- legend -->
-    <div style="display:flex;align-items:center;gap:10px;font-size:10px;padding:0 8px;margin-left:auto;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#50d28a"></div><span style="color:#6dba50">+Gamma (Net)</span></div>
-      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#9010c8"></div><span style="color:#9060d0">−Gamma (Net)</span></div>
-      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:2px;background:#1e3a3a"></div><span style="color:var(--dim)">Neutral</span></div>
-      <div style="display:flex;align-items:center;gap:4px"><span style="font-size:13px">👑</span><span style="color:var(--yellow)">King (Gross γ)</span></div>
+    <div style="display:flex;align-items:center;gap:12px;font-size:12px;padding:0 8px;margin-left:auto;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:#50d28a"></div><span style="color:#6dba50">+Gamma (Net)</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:#9010c8"></div><span style="color:#9060d0">−Gamma (Net)</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:#1e3a3a"></div><span style="color:var(--dim)">Neutral</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><span style="font-size:14px">👑</span><span style="color:var(--yellow)">King (Gross γ)</span></div>
       <div style="height:16px;width:1px;background:var(--border)"></div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:10px">
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px">
         <span style="color:var(--dim)">Bar:</span>
-        <div style="width:8px;height:8px;border-radius:1px;background:#50d28a"></div><span style="color:var(--dim)">call GEX</span>
-        <div style="width:8px;height:8px;border-radius:1px;background:#9010c8"></div><span style="color:var(--dim)">put GEX</span>
+        <div style="width:10px;height:10px;border-radius:1px;background:#50d28a"></div><span style="color:var(--dim)">call GEX</span>
+        <div style="width:10px;height:10px;border-radius:1px;background:#9010c8"></div><span style="color:var(--dim)">put GEX</span>
       </div>
     </div>
   </div>
@@ -578,26 +578,21 @@ function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  const ctrlBar = document.getElementById('ctrlBar');
   const legendBar = document.getElementById('legendBar');
   if (tab === 'live') {
     document.getElementById('live-tab').classList.add('active');
-    if(ctrlBar) ctrlBar.style.display = 'none';
     if(legendBar) legendBar.style.display = 'none';
     if(!liveData) fetchLiveData();
     else renderLiveHeatmap();
   } else if (tab === 'heatmap') {
     document.getElementById('heatmap-tab').classList.add('active');
-    if(ctrlBar) ctrlBar.style.display = '';
     if(legendBar) legendBar.style.display = '';
   } else if (tab === 'odte') {
     document.getElementById('odte-tab').classList.add('active');
-    if(ctrlBar) ctrlBar.style.display = 'none';
     if(legendBar) legendBar.style.display = 'none';
     if(!odteCurrentSym) loadOdteSym('SPX');
   } else if (tab === 'chart') {
     document.getElementById('chart-tab').classList.add('active');
-    if(ctrlBar) ctrlBar.style.display = 'none';
     if(legendBar) legendBar.style.display = 'none';
     if(!chartLoaded) { setTimeout(loadChart, 50); }
     else if(chartObj) { setTimeout(() => { chartObj.resize(document.getElementById('chartContainer').clientWidth, document.getElementById('chartContainer').clientHeight); }, 50); }
@@ -619,9 +614,9 @@ function doLogin(){
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
         startServerFetch(); fetchLiveData();
-        // Default to live tab — hide heatmap controls
-        const cb2=document.getElementById('ctrlBar');const lb2=document.getElementById('legendBar');
-        if(cb2)cb2.style.display='none'; if(lb2)lb2.style.display='none';
+        // Default to live tab — hide heatmap legend
+        const lb2=document.getElementById('legendBar');
+        if(lb2)lb2.style.display='none';
       }else{err.textContent=d.error||'Invalid credentials';err.style.display='block'}
     }).catch(()=>{
       // Fallback for local/file mode
@@ -1380,9 +1375,9 @@ if (window.location.protocol !== 'file:') {
   // Only auto-fetch if already authenticated (session restored)
   if(sessionStorage.getItem('gex_auth')==='1'){
   startServerFetch(); fetchLiveData();
-  // Start on live tab — hide heatmap-only controls
-  const cb=document.getElementById('ctrlBar');const lb=document.getElementById('legendBar');
-  if(cb)cb.style.display='none'; if(lb)lb.style.display='none';
+  // Start on live tab — hide heatmap legend
+  const lb=document.getElementById('legendBar');
+  if(lb)lb.style.display='none';
 }
 } else {
   document.querySelectorAll('.localOnly').forEach(el => el.style.display = 'flex');
@@ -1831,15 +1826,17 @@ function renderOdtePanel(d) {
     </div>`;
   }
 
-  // 1. Price Behavior
+  // 1. Price Behavior (includes strategy summary like PIN & CHOP)
   const posNeg = pc === 'pos' ? 'positive' : pc === 'neg' ? 'negative' : 'neutral';
+  const rec = d.recommendation;
+  const strategySummary = rec && rec.summary ? `<div style="margin-top:10px;padding:8px 10px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:6px;font-size:13px;font-weight:700;color:var(--yellow)">${rec.summary}</div>` : '';
   const behavior = pc === 'pos'
     ? `Dealers are <b style="color:var(--green)">long gamma</b> — they sell rallies and buy dips, suppressing volatility. Expect price to <b style="color:var(--yellow)">pin near $${fp(ks)}</b> (King). Range: $${fp(put_wall)}–$${fp(gamma_wall)}.`
     : pc === 'neg'
     ? `Dealers are <b style="color:var(--red)">short gamma</b> — they amplify moves, buying strength and selling weakness. Expect <b style="color:var(--red)">trending / volatile</b> price action. Breakouts tend to extend.`
     : `Gamma is <b style="color:var(--dim)">near neutral</b> — dealer hedging is balanced. Price can move freely in either direction without strong mean-reversion or momentum bias.`;
 
-  rightCol.appendChild(card('💡 Price Behavior', `<div style="font-size:12px;color:var(--text);line-height:1.7">${behavior}</div>`));
+  rightCol.appendChild(card('💡 Price Behavior', `<div style="font-size:12px;color:var(--text);line-height:1.7">${behavior}</div>${strategySummary}`));
 
   // 2. Key Levels
   const distToKing = ks - spot;
@@ -1881,8 +1878,14 @@ function renderOdtePanel(d) {
   }
   if (resSupHtml) rightCol.appendChild(card('📊 Resistance & Support', resSupHtml));
 
-  // 4. Recommendation — moved to moversCol (3rd column) for prominence
-  // (was in rightCol, user wants it in the right area)
+  // 4. Strategy recommendation — in rightCol after Resistance & Support
+  if (rec && rec.rationale) {
+    const strategyLabel = pc === 'pos' ? '✅ SELL premium' : pc === 'neg' ? '⚠️ BUY debit spreads' : '⚪ Reduce size';
+    rightCol.appendChild(card('📋 Strategy',
+      `<div style="font-size:13px;font-weight:700;color:var(--bright);margin-bottom:8px">${strategyLabel}</div>` +
+      `<div style="font-size:12px;color:var(--text);line-height:1.7">${rec.rationale}</div>`
+    ));
+  }
 
   // 5. Volume Surges
   if (d.volume_surges && d.volume_surges.length) {
@@ -1978,16 +1981,6 @@ function renderOdtePanel(d) {
   }
 
   moversCol.appendChild(card('⚡ Top Movers', moversHtml));
-
-  // Strategy card — prominent in 3rd column
-  const rec = d.recommendation;
-  if (rec) {
-    const stratCard = card('📋 Strategy',
-      `<div style="font-size:14px;font-weight:700;color:var(--bright);margin-bottom:10px">${rec.summary || ''}</div>` +
-      `<div style="font-size:12px;color:var(--text);line-height:1.7">${rec.rationale || ''}</div>`
-    );
-    moversCol.insertBefore(stratCard, moversCol.firstChild);
-  }
 
   wrap.appendChild(leftCol);
   wrap.appendChild(rightCol);
