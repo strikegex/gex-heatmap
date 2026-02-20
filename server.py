@@ -39,7 +39,7 @@ APP_KEY = os.environ.get("SCHWAB_APP_KEY", "")
 APP_SECRET = os.environ.get("SCHWAB_APP_SECRET", "")
 CALLBACK_URL = os.environ.get("SCHWAB_CALLBACK_URL", "https://127.0.0.1:8182/")
 TOKEN_PATH = os.environ.get("SCHWAB_TOKEN_PATH", "schwab_token.json")
-FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "1800"))  # 30 min default
+FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "300"))  # 5 min default
 
 # Full symbol list — env var overrides if set
 _DEFAULT_SYMBOLS = (

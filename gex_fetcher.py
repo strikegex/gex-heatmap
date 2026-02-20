@@ -231,20 +231,31 @@ def calculate_gex(chain, spot):
     # Debug: show top 5 strikes by abs(net_gex)
     if strikes:
         top5 = sorted(strikes.values(), key=lambda s: abs(s["net_gex"]), reverse=True)[:5]
-        print(f"    🏆 Top 5 by abs(net_gex):")
+        print(f"    🏆 Top 5 by abs(net_gex) for {underlying}:")
         for s in top5:
-            print(f"       {s['strike']}: net={s['net_gex']:.1f} call={s['call_gex']:.1f} put={s['put_gex']:.1f} call_oi={s['call_oi']} put_oi={s['put_oi']}")
+            print(f"       {s['strike']}: net={s['net_gex']/1e3:,.1f}K call={s['call_gex']/1e3:,.1f}K put={s['put_gex']/1e3:,.1f}K cOI={s['call_oi']} pOI={s['put_oi']}")
+        total_net = sum(s['net_gex'] for s in strikes.values())
+        print(f"    📊 Total net GEX: {total_net/1e3:,.1f}K | {len(strikes)} strikes total")
 
     return strikes
 
 
 def calculate_gex_per_expiry(chain, spot):
     """Calculate GEX broken out by expiration date. Returns {exp_date: {strike: data}}
-    Uses standard GEX formula: OI * gamma * multiplier (matches Owls Capital).
+    Uses standard GEX formula: OI * gamma * spot * multiplier (matches Owls Capital).
     Calls contribute positive gamma, puts contribute negative gamma.
+    For SPX, only includes SPXW (weekly/0DTE PM-settled) contracts.
     """
     today = date.today()
     per_exp = {}  # {exp_date_str: {strike: {...}}}
+    
+    # For SPX, filter to SPXW only
+    underlying = chain.get("symbol", "").replace("$", "")
+    filter_spxw = underlying in ("SPX",)
+    
+    def is_weekly(contract):
+        sym = contract.get("symbol", "")
+        return "SPXW" in sym or not filter_spxw
 
     for exp_key, smap in chain.get("callExpDateMap", {}).items():
         parts = exp_key.split(":")
@@ -265,6 +276,8 @@ def calculate_gex_per_expiry(chain, spot):
                     call_volume=0, put_volume=0, dte=dte,
                 )
             for c in contracts:
+                if not is_weekly(c):
+                    continue
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
@@ -293,6 +306,8 @@ def calculate_gex_per_expiry(chain, spot):
                     call_volume=0, put_volume=0, dte=dte,
                 )
             for c in contracts:
+                if not is_weekly(c):
+                    continue
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
