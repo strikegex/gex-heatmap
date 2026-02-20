@@ -45,7 +45,7 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 .tab:hover{color:var(--text);background:rgba(255,255,255,.02)}
 .tab.active{color:var(--bright);border-bottom-color:var(--accent);background:rgba(99,102,241,.08)}
 .tab-content{display:none!important}
-.tab-content.active{display:flex!important;flex-direction:column;flex:1;min-height:0}
+.tab-content.active{display:flex!important;flex-direction:column;min-height:calc(100vh - 140px)}
 .ctf{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--dim);background:transparent;border:1px solid transparent;padding:4px 10px;border-radius:5px;cursor:pointer;transition:all .15s}
 .ctf:hover{color:var(--text);background:rgba(255,255,255,.05)}
 .ctf.active{color:var(--bright);background:rgba(99,102,241,.15);border-color:var(--accent)}
@@ -535,18 +535,21 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     <!-- Gamma levels info -->
     <div id="chartGammaInfo" style="display:flex;gap:14px;margin-left:auto;font-size:11px;flex-wrap:wrap"></div>
   </div>
-  <!-- Chart container -->
-  <div id="chartContainer" style="flex:1;min-height:0;position:relative">
-    <div id="chartEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim);gap:8px">
-      <div style="font-size:40px">📈</div>
-      <div style="font-size:16px;font-weight:600;color:var(--text)">GEX Live Chart</div>
-      <div style="font-size:12px">Select a symbol and timeframe to view price action with gamma levels</div>
+  <!-- Chart + Sidebar layout -->
+  <div style="flex:1;min-height:0;display:flex;overflow:hidden">
+    <!-- Chart container (takes remaining space) -->
+    <div id="chartContainer" style="flex:1;min-height:500px;position:relative">
+      <div id="chartEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim);gap:8px">
+        <div style="font-size:40px">📈</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text)">GEX Live Chart</div>
+        <div style="font-size:12px">Select a symbol and timeframe to view price action with gamma levels</div>
+      </div>
     </div>
-  </div>
-  <!-- Gamma sidebar -->
-  <div id="chartSidebar" style="display:none;position:absolute;top:48px;right:12px;width:200px;background:rgba(13,17,23,0.92);border:1px solid var(--border);border-radius:10px;padding:12px;z-index:50;backdrop-filter:blur(8px)">
-    <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600">Gamma Profile</div>
-    <div id="chartSidebarContent"></div>
+    <!-- Gamma sidebar (right side, in flow) -->
+    <div id="chartSidebar" style="display:none;width:220px;flex-shrink:0;background:#0d1117;border-left:1px solid var(--border);padding:16px;overflow-y:auto">
+      <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600">Gamma Profile</div>
+      <div id="chartSidebarContent"></div>
+    </div>
   </div>
 </div>
 
@@ -596,8 +599,8 @@ function switchTab(tab) {
     document.getElementById('chart-tab').classList.add('active');
     if(ctrlBar) ctrlBar.style.display = 'none';
     if(legendBar) legendBar.style.display = 'none';
-    if(!chartLoaded) loadChart();
-    else if(chartObj) chartObj.resize(document.getElementById('chartContainer').clientWidth, document.getElementById('chartContainer').clientHeight);
+    if(!chartLoaded) { setTimeout(loadChart, 50); }
+    else if(chartObj) { setTimeout(() => { chartObj.resize(document.getElementById('chartContainer').clientWidth, document.getElementById('chartContainer').clientHeight); }, 50); }
   }
 }
 
@@ -1877,14 +1880,8 @@ function renderOdtePanel(d) {
   }
   if (resSupHtml) rightCol.appendChild(card('📊 Resistance & Support', resSupHtml));
 
-  // 4. Recommendation
-  const rec = d.recommendation;
-  if (rec) {
-    rightCol.appendChild(card('📋 Strategy',
-      `<div style="font-size:13px;font-weight:700;color:var(--bright);margin-bottom:8px">${rec.summary || ''}</div>` +
-      `<div style="font-size:12px;color:var(--text);line-height:1.6">${rec.rationale || ''}</div>`
-    ));
-  }
+  // 4. Recommendation — moved to moversCol (3rd column) for prominence
+  // (was in rightCol, user wants it in the right area)
 
   // 5. Volume Surges
   if (d.volume_surges && d.volume_surges.length) {
@@ -1981,6 +1978,16 @@ function renderOdtePanel(d) {
 
   moversCol.appendChild(card('⚡ Top Movers', moversHtml));
 
+  // Strategy card — prominent in 3rd column
+  const rec = d.recommendation;
+  if (rec) {
+    const stratCard = card('📋 Strategy',
+      `<div style="font-size:14px;font-weight:700;color:var(--bright);margin-bottom:10px">${rec.summary || ''}</div>` +
+      `<div style="font-size:12px;color:var(--text);line-height:1.7">${rec.rationale || ''}</div>`
+    );
+    moversCol.insertBefore(stratCard, moversCol.firstChild);
+  }
+
   wrap.appendChild(leftCol);
   wrap.appendChild(rightCol);
   wrap.appendChild(moversCol);
@@ -2070,11 +2077,28 @@ async function loadChart() {
 
   // Load lightweight-charts if not yet loaded
   if (!window.LightweightCharts) {
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js';
-    document.head.appendChild(script);
-    await new Promise((res, rej) => { script.onload = res; script.onerror = rej; });
+    try {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js';
+      document.head.appendChild(script);
+      await new Promise((res, rej) => { script.onload = res; script.onerror = rej; });
+    } catch(e1) {
+      // Fallback CDN
+      try {
+        const script2 = document.createElement('script');
+        script2.src = 'https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js';
+        document.head.appendChild(script2);
+        await new Promise((res, rej) => { script2.onload = res; script2.onerror = rej; });
+      } catch(e2) {
+        console.error('Failed to load LightweightCharts from any CDN');
+        if (empty) { empty.querySelector('div:last-child').textContent = 'Failed to load charting library. Please refresh.'; }
+        return;
+      }
+    }
   }
+
+  // Wait a frame for container to have dimensions
+  await new Promise(r => requestAnimationFrame(r));
 
   // Fetch candle data
   try {
@@ -2084,11 +2108,15 @@ async function loadChart() {
 
     if (empty) empty.style.display = 'none';
 
+    // Ensure container has real dimensions
+    const cw = container.clientWidth || 800;
+    const ch = container.clientHeight || 500;
+
     // Create or reuse chart
     if (!chartObj) {
       chartObj = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: container.clientHeight,
+        width: cw,
+        height: ch,
         layout: {
           background: { type: 'solid', color: '#0a0e14' },
           textColor: '#9ca3af',
