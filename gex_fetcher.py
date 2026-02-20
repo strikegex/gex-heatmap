@@ -131,13 +131,14 @@ def get_option_chain(client, symbol, expiry=None, num_strikes=60, all_expiration
         kw["to_date"] = date.today() + timedelta(days=45)
     else:
         kw["from_date"] = date.today()
-        kw["to_date"] = date.today() + timedelta(days=1)
+        kw["to_date"] = date.today()  # Strictly today only for 0DTE
     resp = client.get_option_chain(sym, **kw); resp.raise_for_status()
     return resp.json()
 
 
 def calculate_gex(chain, spot):
     today = date.today()
+    today_str = today.isoformat()  # e.g. "2026-02-20"
     strikes = {}
 
     def ensure(strike):
@@ -150,18 +151,12 @@ def calculate_gex(chain, spot):
                 call_bid=0, call_ask=0, put_bid=0, put_ask=0,
             )
 
-    def get_dte_weight(exp_key):
-        try:
-            parts = exp_key.split(":")
-            dte = int(parts[1]) if len(parts) >= 2 else (date.fromisoformat(parts[0]) - today).days
-            return DTE_WEIGHTS.get(dte, DTE_DEFAULT_WEIGHT), dte
-        except:
-            return DTE_DEFAULT_WEIGHT, 99
-
     for exp_key, smap in chain.get("callExpDateMap", {}).items():
-        weight, dte = get_dte_weight(exp_key)
-        if weight == 0: continue
-        print(f"    ✅ Including expiry {exp_key} (DTE={dte}, weight={weight})")
+        exp_date = exp_key.split(":")[0]
+        if exp_date != today_str:
+            print(f"    ❌ Skipping call expiry {exp_key} (not today {today_str})")
+            continue
+        print(f"    ✅ Including call expiry {exp_key}")
         for sk, contracts in smap.items():
             strike = float(sk)
             for c in contracts:
@@ -170,20 +165,20 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
                 # GEX = OI * gamma * spot * multiplier (matches Python/Owls reference)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER * weight
+                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
                 strikes[strike]["call_volume"] += vol
-                if dte <= 0:
-                    strikes[strike]["call_iv"] = float(c.get("volatility", 0) or 0)
-                    strikes[strike]["call_delta"] = float(c.get("delta", 0) or 0)
-                    strikes[strike]["call_bid"] = float(c.get("bid", 0) or 0)
-                    strikes[strike]["call_ask"] = float(c.get("ask", 0) or 0)
+                strikes[strike]["call_iv"] = float(c.get("volatility", 0) or 0)
+                strikes[strike]["call_delta"] = float(c.get("delta", 0) or 0)
+                strikes[strike]["call_bid"] = float(c.get("bid", 0) or 0)
+                strikes[strike]["call_ask"] = float(c.get("ask", 0) or 0)
 
     for exp_key, smap in chain.get("putExpDateMap", {}).items():
-        weight, dte = get_dte_weight(exp_key)
-        if weight == 0: continue
+        exp_date = exp_key.split(":")[0]
+        if exp_date != today_str:
+            continue
         for sk, contracts in smap.items():
             strike = float(sk)
             for c in contracts:
@@ -191,18 +186,17 @@ def calculate_gex(chain, spot):
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER * weight
+                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
                 strikes[strike]["put_volume"] += vol
-                if dte <= 0:
-                    strikes[strike]["put_iv"] = float(c.get("volatility", 0) or 0)
-                    strikes[strike]["put_delta"] = float(c.get("delta", 0) or 0)
-                    strikes[strike]["put_bid"] = float(c.get("bid", 0) or 0)
-                    strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
+                strikes[strike]["put_iv"] = float(c.get("volatility", 0) or 0)
+                strikes[strike]["put_delta"] = float(c.get("delta", 0) or 0)
+                strikes[strike]["put_bid"] = float(c.get("bid", 0) or 0)
+                strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
 
-    # total_gamma = call_gex + abs(put_gex) — king is the strike with highest gross gamma exposure
+    # total_gamma = call_gex + abs(put_gex)
     for s in strikes.values():
         s["total_gamma"] = abs(s.get("call_gex", 0)) + abs(s.get("put_gex", 0))
 
