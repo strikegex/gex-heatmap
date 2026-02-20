@@ -46,6 +46,9 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 .tab.active{color:var(--bright);border-bottom-color:var(--accent);background:rgba(99,102,241,.08)}
 .tab-content{display:none!important}
 .tab-content.active{display:flex!important;flex-direction:column;flex:1;min-height:0}
+.ctf{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--dim);background:transparent;border:1px solid transparent;padding:4px 10px;border-radius:5px;cursor:pointer;transition:all .15s}
+.ctf:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.ctf.active{color:var(--bright);background:rgba(99,102,241,.15);border-color:var(--accent)}
 
 /* ═══ CONTROLS — single compact row ═══ */
 .ctrl{display:flex;gap:8px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;align-items:center}
@@ -321,6 +324,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="tab active" onclick="switchTab('live')">🗺️ StrikeMap</div>
   <div class="tab" onclick="switchTab('heatmap')">🔥 HeatMap</div>
   <div class="tab" onclick="switchTab('odte')">🎯 0DTE</div>
+  <div class="tab" onclick="switchTab('chart')">📈 Chart</div>
 </div>
 <div class="ctrl" id="ctrlBar" style="display:none">
   <div class="ctrl-g localOnly" style="display:none"><button onclick="document.getElementById('fi').click()">📂 Load</button><input type="file" id="fi" accept=".json" style="display:none" onchange="loadFile(event)"></div>
@@ -500,6 +504,46 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   </div>
 </div>
 
+<!-- ═══ CHART TAB ═══ -->
+<div class="tab-content" id="chart-tab" style="background:#0a0e14">
+  <!-- Chart toolbar -->
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);background:#0d1117;flex-shrink:0;flex-wrap:wrap">
+    <!-- Symbol input -->
+    <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--accent);border-radius:8px;padding:4px 12px">
+      <span style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:600">Symbol</span>
+      <input id="chartSymInput" type="text" value="SPX" maxlength="10"
+        style="background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:800;color:var(--bright);width:70px;text-transform:uppercase"
+        onkeydown="if(event.key==='Enter')loadChart()">
+      <button onclick="loadChart()"
+        style="background:var(--accent);border:none;color:#fff;font-size:11px;font-weight:800;padding:4px 12px;border-radius:5px;cursor:pointer">GO</button>
+    </div>
+    <!-- Timeframe buttons -->
+    <div id="chartTfBar" style="display:flex;gap:2px">
+      <button class="ctf" data-tf="1" onclick="setChartTf('1')">1m</button>
+      <button class="ctf" data-tf="5" onclick="setChartTf('5')">5m</button>
+      <button class="ctf active" data-tf="15" onclick="setChartTf('15')">15m</button>
+      <button class="ctf" data-tf="30" onclick="setChartTf('30')">30m</button>
+      <button class="ctf" data-tf="60" onclick="setChartTf('60')">1H</button>
+      <button class="ctf" data-tf="D" onclick="setChartTf('D')">1D</button>
+    </div>
+    <!-- Gamma levels info -->
+    <div id="chartGammaInfo" style="display:flex;gap:14px;margin-left:auto;font-size:11px;flex-wrap:wrap"></div>
+  </div>
+  <!-- Chart container -->
+  <div id="chartContainer" style="flex:1;min-height:0;position:relative">
+    <div id="chartEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim);gap:8px">
+      <div style="font-size:40px">📈</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text)">GEX Live Chart</div>
+      <div style="font-size:12px">Select a symbol and timeframe to view price action with gamma levels</div>
+    </div>
+  </div>
+  <!-- Gamma sidebar -->
+  <div id="chartSidebar" style="display:none;position:absolute;top:48px;right:12px;width:200px;background:rgba(13,17,23,0.92);border:1px solid var(--border);border-radius:10px;padding:12px;z-index:50;backdrop-filter:blur(8px)">
+    <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600">Gamma Profile</div>
+    <div id="chartSidebarContent"></div>
+  </div>
+</div>
+
 <!-- Tooltip -->
 <div class="tip" id="tip"><div class="tip-t" id="tt"></div><div id="tb"></div></div>
 
@@ -541,8 +585,13 @@ function switchTab(tab) {
     document.getElementById('odte-tab').classList.add('active');
     if(ctrlBar) ctrlBar.style.display = 'none';
     if(legendBar) legendBar.style.display = 'none';
-    // Auto-load SPX if nothing loaded yet
     if(!odteCurrentSym) loadOdteSym('SPX');
+  } else if (tab === 'chart') {
+    document.getElementById('chart-tab').classList.add('active');
+    if(ctrlBar) ctrlBar.style.display = 'none';
+    if(legendBar) legendBar.style.display = 'none';
+    if(!chartLoaded) loadChart();
+    else if(chartObj) chartObj.resize(document.getElementById('chartContainer').clientWidth, document.getElementById('chartContainer').clientHeight);
   }
 }
 
@@ -1997,5 +2046,207 @@ document.addEventListener('click', e => {
     if (dd) dd.style.display = 'none';
   }
 });
+
+// ═══ CHART TAB — TradingView Lightweight Charts + Gamma Levels ═══
+let chartObj = null, chartCandleSeries = null, chartVolSeries = null;
+let chartLoaded = false, chartSym = 'SPX', chartTf = '15';
+let chartGammaLines = [];
+
+function setChartTf(tf) {
+  chartTf = tf;
+  document.querySelectorAll('.ctf').forEach(b => b.classList.toggle('active', b.dataset.tf === tf));
+  loadChart();
+}
+
+async function loadChart() {
+  const sym = document.getElementById('chartSymInput').value.trim().toUpperCase() || 'SPX';
+  chartSym = sym;
+  const container = document.getElementById('chartContainer');
+  const empty = document.getElementById('chartEmpty');
+
+  // Load lightweight-charts if not yet loaded
+  if (!window.LightweightCharts) {
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js';
+    document.head.appendChild(script);
+    await new Promise((res, rej) => { script.onload = res; script.onerror = rej; });
+  }
+
+  // Fetch candle data
+  try {
+    const resp = await fetch(`/api/candles?symbol=${sym}&tf=${chartTf}`);
+    const data = await resp.json();
+    if (data.error) { console.error('Chart error:', data.error); return; }
+
+    if (empty) empty.style.display = 'none';
+
+    // Create or reuse chart
+    if (!chartObj) {
+      chartObj = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: {
+          background: { type: 'solid', color: '#0a0e14' },
+          textColor: '#9ca3af',
+          fontFamily: "'Space Grotesk', sans-serif",
+          fontSize: 11,
+        },
+        grid: {
+          vertLines: { color: 'rgba(255,255,255,0.03)' },
+          horzLines: { color: 'rgba(255,255,255,0.03)' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: 'rgba(99,102,241,0.4)', width: 1, style: 2 },
+          horzLine: { color: 'rgba(99,102,241,0.4)', width: 1, style: 2 },
+        },
+        rightPriceScale: {
+          borderColor: 'rgba(255,255,255,0.08)',
+          scaleMargins: { top: 0.08, bottom: 0.15 },
+        },
+        timeScale: {
+          borderColor: 'rgba(255,255,255,0.08)',
+          timeVisible: chartTf !== 'D',
+          secondsVisible: false,
+        },
+      });
+
+      chartCandleSeries = chartObj.addCandlestickSeries({
+        upColor: '#22c55e',
+        downColor: '#ef4444',
+        borderUpColor: '#22c55e',
+        borderDownColor: '#ef4444',
+        wickUpColor: '#22c55e',
+        wickDownColor: '#ef4444',
+      });
+
+      chartVolSeries = chartObj.addHistogramSeries({
+        priceFormat: { type: 'volume' },
+        priceScaleId: 'vol',
+        scaleMargins: { top: 0.85, bottom: 0 },
+      });
+      chartObj.priceScale('vol').applyOptions({
+        scaleMargins: { top: 0.85, bottom: 0 },
+      });
+
+      // Resize observer
+      const ro = new ResizeObserver(() => {
+        if (chartObj && container.clientWidth > 0) {
+          chartObj.resize(container.clientWidth, container.clientHeight);
+        }
+      });
+      ro.observe(container);
+    } else {
+      // Update time scale visibility for new timeframe
+      chartObj.timeScale().applyOptions({
+        timeVisible: chartTf !== 'D',
+      });
+    }
+
+    // Set candle data
+    const candles = data.candles || [];
+    chartCandleSeries.setData(candles.map(c => ({
+      time: c.time,
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close,
+    })));
+
+    // Set volume data
+    chartVolSeries.setData(candles.map(c => ({
+      time: c.time,
+      value: c.volume,
+      color: c.close >= c.open ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)',
+    })));
+
+    // Draw gamma levels
+    drawGammaLevels(data.gamma || {});
+
+    chartLoaded = true;
+    chartObj.timeScale().fitContent();
+
+  } catch (e) {
+    console.error('Chart load error:', e);
+  }
+}
+
+function drawGammaLevels(gamma) {
+  if (!chartCandleSeries) return;
+
+  // Remove old price lines
+  chartGammaLines.forEach(line => {
+    try { chartCandleSeries.removePriceLine(line); } catch(e) {}
+  });
+  chartGammaLines = [];
+
+  if (!gamma || !gamma.king_node) return;
+
+  const levels = [
+    { price: gamma.king_node, title: '👑 King', color: '#fbbf24', lineWidth: 2, lineStyle: 0 },
+    { price: gamma.gamma_wall, title: 'Γ Wall', color: '#22c55e', lineWidth: 1, lineStyle: 2 },
+    { price: gamma.put_wall, title: 'P Wall', color: '#ef4444', lineWidth: 1, lineStyle: 2 },
+  ];
+
+  levels.forEach(lev => {
+    if (!lev.price) return;
+    const line = chartCandleSeries.createPriceLine({
+      price: lev.price,
+      color: lev.color,
+      lineWidth: lev.lineWidth,
+      lineStyle: lev.lineStyle,
+      axisLabelVisible: true,
+      title: lev.title,
+    });
+    chartGammaLines.push(line);
+  });
+
+  // Update gamma info bar
+  const info = document.getElementById('chartGammaInfo');
+  const net = gamma.total_net_gex || 0;
+  const profile = net > 0 ? 'Positive' : net < 0 ? 'Negative' : 'Neutral';
+  const profileColor = net > 0 ? '#22c55e' : net < 0 ? '#ef4444' : '#9ca3af';
+  info.innerHTML = `
+    <span style="color:#fbbf24;font-weight:700">👑 ${gamma.king_node?.toFixed(0) || '–'}</span>
+    <span style="color:#22c55e">Γ ${gamma.gamma_wall?.toFixed(0) || '–'}</span>
+    <span style="color:#ef4444">P ${gamma.put_wall?.toFixed(0) || '–'}</span>
+    <span style="color:var(--dim)">|</span>
+    <span style="color:${profileColor};font-weight:700">${profile} Gamma</span>
+    <span style="color:var(--dim)">Net: ${fg(net)}</span>
+  `;
+
+  // Update sidebar
+  const sidebar = document.getElementById('chartSidebar');
+  const sc = document.getElementById('chartSidebarContent');
+  sidebar.style.display = '';
+  const kingDist = gamma.king_node - gamma.spot;
+  const kingPct = ((Math.abs(kingDist) / gamma.spot) * 100).toFixed(2);
+  const kingDir = kingDist >= 0 ? 'above' : 'below';
+  sc.innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;color:#fbbf24">👑 King</span>
+      <span style="font-size:12px;font-weight:700;color:var(--bright)">${gamma.king_node?.toFixed(0)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;color:#22c55e">Γ Wall</span>
+      <span style="font-size:12px;font-weight:700;color:var(--bright)">${gamma.gamma_wall?.toFixed(0)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;color:#ef4444">P Wall</span>
+      <span style="font-size:12px;font-weight:700;color:var(--bright)">${gamma.put_wall?.toFixed(0)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--dim)">Spot</span>
+      <span style="font-size:12px;font-weight:700;color:var(--bright)">$${gamma.spot?.toFixed(2)}</span>
+    </div>
+    <div style="height:1px;background:var(--border);margin:8px 0"></div>
+    <div style="font-size:10px;color:var(--dim)">
+      King is <span style="color:var(--text);font-weight:600">${kingDist >= 0 ? '▲' : '▼'} ${Math.abs(kingDist).toFixed(1)}pts (${kingPct}%)</span> ${kingDir} spot
+    </div>
+    <div style="margin-top:6px;font-size:10px;color:${profileColor};font-weight:600">
+      ${profile} Gamma · ${fg(net)}
+    </div>
+  `;
+}
 </script>
 </body></html>
