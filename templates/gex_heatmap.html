@@ -683,7 +683,7 @@ function generateStrategy(d) {
   if (!strikes || !strikes.length) return null;
 
   const mx = Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-  const king = strikes.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b);
+  const king = strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
   const gw = strikes.reduce((b,s)=>s.net_gex>b.net_gex?s:b);
   const pw = strikes.reduce((b,s)=>s.net_gex<b.net_gex?s:b);
   const posAbove = strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.12).sort((a,b)=>a.strike-b.strike);
@@ -1016,7 +1016,7 @@ function renderStrats() {
 function genRec(d){
   const{spot,strikes,total_net_gex}=d;if(!strikes||!strikes.length)return{summary:'No data',bias:'neutral',action_items:[]};
   const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-  const king=strikes.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b);
+  const king=strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
   const posA=strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.15).sort((a,b)=>a.strike-b.strike);
   const posB=strikes.filter(s=>s.strike<spot&&s.net_gex>mx*.15).sort((a,b)=>b.strike-a.strike);
   const profile=total_net_gex>mx*.1?'positive':total_net_gex<-mx*.1?'negative':'neutral';
@@ -1045,7 +1045,7 @@ function renderRecs(){
     const spot=d.spot, strikes=d.strikes||[];
     const sorted=[...strikes].sort((a,b)=>a.strike-b.strike);
     const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-    const king=strikes.reduce((b,s)=>(s.total_gamma||Math.abs(s.net_gex))>(b.total_gamma||Math.abs(b.net_gex))?s:b,strikes[0]);
+    const king=strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b,strikes[0]);
     const kingD=king?king.strike-spot:0;
     const kingPct=spot?((kingD/spot)*100).toFixed(2):0;
     const gw=d.gamma_wall||0, pw=d.put_wall||0;
@@ -1137,10 +1137,10 @@ function renderPanel(d){
   const vis=sorted.slice(Math.max(0,ci-n),Math.min(sorted.length,ci+n+1)).reverse();
   const mx=Math.max(...vis.map(s=>Math.abs(s.net_gex)),1);
   const ss=sorted[ci]?.strike;
-  // King = max total_gamma (gross gamma concentration)
-  const kingObj=vis.reduce((b,s)=>(s.total_gamma||0)>(b.total_gamma||0)?s:b);
+  // King = max abs(net_gex) — largest directional gamma exposure (Owls Capital style)
+  const kingObj=vis.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
   const ks=kingObj.strike;
-  const kingGex=kingObj.total_gamma||0;
+  const kingGex=kingObj.net_gex||0;
   const pc=total_net_gex>mx*.05?'pos':total_net_gex<-mx*.05?'neg':'neu';
   const kingD=ks-spot;
   const kingDir=kingD>=0?'above':'below';
@@ -1727,7 +1727,7 @@ function renderOdtePanel(d) {
   const vis = sorted.slice(Math.max(0, ci - n), Math.min(sorted.length, ci + n + 1)).reverse();
   const mx = Math.max(...vis.map(s => Math.abs(s.net_gex)), 1);
   const ss = sorted[ci]?.strike;
-  const ks = vis.reduce((b, s) => (Math.abs(s.call_gex||0)+Math.abs(s.put_gex||0)) > (Math.abs(b.call_gex||0)+Math.abs(b.put_gex||0)) ? s : b).strike;
+  const ks = vis.reduce((b, s) => Math.abs(s.net_gex) > Math.abs(b.net_gex) ? s : b).strike;
   const pc = total_net_gex > mx * .05 ? 'pos' : total_net_gex < -mx * .05 ? 'neg' : 'neu';
   const pl = pc === 'pos' ? '+Gamma' : pc === 'neg' ? '−Gamma' : 'Neutral';
   const surgeStrikes = new Set((d.volume_surges || []).map(v => v.strike));
