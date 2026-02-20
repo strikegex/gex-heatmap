@@ -140,6 +140,11 @@ def calculate_gex(chain, spot):
     today = date.today()
     today_str = today.isoformat()  # e.g. "2026-02-20"
     strikes = {}
+    
+    # For SPX, determine if we should filter to SPXW only
+    # The chain underlying symbol tells us if this is an index
+    underlying = chain.get("symbol", "").replace("$", "")
+    filter_spxw = underlying in ("SPX",)  # Only filter for SPX
 
     def ensure(strike):
         if strike not in strikes:
@@ -151,18 +156,31 @@ def calculate_gex(chain, spot):
                 call_bid=0, call_ask=0, put_bid=0, put_ask=0,
             )
 
+    def is_weekly(contract):
+        """Check if contract is SPXW (weekly/0DTE) vs SPX (monthly AM-settled)."""
+        sym = contract.get("symbol", "")
+        # SPXW contracts have 'SPXW' in symbol, SPX monthlies have 'SPX' without 'W'
+        return "SPXW" in sym or not filter_spxw
+
     for exp_key, smap in chain.get("callExpDateMap", {}).items():
         exp_date = exp_key.split(":")[0]
         if exp_date != today_str:
             print(f"    ❌ Skipping call expiry {exp_key} (not today {today_str})")
             continue
-        print(f"    ✅ Including call expiry {exp_key}")
+        print(f"    ✅ Including call expiry {exp_key} ({len(smap)} strikes)")
         for sk, contracts in smap.items():
             strike = float(sk)
             for c in contracts:
+                if not is_weekly(c):
+                    sym_name = c.get("symbol", "?")
+                    oi_skip = int(c.get("openInterest", 0))
+                    if oi_skip > 1000:
+                        print(f"      ⏭️ Skipping non-SPXW CALL {sym_name} strike={strike} OI={oi_skip}")
+                    continue
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
+                sym_name = c.get("symbol", "?")
                 ensure(strike)
                 # GEX = OI * gamma * spot * multiplier (matches Python/Owls reference)
                 gex = oi * gamma * spot * CONTRACT_MULTIPLIER
@@ -174,17 +192,24 @@ def calculate_gex(chain, spot):
                 strikes[strike]["call_delta"] = float(c.get("delta", 0) or 0)
                 strikes[strike]["call_bid"] = float(c.get("bid", 0) or 0)
                 strikes[strike]["call_ask"] = float(c.get("ask", 0) or 0)
+                # Debug: log high-OI contracts
+                if oi > 5000:
+                    print(f"      📊 CALL {sym_name} strike={strike} OI={oi} gamma={gamma:.6f} gex={gex:.1f}")
 
     for exp_key, smap in chain.get("putExpDateMap", {}).items():
         exp_date = exp_key.split(":")[0]
         if exp_date != today_str:
             continue
+        print(f"    ✅ Including put expiry {exp_key} ({len(smap)} strikes)")
         for sk, contracts in smap.items():
             strike = float(sk)
             for c in contracts:
+                if not is_weekly(c):
+                    continue
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
+                sym_name = c.get("symbol", "?")
                 ensure(strike)
                 gex = oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
@@ -195,10 +220,20 @@ def calculate_gex(chain, spot):
                 strikes[strike]["put_delta"] = float(c.get("delta", 0) or 0)
                 strikes[strike]["put_bid"] = float(c.get("bid", 0) or 0)
                 strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
+                # Debug: log high-OI contracts  
+                if oi > 5000:
+                    print(f"      📊 PUT  {sym_name} strike={strike} OI={oi} gamma={gamma:.6f} gex={gex:.1f}")
 
     # total_gamma = call_gex + abs(put_gex)
     for s in strikes.values():
         s["total_gamma"] = abs(s.get("call_gex", 0)) + abs(s.get("put_gex", 0))
+
+    # Debug: show top 5 strikes by abs(net_gex)
+    if strikes:
+        top5 = sorted(strikes.values(), key=lambda s: abs(s["net_gex"]), reverse=True)[:5]
+        print(f"    🏆 Top 5 by abs(net_gex):")
+        for s in top5:
+            print(f"       {s['strike']}: net={s['net_gex']:.1f} call={s['call_gex']:.1f} put={s['put_gex']:.1f} call_oi={s['call_oi']} put_oi={s['put_oi']}")
 
     return strikes
 
