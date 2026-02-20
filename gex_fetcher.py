@@ -294,7 +294,7 @@ def generate_recommendation(symbol, spot, strikes, total_net_gex):
     if max_abs == 0:
         return {"summary": "No significant gamma", "bias": "neutral", "action_items": []}
 
-    king = max(strikes, key=lambda s: s["total_gamma"])
+    king = max(strikes, key=lambda s: abs(s["net_gex"]))
     gw = max(strikes, key=lambda s: s["net_gex"])
     pw = min(strikes, key=lambda s: s["net_gex"])
     posA = sorted([s for s in strikes if s["strike"]>spot and s["net_gex"]>max_abs*.15], key=lambda s:s["strike"])
@@ -342,7 +342,7 @@ def fetch_gex(client, symbol, history, expiry=None, num_strikes=30):
     all_s = calculate_gex(chain, spot)
     filtered = filter_near_spot(all_s, spot, num_strikes)
     total = sum(s["net_gex"] for s in filtered)
-    king = max(filtered, key=lambda s: s["total_gamma"])
+    king = max(filtered, key=lambda s: abs(s["net_gex"]))
 
     vol_surges = detect_volume_surges(history, symbol, filtered)
     record_snapshot(history, symbol, spot, king["strike"], king["net_gex"], filtered)
