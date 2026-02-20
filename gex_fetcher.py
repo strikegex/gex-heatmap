@@ -168,8 +168,8 @@ def calculate_gex(chain, spot):
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
-                # GEX = OI * gamma * spot^2 * 0.01 * multiplier
-                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
+                # GEX = OI * gamma * multiplier (standard formula, matches Owls Capital)
+                gex = oi * gamma * CONTRACT_MULTIPLIER * weight
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
@@ -190,7 +190,7 @@ def calculate_gex(chain, spot):
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
                 ensure(strike)
-                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER * weight
+                gex = oi * gamma * CONTRACT_MULTIPLIER * weight
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
@@ -210,7 +210,7 @@ def calculate_gex(chain, spot):
 
 def calculate_gex_per_expiry(chain, spot):
     """Calculate GEX broken out by expiration date. Returns {exp_date: {strike: data}}
-    Uses dollar GEX formula: OI * gamma * spot^2 * 0.01 * multiplier.
+    Uses standard GEX formula: OI * gamma * multiplier (matches Owls Capital).
     Calls contribute positive gamma, puts contribute negative gamma.
     """
     today = date.today()
@@ -238,7 +238,7 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER
+                gex = oi * gamma * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
@@ -266,7 +266,7 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                gex = oi * gamma * spot * spot * 0.01 * CONTRACT_MULTIPLIER
+                gex = oi * gamma * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
@@ -339,10 +339,15 @@ def fetch_gex(client, symbol, history, expiry=None, num_strikes=30):
     if ul and ul.get("last"): spot = float(ul["last"])
 
     exps = sorted(set([e.split(":")[0] for e in list(chain.get("callExpDateMap",{}).keys())+list(chain.get("putExpDateMap",{}).keys())]))
+    print(f"  📋 Chain expirations: {exps}")
     all_s = calculate_gex(chain, spot)
     filtered = filter_near_spot(all_s, spot, num_strikes)
     total = sum(s["net_gex"] for s in filtered)
     king = max(filtered, key=lambda s: abs(s["net_gex"]))
+    # Debug: show top 3 strikes by abs(net_gex)
+    top3 = sorted(filtered, key=lambda s: abs(s["net_gex"]), reverse=True)[:3]
+    for t in top3:
+        print(f"    strike {t['strike']}: net_gex={t['net_gex']:,.1f} call={t['call_gex']:,.1f} put={t['put_gex']:,.1f}")
 
     vol_surges = detect_volume_surges(history, symbol, filtered)
     record_snapshot(history, symbol, spot, king["strike"], king["net_gex"], filtered)
@@ -409,7 +414,7 @@ def fetch_gex_all_expirations(client, symbol, num_strikes=40):
             filtered = []
 
         total = sum(s["net_gex"] for s in filtered)
-        king = max(filtered, key=lambda s: abs(s.get("call_gex",0)) + abs(s.get("put_gex",0))) if filtered else None
+        king = max(filtered, key=lambda s: abs(s.get("net_gex",0))) if filtered else None
 
         exp_data[exp_d] = {
             "expiration": exp_d,
