@@ -394,6 +394,174 @@ def api_gex_all():
         return jsonify(gex_all_data)
 
 
+@app.route("/api/candles")
+def api_candles():
+    """Fetch price history candles from Schwab API.
+    Params:
+      symbol  - ticker (SPX, SPY, QQQ, ES, NQ, AAPL, etc.)
+      tf      - timeframe: 1, 5, 15, 30, 60, 240, D (default: 15)
+      days    - lookback days (default: 5 for intraday, 365 for daily)
+    Returns JSON: {symbol, timeframe, candles: [{time, open, high, low, close, volume}, ...]}
+    """
+    from flask import request
+    from datetime import datetime, timedelta
+
+    symbol = request.args.get("symbol", "SPX").upper()
+    tf = request.args.get("tf", "15")
+    days = request.args.get("days", None)
+
+    # Symbol mapping for Schwab API
+    INDEX_MAP = {"SPX": "$SPX", "NDX": "$NDX", "RUT": "$RUT", "DJX": "$DJX", "VIX": "$VIX"}
+    # Futures → map to ETF equivalents (Schwab doesn't support futures price history)
+    FUTURES_MAP = {"ES": "SPY", "NQ": "QQQ", "RTY": "IWM", "YM": "DIA",
+                   "/ES": "SPY", "/NQ": "QQQ", "/RTY": "IWM", "/YM": "DIA"}
+
+    display_sym = symbol
+    api_sym = FUTURES_MAP.get(symbol, INDEX_MAP.get(symbol, symbol))
+
+    # Get or create Schwab client (reuse from fetch loop if available)
+    try:
+        from schwab import auth
+        if not os.path.exists(TOKEN_PATH):
+            return jsonify({"error": "No Schwab token available"}), 503
+        client = auth.client_from_token_file(
+            token_path=TOKEN_PATH, api_key=APP_KEY, app_secret=APP_SECRET
+        )
+    except Exception as e:
+        return jsonify({"error": f"Schwab auth failed: {str(e)}"}), 503
+
+    try:
+        # Map timeframe to schwab-py method
+        end_dt = datetime.now()
+        if tf == "1":
+            default_days = int(days) if days else 2
+            start_dt = end_dt - timedelta(days=default_days)
+            resp = client.get_price_history_every_minute(
+                api_sym, start_datetime=start_dt, end_datetime=end_dt,
+                need_extended_hours_data=False
+            )
+        elif tf == "5":
+            default_days = int(days) if days else 5
+            start_dt = end_dt - timedelta(days=default_days)
+            resp = client.get_price_history_every_five_minutes(
+                api_sym, start_datetime=start_dt, end_datetime=end_dt,
+                need_extended_hours_data=False
+            )
+        elif tf == "15":
+            default_days = int(days) if days else 5
+            start_dt = end_dt - timedelta(days=default_days)
+            resp = client.get_price_history_every_fifteen_minutes(
+                api_sym, start_datetime=start_dt, end_datetime=end_dt,
+                need_extended_hours_data=False
+            )
+        elif tf == "30":
+            default_days = int(days) if days else 10
+            start_dt = end_dt - timedelta(days=default_days)
+            resp = client.get_price_history_every_thirty_minutes(
+                api_sym, start_datetime=start_dt, end_datetime=end_dt,
+                need_extended_hours_data=False
+            )
+        elif tf == "60":
+            # No native hourly — use 30min and aggregate on frontend
+            default_days = int(days) if days else 20
+            start_dt = end_dt - timedelta(days=default_days)
+            resp = client.get_price_history_every_thirty_minutes(
+                api_sym, start_datetime=start_dt, end_datetime=end_dt,
+                need_extended_hours_data=False
+            )
+        elif tf == "240":
+            # 4H — use daily for now, frontend can aggregate
+            default_days = int(days) if days else 90
+            start_dt = end_dt - timedelta(days=default_days)
+            resp = client.get_price_history_every_day(
+                api_sym, start_datetime=start_dt, end_datetime=end_dt,
+                need_extended_hours_data=False
+            )
+        elif tf == "D":
+            default_days = int(days) if days else 365
+            start_dt = end_dt - timedelta(days=default_days)
+            resp = client.get_price_history_every_day(
+                api_sym, start_datetime=start_dt, end_datetime=end_dt,
+                need_extended_hours_data=False
+            )
+        else:
+            return jsonify({"error": f"Invalid timeframe: {tf}. Use 1,5,15,30,60,240,D"}), 400
+
+        resp.raise_for_status()
+        data = resp.json()
+        raw_candles = data.get("candles", [])
+
+        # Aggregate to 1H if requested
+        if tf == "60":
+            raw_candles = _aggregate_candles(raw_candles, 2)  # 2x30min = 1H
+        elif tf == "240":
+            pass  # daily candles, frontend will display as-is
+
+        # Convert to lightweight charts format
+        candles = []
+        for c in raw_candles:
+            ts = c.get("datetime", 0)
+            if ts > 1e12:
+                ts = ts / 1000  # ms → seconds
+            candles.append({
+                "time": int(ts),
+                "open": c.get("open", 0),
+                "high": c.get("high", 0),
+                "low": c.get("low", 0),
+                "close": c.get("close", 0),
+                "volume": c.get("volume", 0),
+            })
+
+        # Get current gamma levels from gex_data
+        gamma_levels = {}
+        gex_sym = display_sym
+        if gex_sym in FUTURES_MAP:
+            gex_sym = FUTURES_MAP[gex_sym]  # ES → SPY for gamma data
+        with fetch_lock:
+            gd = gex_data.get(gex_sym, {})
+        if gd:
+            gamma_levels = {
+                "king_node": gd.get("king_node", 0),
+                "gamma_wall": gd.get("gamma_wall", 0),
+                "put_wall": gd.get("put_wall", 0),
+                "spot": gd.get("spot", 0),
+                "total_net_gex": gd.get("total_net_gex", 0),
+            }
+
+        return jsonify({
+            "symbol": display_sym,
+            "api_symbol": api_sym,
+            "timeframe": tf,
+            "candles": candles,
+            "gamma": gamma_levels,
+        })
+
+    except Exception as e:
+        print(f"  ⚠️ Candles error for {api_sym}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+def _aggregate_candles(candles, factor):
+    """Aggregate candles by factor (e.g., 2x 30min → 1H)."""
+    if not candles or factor <= 1:
+        return candles
+    result = []
+    for i in range(0, len(candles), factor):
+        group = candles[i:i+factor]
+        if not group:
+            break
+        agg = {
+            "datetime": group[0]["datetime"],
+            "open": group[0]["open"],
+            "high": max(c["high"] for c in group),
+            "low": min(c["low"] for c in group),
+            "close": group[-1]["close"],
+            "volume": sum(c.get("volume", 0) for c in group),
+        }
+        result.append(agg)
+    return result
+
+
 @app.route("/api/status")
 def api_status():
     return jsonify({
