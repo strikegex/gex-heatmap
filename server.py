@@ -39,7 +39,9 @@ APP_KEY = os.environ.get("SCHWAB_APP_KEY", "")
 APP_SECRET = os.environ.get("SCHWAB_APP_SECRET", "")
 CALLBACK_URL = os.environ.get("SCHWAB_CALLBACK_URL", "https://127.0.0.1:8182/")
 TOKEN_PATH = os.environ.get("SCHWAB_TOKEN_PATH", "schwab_token.json")
-FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "300"))  # 5 min default
+FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "300"))  # 0DTE: 5 min default
+FETCH_INTERVAL_ALL = int(os.environ.get("FETCH_INTERVAL_ALL", "1800"))  # StrikeMap: 30 min default
+print(f"⏱️ 0DTE interval = {FETCH_INTERVAL}s ({FETCH_INTERVAL//60}m) | StrikeMap interval = {FETCH_INTERVAL_ALL}s ({FETCH_INTERVAL_ALL//60}m)")
 
 # Full symbol list — env var overrides if set
 _DEFAULT_SYMBOLS = (
@@ -101,81 +103,118 @@ def is_market_hours():
     return 565 <= t < 965  # 9:25am-4:05pm ET (5min buffer both sides)
 
 
-def fetch_loop():
-    """Background: fetch GEX from Schwab every FETCH_INTERVAL seconds."""
-    global gex_data, gex_all_data, last_fetch
+def _get_client():
+    """Get or create Schwab client."""
+    from schwab import auth
+    if not os.path.exists(TOKEN_PATH):
+        print("❌ No token file — cannot authenticate. Set SCHWAB_TOKEN_B64 env var.")
+        return None
+    return auth.client_from_token_file(
+        token_path=TOKEN_PATH, api_key=APP_KEY, app_secret=APP_SECRET,
+    )
+
+
+def fetch_loop_0dte():
+    """Fast loop: fetch 0DTE GEX (HeatMap + 0DTE tabs) every FETCH_INTERVAL seconds."""
+    global gex_data, last_fetch
     import gex_fetcher as gf
 
     client = None
     history = gf.load_history()
-    first_run = True  # attempt one fetch regardless of market hours on startup
+    first_run = True
 
     while True:
         try:
             if not is_market_hours() and not first_run:
-                print(f"  💤 Market closed — skipping fetch ({datetime.now().strftime('%H:%M:%S')} UTC)")
                 time.sleep(FETCH_INTERVAL)
                 continue
             first_run = False
 
             if client is None:
-                from schwab import auth
-                if not os.path.exists(TOKEN_PATH):
-                    print("❌ No token file — cannot authenticate. Set SCHWAB_TOKEN_B64 env var.")
+                client = _get_client()
+                if not client:
                     time.sleep(60)
                     continue
-                # Use client_from_token_file — NEVER opens a browser
-                client = auth.client_from_token_file(
-                    token_path=TOKEN_PATH,
-                    api_key=APP_KEY,
-                    app_secret=APP_SECRET,
-                )
-                print("✅ Schwab client ready (from token file)")
+                print("✅ Schwab client ready (0DTE loop)")
 
             data = {}
-            all_data = {}
-            total_syms = len(SYMBOLS)
-            print(f"  📡 Fetching {total_syms} symbols...")
+            print(f"  📡 0DTE fetch: {len(SYMBOLS)} symbols...")
             for i, sym in enumerate(SYMBOLS):
                 try:
                     data[sym] = gf.fetch_gex(client, sym, history)
                 except Exception as e:
                     print(f"  ⚠️ {sym} 0DTE: {e}")
-                try:
-                    all_data[sym] = gf.fetch_gex_all_expirations(client, sym)
-                except Exception as e:
-                    print(f"  ⚠️ {sym} ALL-EXP: {e}")
-                # Save progress incrementally so data is available mid-fetch
+                # Save progress incrementally
                 if data:
                     with fetch_lock:
                         gex_data = dict(data)
-                        if all_data:
-                            gex_all_data = dict(all_data)
                         last_fetch = datetime.now().isoformat()
-                # Rate limit: 0.5s between symbols to avoid Schwab throttling
-                time.sleep(0.5)
-                if (i + 1) % 20 == 0:
-                    print(f"  ⏳ Progress: {i+1}/{total_syms} symbols fetched")
+                time.sleep(0.3)
 
             if data:
                 gf.save_history(history)
                 with fetch_lock:
                     gex_data = data
-                    if all_data:
-                        gex_all_data = all_data
                     last_fetch = datetime.now().isoformat()
                 with open("gex_data.json", "w") as f:
                     json.dump(data, f)
-                if all_data:
-                    with open("gex_all_data.json", "w") as f:
-                        json.dump(all_data, f)
-                print(f"  ✅ {len(data)} symbols @ {datetime.now().strftime('%H:%M:%S')}")
+                print(f"  ✅ 0DTE: {len(data)} symbols @ {datetime.now().strftime('%H:%M:%S')}")
 
         except Exception as e:
-            print(f"  ⚠️ Fetch error: {e}")
+            print(f"  ⚠️ 0DTE fetch error: {e}")
             client = None
 
         time.sleep(FETCH_INTERVAL)
+
+
+def fetch_loop_all():
+    """Slow loop: fetch ALL expirations (StrikeMap) every FETCH_INTERVAL_ALL seconds."""
+    global gex_all_data
+    import gex_fetcher as gf
+
+    client = None
+    first_run = True
+
+    while True:
+        try:
+            if not is_market_hours() and not first_run:
+                time.sleep(FETCH_INTERVAL_ALL)
+                continue
+            first_run = False
+
+            if client is None:
+                client = _get_client()
+                if not client:
+                    time.sleep(60)
+                    continue
+                print("✅ Schwab client ready (StrikeMap loop)")
+
+            all_data = {}
+            print(f"  🗺️ StrikeMap fetch: {len(SYMBOLS)} symbols...")
+            for i, sym in enumerate(SYMBOLS):
+                try:
+                    all_data[sym] = gf.fetch_gex_all_expirations(client, sym)
+                except Exception as e:
+                    print(f"  ⚠️ {sym} ALL-EXP: {e}")
+                if all_data:
+                    with fetch_lock:
+                        gex_all_data = dict(all_data)
+                time.sleep(0.5)
+                if (i + 1) % 20 == 0:
+                    print(f"  ⏳ StrikeMap progress: {i+1}/{len(SYMBOLS)}")
+
+            if all_data:
+                with fetch_lock:
+                    gex_all_data = all_data
+                with open("gex_all_data.json", "w") as f:
+                    json.dump(all_data, f)
+                print(f"  ✅ StrikeMap: {len(all_data)} symbols @ {datetime.now().strftime('%H:%M:%S')}")
+
+        except Exception as e:
+            print(f"  ⚠️ StrikeMap fetch error: {e}")
+            client = None
+
+        time.sleep(FETCH_INTERVAL_ALL)
 
 
 @app.route("/")
@@ -568,11 +607,12 @@ def api_status():
         "status": "ok",
         "last_fetch": last_fetch,
         "symbols": SYMBOLS,
-        "interval": FETCH_INTERVAL,
+        "interval_0dte": FETCH_INTERVAL,
+        "interval_strikemap": FETCH_INTERVAL_ALL,
     })
 
 
-# ─── Start fetch loop (works with both gunicorn and python server.py) ───
+# ─── Start fetch loops (works with both gunicorn and python server.py) ───
 _fetch_started = False
 def start_fetch():
     global _fetch_started
@@ -580,9 +620,13 @@ def start_fetch():
         return
     _fetch_started = True
     if APP_KEY:
-        t = threading.Thread(target=fetch_loop, daemon=True)
-        t.start()
-        print(f"🔴 Auto-fetch: {','.join(SYMBOLS)} every {FETCH_INTERVAL}s")
+        t1 = threading.Thread(target=fetch_loop_0dte, daemon=True)
+        t1.start()
+        t2 = threading.Thread(target=fetch_loop_all, daemon=True)
+        t2.start()
+        print(f"🔴 0DTE loop: every {FETCH_INTERVAL}s ({FETCH_INTERVAL//60}m)")
+        print(f"🗺️ StrikeMap loop: every {FETCH_INTERVAL_ALL}s ({FETCH_INTERVAL_ALL//60}m)")
+        print(f"📊 Symbols: {','.join(SYMBOLS[:5])}... ({len(SYMBOLS)} total)")
     else:
         print("⚠️ No SCHWAB_APP_KEY — static mode only (set env vars)")
 

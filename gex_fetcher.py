@@ -182,8 +182,8 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                # For 0DTE, use max(OI, volume) — intraday volume captures new positions
-                effective_oi = max(oi, vol)
+                # For 0DTE, use OI + volume — competitor uses cumulative daily exposure
+                effective_oi = oi + vol
                 # GEX = effective_oi * gamma * spot * multiplier
                 gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
@@ -213,7 +213,7 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                effective_oi = max(oi, vol)
+                effective_oi = oi + vol
                 gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
@@ -284,8 +284,8 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                # For 0DTE, intraday volume > OI; for longer-dated, use OI
-                effective_oi = max(oi, vol) if dte <= 0 else oi
+                # For 0DTE, OI + volume = total exposure; for longer-dated, use OI
+                effective_oi = (oi + vol) if dte <= 0 else oi
                 gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
@@ -316,7 +316,7 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                effective_oi = max(oi, vol) if dte <= 0 else oi
+                effective_oi = (oi + vol) if dte <= 0 else oi
                 gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
