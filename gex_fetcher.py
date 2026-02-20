@@ -182,8 +182,10 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                # GEX = OI * gamma * spot * multiplier (matches Python/Owls reference)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                # For 0DTE, use max(OI, volume) — intraday volume captures new positions
+                effective_oi = max(oi, vol)
+                # GEX = effective_oi * gamma * spot * multiplier
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
@@ -193,8 +195,8 @@ def calculate_gex(chain, spot):
                 strikes[strike]["call_bid"] = float(c.get("bid", 0) or 0)
                 strikes[strike]["call_ask"] = float(c.get("ask", 0) or 0)
                 # Debug: log high-OI contracts
-                if oi > 5000:
-                    print(f"      📊 CALL {sym_name} strike={strike} OI={oi} gamma={gamma:.6f} gex={gex:.1f}")
+                if effective_oi > 5000:
+                    print(f"      📊 CALL {sym_name} strike={strike} OI={oi} vol={vol} eff={effective_oi} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
 
     for exp_key, smap in chain.get("putExpDateMap", {}).items():
         exp_date = exp_key.split(":")[0]
@@ -211,7 +213,8 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                effective_oi = max(oi, vol)
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
@@ -221,8 +224,8 @@ def calculate_gex(chain, spot):
                 strikes[strike]["put_bid"] = float(c.get("bid", 0) or 0)
                 strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
                 # Debug: log high-OI contracts  
-                if oi > 5000:
-                    print(f"      📊 PUT  {sym_name} strike={strike} OI={oi} gamma={gamma:.6f} gex={gex:.1f}")
+                if effective_oi > 5000:
+                    print(f"      📊 PUT  {sym_name} strike={strike} OI={oi} vol={vol} eff={effective_oi} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
 
     # total_gamma = call_gex + abs(put_gex)
     for s in strikes.values():
@@ -281,7 +284,9 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                # For 0DTE, intraday volume > OI; for longer-dated, use OI
+                effective_oi = max(oi, vol) if dte <= 0 else oi
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
@@ -311,7 +316,8 @@ def calculate_gex_per_expiry(chain, spot):
                 oi = int(c.get("openInterest", 0))
                 vol = int(c.get("totalVolume", 0))
                 gamma = float(c.get("gamma", 0) or 0)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                effective_oi = max(oi, vol) if dte <= 0 else oi
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
