@@ -1878,14 +1878,7 @@ function renderOdtePanel(d) {
   }
   if (resSupHtml) rightCol.appendChild(card('📊 Resistance & Support', resSupHtml));
 
-  // 4. Strategy recommendation — in rightCol after Resistance & Support
-  if (rec && rec.rationale) {
-    const strategyLabel = pc === 'pos' ? '✅ SELL premium' : pc === 'neg' ? '⚠️ BUY debit spreads' : '⚪ Reduce size';
-    rightCol.appendChild(card('📋 Strategy',
-      `<div style="font-size:13px;font-weight:700;color:var(--bright);margin-bottom:8px">${strategyLabel}</div>` +
-      `<div style="font-size:12px;color:var(--text);line-height:1.7">${rec.rationale}</div>`
-    ));
-  }
+  // Strategy is now in moversCol (3rd column) with full trade details
 
   // 5. Volume Surges
   if (d.volume_surges && d.volume_surges.length) {
@@ -1981,6 +1974,56 @@ function renderOdtePanel(d) {
   }
 
   moversCol.appendChild(card('⚡ Top Movers', moversHtml));
+
+  // Strategy card for this symbol — same as the Strategy overlay but inline
+  if (stratVisible || true) { // Always show in 0DTE tab
+    const strats = generateStrategy(d);
+    if (strats && strats.length) {
+      const s = strats[0];
+      const legsH = s.legs.map(l =>
+        `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:rgba(255,255,255,.03);border-radius:6px">
+          <span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:3px;background:${l.action==='BUY'?'rgba(34,197,94,.2)':'rgba(248,113,113,.2)'};color:${l.action==='BUY'?'#4ade80':'#f87171'}">${l.action}</span>
+          <span style="font-size:11px;color:var(--dim)">${l.type}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--bright)">${fp(l.strike)}${l.qty?' ×'+l.qty:''}</span>
+          <span style="font-size:10px;color:var(--accent);margin-left:auto">${l.tag}</span>
+        </div>`
+      ).join('');
+      const whyH = s.why.map(w => `<div style="margin:4px 0;font-size:11px;color:var(--text)">→ ${w}</div>`).join('');
+      const altH = strats.length > 1 ? `<div style="margin-top:8px;font-size:10px;color:var(--dim)"><strong>Alt:</strong> ${strats.slice(1).map(a => a.name).join(', ')}</div>` : '';
+      
+      const stratHtml = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:14px;font-weight:800;color:var(--bright)">${symbol} · $${fp(spot)}</span>
+          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;background:rgba(34,197,94,.12);color:var(--green)">${s.name}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text);line-height:1.6;margin-bottom:10px;padding:8px 10px;background:rgba(255,255,255,.02);border-left:3px solid var(--accent);border-radius:4px">${s.rationale}</div>
+        <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600">Legs</div>
+        ${legsH}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+          <div style="text-align:center;padding:6px;background:rgba(255,255,255,.02);border-radius:4px">
+            <div style="font-size:9px;color:var(--dim);text-transform:uppercase">Premium</div>
+            <div style="font-size:12px;font-weight:700;color:var(--cyan)">${s.expectedPremium||'—'}</div>
+          </div>
+          <div style="text-align:center;padding:6px;background:rgba(255,255,255,.02);border-radius:4px">
+            <div style="font-size:9px;color:var(--dim);text-transform:uppercase">Max Profit</div>
+            <div style="font-size:12px;font-weight:700;color:#4ade80">${s.maxProfit}</div>
+          </div>
+          <div style="text-align:center;padding:6px;background:rgba(255,255,255,.02);border-radius:4px">
+            <div style="font-size:9px;color:var(--dim);text-transform:uppercase">Max Risk</div>
+            <div style="font-size:12px;font-weight:700;color:#f87171">${s.maxRisk}</div>
+          </div>
+          <div style="text-align:center;padding:6px;background:rgba(255,255,255,.02);border-radius:4px">
+            <div style="font-size:9px;color:var(--dim);text-transform:uppercase">Target</div>
+            <div style="font-size:12px;font-weight:700;color:var(--bright)">${s.target}</div>
+          </div>
+        </div>
+        ${whyH}
+        ${altH}
+        <div style="margin-top:8px;font-size:9px;color:var(--dim)">⚠ Not financial advice. Verify on live chain.</div>
+      `;
+      moversCol.appendChild(card('📊 Strategy', stratHtml));
+    }
+  }
 
   wrap.appendChild(leftCol);
   wrap.appendChild(rightCol);
