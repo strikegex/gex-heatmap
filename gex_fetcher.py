@@ -182,8 +182,9 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                # Standard GEX: OI * gamma * spot * multiplier (matches competition)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                # 0DTE GEX: (OI + volume) captures intraday exposure (matches competition)
+                effective_oi = oi + vol
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
@@ -194,7 +195,7 @@ def calculate_gex(chain, spot):
                 strikes[strike]["call_ask"] = float(c.get("ask", 0) or 0)
                 # Debug: log high-OI contracts
                 if oi > 5000:
-                    print(f"      📊 CALL {sym_name} strike={strike} OI={oi} vol={vol} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
+                    print(f"      📊 CALL {sym_name} strike={strike} OI={oi} vol={vol} eff={effective_oi} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
 
     for exp_key, smap in chain.get("putExpDateMap", {}).items():
         exp_date = exp_key.split(":")[0]
@@ -211,8 +212,9 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                # Standard GEX: OI * gamma * spot * multiplier (matches competition)
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                # 0DTE GEX: (OI + volume) captures intraday exposure (matches competition)
+                effective_oi = oi + vol
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
@@ -223,7 +225,7 @@ def calculate_gex(chain, spot):
                 strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
                 # Debug: log high-OI contracts  
                 if oi > 5000:
-                    print(f"      📊 PUT  {sym_name} strike={strike} OI={oi} vol={vol} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
+                    print(f"      📊 PUT  {sym_name} strike={strike} OI={oi} vol={vol} eff={effective_oi} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
 
     # total_gamma = call_gex + abs(put_gex)
     for s in strikes.values():
