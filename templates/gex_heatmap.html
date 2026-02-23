@@ -162,7 +162,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr{display:flex;align-items:center;height:36px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
 .sr:hover{outline:1px solid rgba(255,255,255,.15);z-index:1}
 .sr.spot{outline:2px solid #fff;z-index:2}
-.sr.king{outline:none;z-index:5;border:3px solid rgba(255,68,68,0.9);box-shadow:0 0 12px rgba(255,0,0,.4);border-radius:3px;margin:1px 0;background:rgba(255,68,68,0.08)}
+.sr.king{outline:none;z-index:5;border:3px solid rgba(255,68,68,0.9);box-shadow:0 0 12px rgba(255,0,0,.4);border-radius:3px;margin:1px 0}
 .sr-bg{position:absolute;top:0;bottom:0;transition:opacity .15s}
 .sr:hover .sr-bg{opacity:.85}
 .sr-lbl{width:110px;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:flex-end;gap:4px;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
@@ -171,7 +171,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr.king .sr-lbl{color:#ff4444;font-weight:700}
 .sr.king .sr-lbl::before{content:"👑 ";font-size:13px}
 .gbar-c{flex:1;height:100%;position:relative;display:flex;align-items:center;justify-content:flex-end}
-.gval{font-size:15px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:80px;text-align:right}
+.gval{font-size:15px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:80px;text-align:right;text-shadow:0 0 4px rgba(0,0,0,.85),0 0 8px rgba(0,0,0,.6)}
 
 /* ═══ MOBILE RESPONSIVE ═══ */
 @media(max-width:900px){
@@ -664,8 +664,7 @@ function _viridisRGB(t) {
 }
 function gc(n, m, k, dataMin, dataMax) {
   // Viridis scale: maps n from [dataMin, dataMax] → viridis [0, 1]
-  // King stays gold/yellow
-  if (k) return { r: 251, g: 191, b: 36 };
+  // King uses same viridis color as any other strike (red border via CSS)
   // If min/max provided, use data-range mapping (like StrikeMap)
   if (dataMin !== undefined && dataMax !== undefined) {
     const range = dataMax - dataMin;
@@ -679,20 +678,8 @@ function gc(n, m, k, dataMin, dataMax) {
   return _viridisRGB(t);
 }
 function tc(n, m, k, dataMin, dataMax) {
-  if (k) return '#1a1a1a'; // dark text on yellow king
-  let t;
-  if (dataMin !== undefined && dataMax !== undefined) {
-    const range = dataMax - dataMin;
-    if (range === 0) return 'rgba(255,255,255,.7)';
-    t = (n - dataMin) / range;
-  } else {
-    if (m === 0) return 'rgba(255,255,255,.5)';
-    t = (n + m) / (2 * m);
-  }
-  // Dark text on bright yellow/lime, white on dark purple/teal
-  if (t > 0.82) return 'rgba(0,0,0,.75)';
-  if (t > 0.68) return 'rgba(0,0,0,.55)';
-  return 'rgba(255,255,255,.85)';
+  // Always use white text for readability against viridis bar backgrounds
+  return '#fff';
 }
 
 function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
@@ -1231,12 +1218,11 @@ function renderPanel(d){
     row.className='sr'+(iS?' spot':'')+(iK?' king':'');
     if(iV) row.style.borderRight='3px solid var(--cyan)';
 
-    // Spot row gets ▶ marker, King gets ★
-    const strikeLabel = iS ? `${fp(s.strike)} ▶` : fp(s.strike);
-    const kingMarker = iK ? ' ★' : '';
+    // Spot arrow and King crown are handled by CSS ::before pseudo-elements
+    const strikeLabel = fp(s.strike);
     const surgeMarker = iV ? ' 📈' : '';
 
-    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${chgTag}${strikeLabel}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${kingMarker}${surgeMarker}</span></div>`;
+    row.innerHTML=`<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${barPct}%;right:0"></div><span class="sr-lbl">${chgTag}${strikeLabel}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${surgeMarker}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
   });
@@ -1834,7 +1820,7 @@ function renderOdtePanel(d) {
     const row = document.createElement('div');
     row.className = 'sr' + (iS ? ' spot' : '') + (iK ? ' king' : '');
     if (iV) row.style.borderRight = '3px solid var(--cyan)';
-    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${kingBarPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iK?' 👑':''}${iV?' 📈':''}</span></div>`;
+    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${kingBarPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iV?' 📈':''}</span></div>`;
     row.onmouseenter = e => showTip(e, s, symbol, spot, mx, iK);
     row.onmousemove = moveTip;
     row.onmouseleave = hideTip;
