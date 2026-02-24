@@ -182,8 +182,9 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                # GEX: OI * gamma * spot * multiplier
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                # 0DTE GEX: (OI + volume) for intraday exposure
+                effective_oi = oi + vol
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["call_gex"] += gex
                 strikes[strike]["net_gex"] += gex
                 strikes[strike]["call_oi"] += oi
@@ -211,8 +212,9 @@ def calculate_gex(chain, spot):
                 gamma = float(c.get("gamma", 0) or 0)
                 sym_name = c.get("symbol", "?")
                 ensure(strike)
-                # GEX: OI * gamma * spot * multiplier
-                gex = oi * gamma * spot * CONTRACT_MULTIPLIER
+                # 0DTE GEX: (OI + volume) for intraday exposure
+                effective_oi = oi + vol
+                gex = effective_oi * gamma * spot * CONTRACT_MULTIPLIER
                 strikes[strike]["put_gex"] -= gex
                 strikes[strike]["net_gex"] -= gex
                 strikes[strike]["put_oi"] += oi
