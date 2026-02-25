@@ -336,7 +336,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
     <span style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Strikes:</span>
     <select id="ns" onchange="rerender()" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:4px;cursor:pointer">
-      <option value="15" selected>15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option>
+      <option value="10" selected>10</option><option value="15">15</option><option value="25">25</option><option value="40">40</option><option value="60">60</option>
     </select>
   </div>
 </div>
@@ -424,7 +424,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
         <select id="liveStrikeRange" onchange="renderLiveHeatmap()"
           style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer">
           <option value="40">±40</option>
-          <option value="20" selected>±20</option>
+          <option value="15" selected>±15</option>
+          <option value="20">±20</option>
           <option value="60">±60</option>
           <option value="0">All</option>
         </select>
@@ -469,7 +470,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
       <label style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px">Strikes</label>
       <select id="odteNs" onchange="if(odteCurrentSym)loadOdteSym(odteCurrentSym)"
         style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:6px;cursor:pointer">
-        <option value="15" selected>15</option>
+        <option value="10" selected>10</option>
+        <option value="15">15</option>
         <option value="30">30</option>
       </select>
     </div>
