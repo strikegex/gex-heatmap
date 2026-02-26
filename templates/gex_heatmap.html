@@ -2203,18 +2203,7 @@ function renderSessionChart(canvas, snaps, symbol) {
   const colW = plotW / Math.max(numSnaps, 1);
   const xForSnap = i => marginLeft + i * colW;
 
-  // Find max absolute GEX for bar scaling
-  let maxAbsGex = 0;
-  snaps.forEach(snap => {
-    if (!snap.gex) return;
-    Object.values(snap.gex).forEach(g => {
-      maxAbsGex = Math.max(maxAbsGex, Math.abs(g.n || 0));
-    });
-  });
-  if (maxAbsGex === 0) maxAbsGex = 1;
-
   // Bar height based on strike spacing
-  const strikeStep = strikes.length >= 2 ? strikes[1] - strikes[0] : 5;
   const barH = Math.max(2, Math.min(12, (plotH / strikes.length) * 0.7));
 
   // ── Background ──
@@ -2232,50 +2221,46 @@ function renderSessionChart(canvas, snaps, symbol) {
     ctx.stroke();
   });
 
-  // ── Draw GEX bars for each snapshot ──
-  snaps.forEach((snap, i) => {
-    if (!snap.gex) return;
-    const x = xForSnap(i);
-    const bw = Math.max(1, colW - 1);
+  // ── Draw latest-snapshot GEX bars (left-anchored, like StrikeMap style) ──
+  const lastSnap = snaps[snaps.length - 1];
+  if (!lastSnap || !lastSnap.gex) return;
 
-    strikes.forEach(s => {
-      const sk = String(s) + '.0';
-      const sk2 = String(s);
-      const g = snap.gex[sk] || snap.gex[sk2];
-      if (!g) return;
+  let maxAbsLatest = 0;
+  strikes.forEach(s => {
+    const sk = String(s) + '.0';
+    const sk2 = String(s);
+    const g = lastSnap.gex[sk] || lastSnap.gex[sk2];
+    if (!g) return;
+    maxAbsLatest = Math.max(maxAbsLatest, Math.abs(g.n || 0));
+  });
+  if (maxAbsLatest <= 0) maxAbsLatest = 1;
 
-      const netGex = g.n || 0;
-      if (Math.abs(netGex) < maxAbsGex * 0.005) return; // skip tiny
+  strikes.forEach(s => {
+    const sk = String(s) + '.0';
+    const sk2 = String(s);
+    const g = lastSnap.gex[sk] || lastSnap.gex[sk2];
+    if (!g) return;
 
-      const y = yForStrike(s);
-      // Bar width proportional to GEX magnitude
-      const barW = (Math.abs(netGex) / maxAbsGex) * colW * 0.9;
+    const netGex = g.n || 0;
+    if (Math.abs(netGex) < maxAbsLatest * 0.005) return;
+    const y = yForStrike(s);
+    const barW = (Math.abs(netGex) / maxAbsLatest) * (plotW * 0.95);
+    const callOI = g.co || 0;
+    const putOI = g.po || 0;
+    const totalOI = callOI + putOI;
+    const oiPortion = totalOI > 0 ? Math.min(1, totalOI / (totalOI + 1)) : 0.5;
 
-      // Determine OI vs volume portion
-      // call_gex and put_gex are OI-based; the volume portion is estimated
-      const callOI = g.co || 0;
-      const putOI = g.po || 0;
-      const totalOI = callOI + putOI;
-
-      if (netGex > 0) {
-        // Positive GEX — green bars
-        // Darker green for OI portion, lighter green for volume
-        const oiPortion = totalOI > 0 ? Math.min(1, totalOI / (totalOI + 1)) : 0.5;
-        // OI bar
-        ctx.fillStyle = '#22c55e'; // dark green = OI
-        ctx.fillRect(x, y - barH / 2, barW * oiPortion, barH);
-        // Volume bar (lighter, extends further)
-        ctx.fillStyle = '#4ade80'; // light green = volume
-        ctx.fillRect(x + barW * oiPortion, y - barH / 2, barW * (1 - oiPortion), barH);
-      } else {
-        // Negative GEX — red bars
-        ctx.fillStyle = '#ef4444'; // dark red = OI
-        const oiPortion = totalOI > 0 ? Math.min(1, totalOI / (totalOI + 1)) : 0.5;
-        ctx.fillRect(x, y - barH / 2, barW * oiPortion, barH);
-        ctx.fillStyle = '#f87171'; // light red = volume
-        ctx.fillRect(x + barW * oiPortion, y - barH / 2, barW * (1 - oiPortion), barH);
-      }
-    });
+    if (netGex > 0) {
+      ctx.fillStyle = '#1f9d55'; // Pos GEX (OI)
+      ctx.fillRect(marginLeft, y - barH / 2, barW * oiPortion, barH);
+      ctx.fillStyle = '#6ee77a'; // Pos GEX (Volume)
+      ctx.fillRect(marginLeft + barW * oiPortion, y - barH / 2, barW * (1 - oiPortion), barH);
+    } else {
+      ctx.fillStyle = '#c24130'; // Neg GEX (OI)
+      ctx.fillRect(marginLeft, y - barH / 2, barW * oiPortion, barH);
+      ctx.fillStyle = '#ff6b6b'; // Neg GEX (Volume)
+      ctx.fillRect(marginLeft + barW * oiPortion, y - barH / 2, barW * (1 - oiPortion), barH);
+    }
   });
 
   // ── Spot price line ──
@@ -2294,7 +2279,7 @@ function renderSessionChart(canvas, snaps, symbol) {
   ctx.stroke();
 
   // ── Spot price label (right side) ──
-  const lastSpot = snaps[snaps.length - 1]?.spot;
+  const lastSpot = lastSnap?.spot;
   if (lastSpot) {
     const spotY = yForStrike(lastSpot);
     ctx.fillStyle = '#0d3a3a';
@@ -2312,7 +2297,6 @@ function renderSessionChart(canvas, snaps, symbol) {
 
   // ── Zero Gamma line (find where GEX flips sign) ──
   // Use latest snapshot to find zero-crossing strike
-  const lastSnap = snaps[snaps.length - 1];
   if (lastSnap && lastSnap.gex) {
     const sortedGex = strikes.map(s => {
       const sk = String(s) + '.0';
@@ -2382,6 +2366,24 @@ function renderSessionChart(canvas, snaps, symbol) {
     ctx.fillText(s >= 1000 ? s.toFixed(0) : s.toFixed(2), marginLeft - 6, y);
   });
 
+  // ── Top axis labels (GEX magnitude, Bn) ──
+  ctx.fillStyle = '#e5e7eb';
+  ctx.font = '500 10px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  const gexTickCount = 5;
+  for (let i = 0; i <= gexTickCount; i++) {
+    const x = marginLeft + (plotW * i / gexTickCount);
+    const valBn = (maxAbsLatest / 1e9) * (i / gexTickCount);
+    ctx.fillText(valBn.toFixed(valBn >= 10 ? 0 : 1), x, marginTop - 6);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x, marginTop);
+    ctx.lineTo(x, marginTop + plotH);
+    ctx.stroke();
+  }
+
   // ── X axis labels (time) ──
   ctx.fillStyle = '#9ca3af';
   ctx.font = '500 9px "Space Grotesk", sans-serif';
@@ -2401,7 +2403,7 @@ function renderSessionChart(canvas, snaps, symbol) {
   ctx.fillStyle = '#e5e7eb';
   ctx.font = '700 14px "Space Grotesk", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`${symbol} Gamma Exposure (Session)`, W / 2, 16);
+  ctx.fillText(`${symbol} Gamma Exposure (Bn)`, W / 2, 16);
 
   // ── Y axis title ──
   ctx.save();
