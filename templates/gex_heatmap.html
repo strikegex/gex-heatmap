@@ -363,11 +363,16 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
       <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ⚪ Reduce size. Wait for clearer setup. Can flip +/− without warning.</div>
     </div>
     <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Max Gross Gamma</div>
-      <div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #fbbf24">
-        <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">All tabs: Max |Call GEX| + |Put GEX|</div>
-        <div style="color:var(--text);font-size:11px">King is the strike with highest <strong>total gamma concentration</strong>. This is the largest dealer hedging zone and often acts as the most important intraday magnet / S-R level.</div>
-        <div style="color:var(--dim);font-size:10px;margin-top:3px">Interpret direction using spot vs king distance and net gamma profile.</div>
+      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Tab-Specific</div>
+      <div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #f87171">
+        <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:3px">HeatMap / 0DTE: Max |Net GEX|</div>
+        <div style="color:var(--text);font-size:11px">Directional king from <strong>call GEX − put GEX</strong>. Used as intraday drift/magnet level.</div>
+        <div style="color:var(--dim);font-size:10px;margin-top:3px">Good for short-term direction and pin behavior.</div>
+      </div>
+      <div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #fbbf24;margin-top:8px">
+        <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">StrikeMap matrix: Max Gross Gamma</div>
+        <div style="color:var(--text);font-size:11px">Concentration king from <strong>|Call GEX| + |Put GEX|</strong>. Strong S/R and positioning zone.</div>
+        <div style="color:var(--dim);font-size:10px;margin-top:3px">Better for structure across expirations.</div>
       </div>
     </div>
   </div>
@@ -703,7 +708,7 @@ function generateStrategy(d) {
   if (!strikes || !strikes.length) return null;
 
   const mx = Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-  const king = strikes.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b);
+  const king = strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
   const gw = strikes.reduce((b,s)=>s.net_gex>b.net_gex?s:b);
   const pw = strikes.reduce((b,s)=>s.net_gex<b.net_gex?s:b);
   const posAbove = strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.12).sort((a,b)=>a.strike-b.strike);
@@ -1036,7 +1041,7 @@ function renderStrats() {
 function genRec(d){
   const{spot,strikes,total_net_gex}=d;if(!strikes||!strikes.length)return{summary:'No data',bias:'neutral',action_items:[]};
   const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-  const king=strikes.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b);
+  const king=strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
   const posA=strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.15).sort((a,b)=>a.strike-b.strike);
   const posB=strikes.filter(s=>s.strike<spot&&s.net_gex>mx*.15).sort((a,b)=>b.strike-a.strike);
   const profile=total_net_gex>mx*.1?'positive':total_net_gex<-mx*.1?'negative':'neutral';
@@ -1065,7 +1070,7 @@ function renderRecs(){
     const spot=d.spot, strikes=d.strikes||[];
     const sorted=[...strikes].sort((a,b)=>a.strike-b.strike);
     const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-    const king=strikes.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b,strikes[0]);
+    const king=strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b,strikes[0]);
     const kingD=king?king.strike-spot:0;
     const kingPct=spot?((kingD/spot)*100).toFixed(2):0;
     const gw=d.gamma_wall||0, pw=d.put_wall||0;
@@ -1157,10 +1162,14 @@ function renderPanel(d){
   const vis=sorted.slice(Math.max(0,ci-n),Math.min(sorted.length,ci+n+1)).reverse();
   const mx=Math.max(...vis.map(s=>Math.abs(s.net_gex)),1);
   const ss=sorted[ci]?.strike;
-  // King = max gross gamma concentration
-  const kingObj=vis.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b);
-  const ks=kingObj.strike;
-  const kingGex=kingObj.total_gamma||0;
+  // King = max directional gamma exposure (competitor-style for HeatMap view)
+  const kingAll=sorted.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b,sorted[0]);
+  let ks=kingAll.strike;
+  if(!vis.some(s=>s.strike===ks)){
+    ks = vis.reduce((b,s)=>Math.abs(s.strike-ks)<Math.abs(b.strike-ks)?s:b,vis[0]).strike;
+  }
+  const kingObj = sorted.find(s=>s.strike===ks) || vis.find(s=>s.strike===ks) || vis[0];
+  const kingGex=kingObj.net_gex||0;
   const pc=total_net_gex>mx*.05?'pos':total_net_gex<-mx*.05?'neg':'neu';
   const kingD=ks-spot;
   const kingDir=kingD>=0?'above':'below';
@@ -1191,7 +1200,7 @@ function renderPanel(d){
     </div>
     <div style="padding:6px 14px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
       <span style="font-size:12px;color:var(--dim)">${fp(ks)}</span>
-      <span style="font-size:13px;font-weight:700;color:var(--bright)">${fg(Math.abs(kingGex))}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--bright)">${fg(kingGex)}</span>
       <span style="font-size:11px;color:var(--dim)">↗ $${Math.abs(kingD).toFixed(2)} (${kingDistPct}%) ${kingDir} spot</span>
     </div>
     <div class="strikes" id="s-${symbol}"></div>`;
@@ -1733,7 +1742,7 @@ function renderOdtePanel(d) {
   const vis = sorted.slice(Math.max(0, ci - n), Math.min(sorted.length, ci + n + 1)).reverse();
   const mx = Math.max(...vis.map(s => Math.abs(s.net_gex)), 1);
   const ss = sorted[ci]?.strike;
-  const ks = vis.reduce((b, s) => Math.abs(s.total_gamma || 0) > Math.abs(b.total_gamma || 0) ? s : b).strike;
+  const ks = vis.reduce((b, s) => Math.abs(s.net_gex) > Math.abs(b.net_gex) ? s : b).strike;
   const pc = total_net_gex > mx * .05 ? 'pos' : total_net_gex < -mx * .05 ? 'neg' : 'neu';
   const pl = pc === 'pos' ? '+Gamma' : pc === 'neg' ? '−Gamma' : 'Neutral';
   const surgeStrikes = new Set((d.volume_surges || []).map(v => v.strike));
