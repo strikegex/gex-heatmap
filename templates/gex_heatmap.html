@@ -363,18 +363,12 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
       <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ⚪ Reduce size. Wait for clearer setup. Can flip +/− without warning.</div>
     </div>
     <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;padding:12px 14px">
-      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Two Definitions (by tab)</div>
-      <div style="margin-bottom:8px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #f87171">
-        <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:3px">🔥 HeatMap &amp; 0DTE — Max Net Gamma (Directional)</div>
-        <div style="color:var(--text);font-size:11px">Strike with highest <strong>absolute net GEX</strong> (call − put). Indicates where dealers hedge most directionally. Acts as a <em>price magnet</em> — spot drifts toward it throughout the day.</div>
-        <div style="color:var(--dim);font-size:10px;margin-top:3px">King above spot → bullish drift. Below → bearish. At spot → pin zone.</div>
-      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Max Gross Gamma</div>
       <div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #fbbf24">
-        <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">🗺️ StrikeMap — Max Gross Gamma (Concentration)</div>
-        <div style="color:var(--text);font-size:11px">Strike with highest <strong>total gamma exposure</strong> (|call GEX| + |put GEX|). Ignores direction — shows where the most open interest is concentrated across all expirations.</div>
-        <div style="color:var(--dim);font-size:10px;margin-top:3px">Strong support/resistance zone. Price often stalls or reverses here regardless of direction.</div>
+        <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">All tabs: Max |Call GEX| + |Put GEX|</div>
+        <div style="color:var(--text);font-size:11px">King is the strike with highest <strong>total gamma concentration</strong>. This is the largest dealer hedging zone and often acts as the most important intraday magnet / S-R level.</div>
+        <div style="color:var(--dim);font-size:10px;margin-top:3px">Interpret direction using spot vs king distance and net gamma profile.</div>
       </div>
-      <div style="color:var(--text);margin-top:8px;font-size:11px"><strong>Strategy:</strong> Use HeatMap King as your drift target. Use StrikeMap King (red border row) as your key S/R level for multi-expiry positioning.</div>
     </div>
   </div>
 </div>
@@ -645,49 +639,33 @@ if((sessionStorage.getItem('gex_auth')==='1' && sessionStorage.getItem('gex_toke
   document.getElementById('appWrap').style.display='';
 }
 
-// ═══ COLOR — Viridis colormap (matches StrikeMap) ═══
-// Viridis lookup table
-const VIRIDIS = [
-  [68,   1,  84],  // 0.00
-  [72,  36, 117],  // 0.10
-  [65,  68, 135],  // 0.20
-  [53,  95, 141],  // 0.30
-  [42, 120, 142],  // 0.40
-  [33, 145, 140],  // 0.50
-  [34, 168, 132],  // 0.60
-  [68, 191, 112],  // 0.70
-  [122,209,  81],  // 0.80
-  [189,223,  38],  // 0.90
-  [253,231,  37],  // 1.00
-];
-function _viridisRGB(t) {
-  // t in [0,1] → {r,g,b}
+// ═══ COLOR — Legend-matched diverging scale ═══
+// Positive -> yellow, Negative -> purple, Near zero -> green
+const POS_RGB = [251, 191, 36];
+const NEG_RGB = [120, 28, 196];
+const NEU_RGB = [34, 197, 94];
+function _lerpRGB(a, b, t){
   t = Math.max(0, Math.min(1, t));
-  const V = VIRIDIS;
-  const n = V.length - 1;
-  const i = Math.min(n - 1, Math.floor(t * n));
-  const frac = t * n - i;
-  function lerp(a, b, f) { return Math.round(a + (b - a) * f); }
-  return { r: lerp(V[i][0], V[i+1][0], frac), g: lerp(V[i][1], V[i+1][1], frac), b: lerp(V[i][2], V[i+1][2], frac) };
+  return {
+    r: Math.round(a[0] + (b[0] - a[0]) * t),
+    g: Math.round(a[1] + (b[1] - a[1]) * t),
+    b: Math.round(a[2] + (b[2] - a[2]) * t),
+  };
 }
 function gc(n, m, k, dataMin, dataMax) {
-  // Viridis scale: maps n from [dataMin, dataMax] → viridis [0, 1]
-  // King uses same viridis color as any other strike (red border via CSS)
-  // If min/max provided, use data-range mapping (like StrikeMap)
-  if (dataMin !== undefined && dataMax !== undefined) {
-    const range = dataMax - dataMin;
-    if (range === 0) return { r: 68, g: 1, b: 84 };
-    const t = (n - dataMin) / range;
-    return _viridisRGB(t);
-  }
-  // Fallback: use m as symmetric scale [-m, +m]
-  if (m === 0) return { r: 68, g: 1, b: 84 };
-  const t = (n + m) / (2 * m); // maps [-m, +m] → [0, 1]
-  return _viridisRGB(t);
+  const minV = (dataMin !== undefined) ? dataMin : -Math.abs(m || 1);
+  const maxV = (dataMax !== undefined) ? dataMax : Math.abs(m || 1);
+  const scale = Math.max(Math.abs(minV), Math.abs(maxV), 1);
+  const mag = Math.min(1, Math.abs(n) / scale);
+  if (Math.abs(n) < scale * 0.04) return { r: NEU_RGB[0], g: NEU_RGB[1], b: NEU_RGB[2] };
+  return n >= 0 ? _lerpRGB(NEU_RGB, POS_RGB, mag) : _lerpRGB(NEU_RGB, NEG_RGB, mag);
 }
 function tc(n, m, k, dataMin, dataMax) {
-  // Always use white text for readability against viridis bar backgrounds
-  return '#fff';
+  const minV = (dataMin !== undefined) ? dataMin : -Math.abs(m || 1);
+  const maxV = (dataMax !== undefined) ? dataMax : Math.abs(m || 1);
+  const scale = Math.max(Math.abs(minV), Math.abs(maxV), 1);
+  const mag = Math.min(1, Math.abs(n) / scale);
+  return (n > 0 && mag > 0.72) ? 'rgba(0,0,0,.72)' : '#fff';
 }
 
 function ct(n,m){const r=n/m;return Math.abs(r)<.04?'neutral':r>0?'positive':'negative'}
@@ -703,7 +681,7 @@ function generateStrategy(d) {
   if (!strikes || !strikes.length) return null;
 
   const mx = Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-  const king = strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
+  const king = strikes.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b);
   const gw = strikes.reduce((b,s)=>s.net_gex>b.net_gex?s:b);
   const pw = strikes.reduce((b,s)=>s.net_gex<b.net_gex?s:b);
   const posAbove = strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.12).sort((a,b)=>a.strike-b.strike);
@@ -1036,7 +1014,7 @@ function renderStrats() {
 function genRec(d){
   const{spot,strikes,total_net_gex}=d;if(!strikes||!strikes.length)return{summary:'No data',bias:'neutral',action_items:[]};
   const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-  const king=strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
+  const king=strikes.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b);
   const posA=strikes.filter(s=>s.strike>spot&&s.net_gex>mx*.15).sort((a,b)=>a.strike-b.strike);
   const posB=strikes.filter(s=>s.strike<spot&&s.net_gex>mx*.15).sort((a,b)=>b.strike-a.strike);
   const profile=total_net_gex>mx*.1?'positive':total_net_gex<-mx*.1?'negative':'neutral';
@@ -1065,7 +1043,7 @@ function renderRecs(){
     const spot=d.spot, strikes=d.strikes||[];
     const sorted=[...strikes].sort((a,b)=>a.strike-b.strike);
     const mx=Math.max(...strikes.map(s=>Math.abs(s.net_gex)),1);
-    const king=strikes.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b,strikes[0]);
+    const king=strikes.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b,strikes[0]);
     const kingD=king?king.strike-spot:0;
     const kingPct=spot?((kingD/spot)*100).toFixed(2):0;
     const gw=d.gamma_wall||0, pw=d.put_wall||0;
@@ -1157,10 +1135,10 @@ function renderPanel(d){
   const vis=sorted.slice(Math.max(0,ci-n),Math.min(sorted.length,ci+n+1)).reverse();
   const mx=Math.max(...vis.map(s=>Math.abs(s.net_gex)),1);
   const ss=sorted[ci]?.strike;
-  // King = max abs(net_gex) — largest directional gamma exposure (Owls Capital style)
-  const kingObj=vis.reduce((b,s)=>Math.abs(s.net_gex)>Math.abs(b.net_gex)?s:b);
+  // King = max gross gamma concentration
+  const kingObj=vis.reduce((b,s)=>Math.abs(s.total_gamma||0)>Math.abs(b.total_gamma||0)?s:b);
   const ks=kingObj.strike;
-  const kingGex=kingObj.net_gex||0;
+  const kingGex=kingObj.total_gamma||0;
   const pc=total_net_gex>mx*.05?'pos':total_net_gex<-mx*.05?'neg':'neu';
   const kingD=ks-spot;
   const kingDir=kingD>=0?'above':'below';
@@ -1191,7 +1169,7 @@ function renderPanel(d){
     </div>
     <div style="padding:6px 14px 8px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
       <span style="font-size:12px;color:var(--dim)">${fp(ks)}</span>
-      <span style="font-size:13px;font-weight:700;color:var(--bright)">${fg(kingGex)}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--bright)">${fg(Math.abs(kingGex))}</span>
       <span style="font-size:11px;color:var(--dim)">↗ $${Math.abs(kingD).toFixed(2)} (${kingDistPct}%) ${kingDir} spot</span>
     </div>
     <div class="strikes" id="s-${symbol}"></div>`;
@@ -1200,7 +1178,7 @@ function renderPanel(d){
   // Volume surge strikes
   const surgeStrikes = new Set((d.volume_surges||[]).map(v=>v.strike));
 
-  // Compute data range for viridis color mapping (like StrikeMap)
+  // Compute data range for legend-matched diverging color mapping
   const dataMin = Math.min(...vis.map(s => s.net_gex));
   const dataMax = Math.max(...vis.map(s => s.net_gex));
 
@@ -1446,44 +1424,21 @@ async function fetchLiveData(){
   }catch(e){console.error('GEX-ALL fetch:',e)}
 }
 
-// ── Color scale: TRUE matplotlib viridis mapped over actual data [min, max] ──
+// ── StrikeMap matrix color scale (legend-matched) ──
 function gexColor(v, dataMin, dataMax){
-  // Maps v in [dataMin, dataMax] linearly onto viridis [0.0, 1.0]
-  // dataMin → dark purple (viridis 0.0)
-  // dataMax → yellow (viridis 1.0)
-  // Zero falls wherever it naturally sits in the data range (NOT forced to 0.5)
-  const range = dataMax - dataMin;
-  if(range === 0) return 'rgb(68,1,84)';
-  const t = Math.max(0, Math.min(1, (v - dataMin) / range));
-
-  const V = [
-    [68,   1,  84],  // 0.00
-    [72,  36, 117],  // 0.10
-    [65,  68, 135],  // 0.20
-    [53,  95, 141],  // 0.30
-    [42, 120, 142],  // 0.40
-    [33, 145, 140],  // 0.50
-    [34, 168, 132],  // 0.60
-    [68, 191, 112],  // 0.70
-    [122,209,  81],  // 0.80
-    [189,223,  38],  // 0.90
-    [253,231,  37],  // 1.00
-  ];
-  function lerp(a, b, f){ return Math.round(a + (b-a)*f); }
-  const n = V.length - 1;
-  const i = Math.min(n-1, Math.floor(t * n));
-  const frac = t * n - i;
-  return `rgb(${lerp(V[i][0],V[i+1][0],frac)},${lerp(V[i][1],V[i+1][1],frac)},${lerp(V[i][2],V[i+1][2],frac)})`;
+  const scale = Math.max(Math.abs(dataMin || 0), Math.abs(dataMax || 0), 1);
+  const mag = Math.min(1, Math.abs(v) / scale);
+  let c;
+  if(Math.abs(v) < scale * 0.04) c = {r: NEU_RGB[0], g: NEU_RGB[1], b: NEU_RGB[2]};
+  else c = v >= 0 ? _lerpRGB(NEU_RGB, POS_RGB, mag) : _lerpRGB(NEU_RGB, NEG_RGB, mag);
+  return `rgb(${c.r},${c.g},${c.b})`;
 }
 
 function textColor(v, dataMin, dataMax){
-  const range = dataMax - dataMin;
-  if(range === 0) return 'rgba(255,255,255,.7)';
-  const t = (v - dataMin) / range; // 0..1
-  // Dark text on bright yellow/lime, white on dark purple/teal
-  if(t > 0.82) return 'rgba(0,0,0,.75)';
-  if(t > 0.68) return 'rgba(0,0,0,.55)';
-  return 'rgba(255,255,255,.85)';
+  const scale = Math.max(Math.abs(dataMin || 0), Math.abs(dataMax || 0), 1);
+  const mag = Math.min(1, Math.abs(v) / scale);
+  if(v > 0 && mag > 0.72) return 'rgba(0,0,0,.72)';
+  return 'rgba(255,255,255,.9)';
 }
 
 function fmtGex(v){
@@ -1551,8 +1506,7 @@ function renderLiveHeatmap(){
     if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = s.net_gex; });
   });
 
-  // Per-column [min, max] scaling — each expiry gets its own viridis color range
-  // This matches the Python reference where even small-valued columns show full color variation
+  // Per-column [min, max] scaling for diverging color mapping
   const expMin = {}, expMax = {};
   filteredExps.forEach(exp => {
     const ed = expData[exp];
@@ -1569,14 +1523,14 @@ function renderLiveHeatmap(){
   // Find spot row
   const nearSpot = allStrikes.reduce((b,s) => Math.abs(s-spot) < Math.abs(b-spot) ? s : b, allStrikes[0]);
 
-  // King = max abs(net_gex) in 0DTE column — largest directional exposure
+  // King = max gross gamma in 0DTE column
   let kingStrike = 0, kingVal = 0;
   const odteExp = filteredExps.find(exp => expData[exp] && expData[exp].dte === 0);
   const nearestExp = filteredExps.filter(e => e !== 'ALL').sort((a,b) => (expData[a]?.dte||99) - (expData[b]?.dte||99))[0];
   const kingExp = odteExp || nearestExp;
   if(kingExp && expData[kingExp]?.strikes){
     expData[kingExp].strikes.forEach(s => {
-      const av = Math.abs(s.net_gex || 0);
+      const av = Math.abs(s.total_gamma || 0);
       if(av > kingVal){ kingVal = av; kingStrike = s.strike; }
     });
   }
@@ -1749,7 +1703,7 @@ function renderOdtePanel(d) {
   const vis = sorted.slice(Math.max(0, ci - n), Math.min(sorted.length, ci + n + 1)).reverse();
   const mx = Math.max(...vis.map(s => Math.abs(s.net_gex)), 1);
   const ss = sorted[ci]?.strike;
-  const ks = vis.reduce((b, s) => Math.abs(s.net_gex) > Math.abs(b.net_gex) ? s : b).strike;
+  const ks = vis.reduce((b, s) => Math.abs(s.total_gamma || 0) > Math.abs(b.total_gamma || 0) ? s : b).strike;
   const pc = total_net_gex > mx * .05 ? 'pos' : total_net_gex < -mx * .05 ? 'neg' : 'neu';
   const pl = pc === 'pos' ? '+Gamma' : pc === 'neg' ? '−Gamma' : 'Neutral';
   const surgeStrikes = new Set((d.volume_surges || []).map(v => v.strike));
@@ -1797,7 +1751,7 @@ function renderOdtePanel(d) {
   const strikesDiv = document.createElement('div');
   strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto;max-width:100%';
 
-  // Compute data range for viridis color mapping (like StrikeMap)
+  // Compute data range for legend-matched diverging color mapping
   const dataMin = Math.min(...vis.map(s => s.net_gex));
   const dataMax = Math.max(...vis.map(s => s.net_gex));
 
