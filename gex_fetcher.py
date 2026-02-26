@@ -122,10 +122,32 @@ def get_schwab_client():
         print(f"❌ Auth failed: {e}"); sys.exit(1)
 
 
+def _parse_json_response(resp, context):
+    """Parse JSON and include response diagnostics when upstream is empty/non-JSON."""
+    try:
+        return resp.json()
+    except Exception as e:
+        status = getattr(resp, "status_code", "?")
+        ctype = (getattr(resp, "headers", {}) or {}).get("content-type", "")
+        body = ""
+        try:
+            body = (resp.text or "").strip()
+        except Exception:
+            body = ""
+        if body:
+            body = body[:240].replace("\n", " ")
+        else:
+            body = "<empty>"
+        raise RuntimeError(
+            f"{context}: invalid JSON from Schwab (status={status}, content-type={ctype}, body={body})"
+        ) from e
+
+
 def get_spot_price(client, symbol):
     sym = f"${symbol}" if symbol in ("SPX","NDX","RUT","DJX","VIX") else symbol
     resp = client.get_quote(sym); resp.raise_for_status()
-    q = resp.json().get(sym, {}).get("quote", {})
+    payload = _parse_json_response(resp, f"{symbol} quote")
+    q = payload.get(sym, {}).get("quote", {})
     return float(q.get("lastPrice", q.get("closePrice", 0)))
 
 
@@ -143,7 +165,7 @@ def get_option_chain(client, symbol, expiry=None, num_strikes=60, all_expiration
         kw["from_date"] = date.today()
         kw["to_date"] = date.today()  # Strictly today only for 0DTE
     resp = client.get_option_chain(sym, **kw); resp.raise_for_status()
-    return resp.json()
+    return _parse_json_response(resp, f"{symbol} option_chain")
 
 
 def calculate_gex(chain, spot):

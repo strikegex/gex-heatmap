@@ -150,7 +150,13 @@ def fetch_loop_0dte():
                 try:
                     data[sym] = gf.fetch_gex(client, sym, history)
                 except Exception as e:
-                    print(f"  ⚠️ {sym} 0DTE: {e}")
+                    msg = str(e)
+                    print(f"  ⚠️ {sym} 0DTE: {msg}")
+                    # If upstream auth/format failed, recycle client and restart loop.
+                    if "invalid JSON from Schwab" in msg or "401" in msg or "Unauthorized" in msg:
+                        print("  🔁 Rebuilding Schwab client after upstream response/auth failure (0DTE)")
+                        client = None
+                        break
                 # Save progress incrementally
                 if data:
                     with fetch_lock:
@@ -202,7 +208,12 @@ def fetch_loop_all():
                 try:
                     all_data[sym] = gf.fetch_gex_all_expirations(client, sym)
                 except Exception as e:
-                    print(f"  ⚠️ {sym} ALL-EXP: {e}")
+                    msg = str(e)
+                    print(f"  ⚠️ {sym} ALL-EXP: {msg}")
+                    if "invalid JSON from Schwab" in msg or "401" in msg or "Unauthorized" in msg:
+                        print("  🔁 Rebuilding Schwab client after upstream response/auth failure (StrikeMap)")
+                        client = None
+                        break
                 if all_data:
                     with fetch_lock:
                         gex_all_data = dict(all_data)
