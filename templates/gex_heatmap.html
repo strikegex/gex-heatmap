@@ -162,14 +162,15 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sr{display:flex;align-items:center;height:36px;padding:0 4px;position:relative;cursor:default;transition:background .1s}
 .sr:hover{outline:1px solid rgba(255,255,255,.15);z-index:1}
 .sr.spot{outline:2px solid #fff;z-index:2}
-.sr.king{outline:none;z-index:5;border:2px solid rgba(251,191,36,0.9);box-shadow:0 0 10px rgba(251,191,36,.35);border-radius:3px;margin:1px 0}
+.sr.king{outline:none;z-index:5;border:2px solid rgba(239,68,68,.95);box-shadow:0 0 10px rgba(239,68,68,.28);border-radius:3px;margin:1px 0}
 .sr-bg{position:absolute;top:0;bottom:0;transition:opacity .15s}
 .sr:hover .sr-bg{opacity:.85}
 .sr-lbl{width:110px;font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:flex-end;gap:4px;padding-right:10px;flex-shrink:0;z-index:1;position:relative;color:var(--text)}
 .sr.spot .sr-lbl{color:#fff;font-weight:700}
 .sr.spot .sr-lbl::before{content:"◂ ";font-size:12px}
-.sr.king .sr-lbl{color:#fbbf24;font-weight:700}
+.sr.king .sr-lbl{color:#fff;font-weight:700}
 .sr.king .sr-lbl::before{content:"👑 ";font-size:13px}
+.sr.spot.king .sr-lbl::before{content:"◂ 👑 ";font-size:12px}
 .gbar-c{flex:1;height:100%;position:relative;display:flex;align-items:center;justify-content:flex-end}
 .gval{font-size:15px;font-weight:600;position:relative;z-index:1;padding:0 10px;white-space:nowrap;min-width:80px;text-align:right;text-shadow:0 0 4px rgba(0,0,0,.85),0 0 8px rgba(0,0,0,.6)}
 
@@ -1216,7 +1217,7 @@ function renderPanel(d){
   vis.forEach(s=>{
     const iS=s.strike===ss,iK=s.strike===ks,iV=surgeStrikes.has(s.strike);
     const co = panelHeatColor(s.net_gex, dataMin, dataMax);
-    const tco = (iK || s.net_gex > dataMax * 0.7) ? 'rgba(0,0,0,.78)' : '#fff';
+    const tco = (s.net_gex > dataMax * 0.7) ? 'rgba(0,0,0,.78)' : '#fff';
     // % change since open
     let chgTag='';
     if(openSnap){
@@ -1238,7 +1239,7 @@ function renderPanel(d){
     const strikeLabel = fp(s.strike);
     const surgeMarker = iV ? ' 📈' : '';
 
-    const bgStyle = iK ? 'background:rgb(251,191,36);width:100%;right:0' : `background:rgb(${co.r},${co.g},${co.b});width:100%;right:0`;
+    const bgStyle = `background:rgb(${co.r},${co.g},${co.b});width:100%;right:0`;
     row.innerHTML=`<div class="sr-bg" style="${bgStyle}"></div><span class="sr-lbl">${chgTag}${strikeLabel}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${surgeMarker}</span></div>`;
     row.onmouseenter=e=>showTip(e,s,symbol,spot,mx,iK);row.onmousemove=moveTip;row.onmouseleave=hideTip;
     cont.appendChild(row);
@@ -2439,6 +2440,50 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
   ctx.font = '700 14px "Space Grotesk", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(`${symbol} Gamma Exposure (Bn)`, W / 2, 16);
+
+  // ── In-chart legend box (yellow outline, reference style) ──
+  const legendItems = [
+    {type:'bar', color:'#1f9d55', text:'Pos GEX (OI)'},
+    {type:'bar', color:'#6ee77a', text:'Pos GEX (Volume)'},
+    {type:'bar', color:'#c24130', text:'Neg GEX (OI)'},
+    {type:'bar', color:'#ff6b6b', text:'Neg GEX (Volume)'},
+    {type:'line', color:'#00f5ff', text:'Spot'},
+    {type:'lineDash', color:'#fbbf24', text:'Zero Gamma'},
+    {type:'lineDash', color:'rgba(34,197,94,0.8)', text:'Major Pos Gamma'},
+    {type:'lineDash', color:'rgba(239,68,68,0.8)', text:'Major Neg Gamma'},
+  ];
+  const lPad = 12, lineH = 22;
+  const lW = 240, lH = (legendItems.length * lineH) + lPad * 2;
+  const lx = marginLeft + plotW - lW - 14;
+  const ly = marginTop + 10;
+  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.strokeStyle = '#facc15';
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(lx, ly, lW, lH);
+  ctx.strokeRect(lx, ly, lW, lH);
+  legendItems.forEach((it, i) => {
+    const y = ly + lPad + i * lineH + 11;
+    if (it.type === 'bar') {
+      ctx.fillStyle = it.color;
+      ctx.fillRect(lx + 12, y - 5, 28, 10);
+    } else if (it.type === 'line') {
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(lx + 12, y); ctx.lineTo(lx + 40, y); ctx.stroke();
+    } else {
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(lx + 12, y); ctx.lineTo(lx + 40, y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.fillStyle = '#e5e7eb';
+    ctx.font = '500 11px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(it.text, lx + 52, y);
+  });
 
   // ── Y axis title ──
   ctx.save();
