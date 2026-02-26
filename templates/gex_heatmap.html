@@ -503,52 +503,41 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   </div>
 </div>
 
-<!-- ═══ CHART TAB ═══ -->
+<!-- ═══ CHART TAB — Session GEX ═══ -->
 <div class="tab-content" id="chart-tab" style="background:#0a0e14">
   <!-- Chart toolbar -->
   <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);background:#0d1117;flex-shrink:0;flex-wrap:wrap">
-    <!-- Symbol input — matching StrikeMap size -->
+    <!-- Symbol input -->
     <div style="display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--accent);border-radius:8px;padding:6px 14px;box-shadow:0 0 12px rgba(100,180,100,0.2)">
       <span style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:600">Symbol</span>
       <input id="chartSymInput" type="text" value="SPX" maxlength="10"
         style="background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:var(--bright);width:90px;text-transform:uppercase"
-        onkeydown="if(event.key==='Enter')loadChart()">
-      <button onclick="loadChart()"
+        onkeydown="if(event.key==='Enter')loadSessionChart()">
+      <button onclick="loadSessionChart()"
         style="background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:800;padding:6px 16px;border-radius:6px;cursor:pointer;letter-spacing:.5px">GO</button>
     </div>
-    <!-- Timeframe buttons -->
-    <div id="chartTfBar" style="display:flex;gap:2px">
-      <button class="ctf" data-tf="1" onclick="setChartTf('1')">1m</button>
-      <button class="ctf" data-tf="5" onclick="setChartTf('5')">5m</button>
-      <button class="ctf active" data-tf="15" onclick="setChartTf('15')">15m</button>
-      <button class="ctf" data-tf="30" onclick="setChartTf('30')">30m</button>
-      <button class="ctf" data-tf="60" onclick="setChartTf('60')">1H</button>
-      <button class="ctf" data-tf="D" onclick="setChartTf('D')">1D</button>
-    </div>
-    <!-- Color legend -->
-    <div style="display:flex;align-items:center;gap:10px;font-size:10px;padding:0 8px">
+    <!-- Legend -->
+    <div style="display:flex;align-items:center;gap:12px;font-size:10px;padding:0 8px">
       <span style="color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.5px">Legend:</span>
-      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:3px;border-radius:1px;background:#fbbf24"></div><span style="color:#fbbf24">King</span></div>
-      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:3px;border-radius:1px;background:#22c55e"></div><span style="color:#22c55e">Γ Wall</span></div>
-      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:3px;border-radius:1px;background:#ef4444"></div><span style="color:#ef4444">Put Wall</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:6px;border-radius:1px;background:#22c55e"></div><span style="color:#22c55e">Pos GEX (OI)</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:6px;border-radius:1px;background:#ef4444"></div><span style="color:#ef4444">Neg GEX (OI)</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:6px;border-radius:1px;background:#4ade80"></div><span style="color:#4ade80">Pos GEX (Vol)</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:6px;border-radius:1px;background:#f87171"></div><span style="color:#f87171">Neg GEX (Vol)</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:2px;height:10px;border-radius:1px;background:#67e8f9"></div><span style="color:#67e8f9">Spot</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:0;border-top:1px dashed #fbbf24"></div><span style="color:#fbbf24">Zero Gamma</span></div>
     </div>
-    <!-- Gamma levels info -->
-    <div id="chartGammaInfo" style="display:flex;gap:14px;margin-left:auto;font-size:11px;flex-wrap:wrap"></div>
+    <!-- Session info -->
+    <div id="chartSessionInfo" style="display:flex;gap:14px;margin-left:auto;font-size:11px;flex-wrap:wrap"></div>
   </div>
-  <!-- Chart + Sidebar layout -->
-  <div style="flex:1;min-height:0;display:flex;overflow:hidden">
-    <!-- Chart container (takes remaining space) -->
+  <!-- Canvas container -->
+  <div style="flex:1;min-height:0;display:flex;overflow:hidden;position:relative">
     <div id="chartContainer" style="flex:1;min-height:500px;position:relative">
-      <div id="chartEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim);gap:8px">
+      <canvas id="sessionCanvas" style="width:100%;height:100%"></canvas>
+      <div id="chartEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim);gap:8px;position:absolute;top:0;left:0;right:0;bottom:0">
         <div style="font-size:40px">📈</div>
-        <div style="font-size:16px;font-weight:600;color:var(--text)">GEX Live Chart</div>
-        <div style="font-size:12px">Select a symbol and timeframe to view price action with gamma levels</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text)">Session GEX Chart</div>
+        <div style="font-size:12px">Gamma exposure by strike over the trading session</div>
       </div>
-    </div>
-    <!-- Gamma sidebar (right side, in flow) -->
-    <div id="chartSidebar" style="display:none;width:220px;flex-shrink:0;background:#0d1117;border-left:1px solid var(--border);padding:16px;overflow-y:auto">
-      <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600">Gamma Profile</div>
-      <div id="chartSidebarContent"></div>
     </div>
   </div>
 </div>
@@ -594,8 +583,8 @@ function switchTab(tab) {
   } else if (tab === 'chart') {
     document.getElementById('chart-tab').classList.add('active');
     if(legendBar) legendBar.style.display = 'none';
-    if(!chartLoaded) { setTimeout(loadChart, 50); }
-    else if(chartObj) { setTimeout(() => { chartObj.resize(document.getElementById('chartContainer').clientWidth, document.getElementById('chartContainer').clientHeight); }, 50); }
+    if(!sessionChartLoaded) { setTimeout(loadSessionChart, 50); }
+    else { setTimeout(() => { loadSessionChart(); }, 50); }
   }
 }
 
@@ -2117,226 +2106,310 @@ document.addEventListener('click', e => {
 });
 
 // ═══ CHART TAB — TradingView Lightweight Charts + Gamma Levels ═══
-let chartObj = null, chartCandleSeries = null, chartVolSeries = null;
-let chartLoaded = false, chartSym = 'SPX', chartTf = '15';
-let chartGammaLines = [];
+// ═══ SESSION GEX CHART ═══
+let sessionChartLoaded = false;
+let sessionChartTimer = null;
 
-function setChartTf(tf) {
-  chartTf = tf;
-  document.querySelectorAll('.ctf').forEach(b => b.classList.toggle('active', b.dataset.tf === tf));
-  loadChart();
-}
-
-async function loadChart() {
+async function loadSessionChart() {
   const sym = document.getElementById('chartSymInput').value.trim().toUpperCase() || 'SPX';
-  chartSym = sym;
   const container = document.getElementById('chartContainer');
+  const canvas = document.getElementById('sessionCanvas');
   const empty = document.getElementById('chartEmpty');
 
-  // Load lightweight-charts if not yet loaded
-  if (!window.LightweightCharts) {
-    try {
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js';
-      document.head.appendChild(script);
-      await new Promise((res, rej) => { script.onload = res; script.onerror = rej; });
-    } catch(e1) {
-      // Fallback CDN
-      try {
-        const script2 = document.createElement('script');
-        script2.src = 'https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js';
-        document.head.appendChild(script2);
-        await new Promise((res, rej) => { script2.onload = res; script2.onerror = rej; });
-      } catch(e2) {
-        console.error('Failed to load LightweightCharts from any CDN');
-        if (empty) { empty.querySelector('div:last-child').textContent = 'Failed to load charting library. Please refresh.'; }
-        return;
-      }
-    }
-  }
-
-  // Wait a frame for container to have dimensions
-  await new Promise(r => requestAnimationFrame(r));
-
-  // Fetch candle data
   try {
-    const resp = await fetch(`/api/candles?symbol=${sym}&tf=${chartTf}`);
+    const resp = await fetch(`/api/session?symbol=${sym}`);
     const data = await resp.json();
-    if (data.error) { console.error('Chart error:', data.error); return; }
-
-    if (empty) empty.style.display = 'none';
-
-    // Ensure container has real dimensions
-    const cw = container.clientWidth || 800;
-    const ch = container.clientHeight || 500;
-
-    // Create or reuse chart
-    if (!chartObj) {
-      chartObj = LightweightCharts.createChart(container, {
-        width: cw,
-        height: ch,
-        layout: {
-          background: { type: 'solid', color: '#0a0e14' },
-          textColor: '#9ca3af',
-          fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: 11,
-        },
-        grid: {
-          vertLines: { color: 'rgba(255,255,255,0.03)' },
-          horzLines: { color: 'rgba(255,255,255,0.03)' },
-        },
-        crosshair: {
-          mode: LightweightCharts.CrosshairMode.Normal,
-          vertLine: { color: 'rgba(99,102,241,0.4)', width: 1, style: 2 },
-          horzLine: { color: 'rgba(99,102,241,0.4)', width: 1, style: 2 },
-        },
-        rightPriceScale: {
-          borderColor: 'rgba(255,255,255,0.08)',
-          scaleMargins: { top: 0.08, bottom: 0.15 },
-        },
-        timeScale: {
-          borderColor: 'rgba(255,255,255,0.08)',
-          timeVisible: chartTf !== 'D',
-          secondsVisible: false,
-        },
-      });
-
-      chartCandleSeries = chartObj.addCandlestickSeries({
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        borderDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
-        wickDownColor: '#ef4444',
-      });
-
-      chartVolSeries = chartObj.addHistogramSeries({
-        priceFormat: { type: 'volume' },
-        priceScaleId: 'vol',
-        scaleMargins: { top: 0.85, bottom: 0 },
-      });
-      chartObj.priceScale('vol').applyOptions({
-        scaleMargins: { top: 0.85, bottom: 0 },
-      });
-
-      // Resize observer
-      const ro = new ResizeObserver(() => {
-        if (chartObj && container.clientWidth > 0) {
-          chartObj.resize(container.clientWidth, container.clientHeight);
-        }
-      });
-      ro.observe(container);
-    } else {
-      // Update time scale visibility for new timeframe
-      chartObj.timeScale().applyOptions({
-        timeVisible: chartTf !== 'D',
-      });
+    const snaps = data.snapshots || [];
+    if (!snaps.length || !snaps[0].gex) {
+      if (empty) { empty.querySelector('div:last-child').textContent = 'No session data yet. Waiting for first GEX fetch...'; }
+      return;
     }
+    if (empty) empty.style.display = 'none';
+    canvas.style.display = 'block';
+    renderSessionChart(canvas, snaps, sym);
+    sessionChartLoaded = true;
 
-    // Set candle data
-    const candles = data.candles || [];
-    chartCandleSeries.setData(candles.map(c => ({
-      time: c.time,
-      open: c.open,
-      high: c.high,
-      low: c.low,
-      close: c.close,
-    })));
-
-    // Set volume data
-    chartVolSeries.setData(candles.map(c => ({
-      time: c.time,
-      value: c.volume,
-      color: c.close >= c.open ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)',
-    })));
-
-    // Draw gamma levels
-    drawGammaLevels(data.gamma || {});
-
-    chartLoaded = true;
-    chartObj.timeScale().fitContent();
+    // Auto-refresh every 60s
+    if (sessionChartTimer) clearInterval(sessionChartTimer);
+    sessionChartTimer = setInterval(() => loadSessionChart(), 60000);
 
   } catch (e) {
-    console.error('Chart load error:', e);
+    console.error('Session chart error:', e);
   }
 }
 
-function drawGammaLevels(gamma) {
-  if (!chartCandleSeries) return;
+function renderSessionChart(canvas, snaps, symbol) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height || 600;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
 
-  // Remove old price lines
-  chartGammaLines.forEach(line => {
-    try { chartCandleSeries.removePriceLine(line); } catch(e) {}
+  // Layout
+  const marginLeft = 70, marginRight = 80, marginTop = 30, marginBottom = 40;
+  const plotW = W - marginLeft - marginRight;
+  const plotH = H - marginTop - marginBottom;
+
+  // Gather all strikes and find range
+  const allStrikes = new Set();
+  let minSpot = Infinity, maxSpot = -Infinity;
+  snaps.forEach(snap => {
+    if (snap.gex) Object.keys(snap.gex).forEach(k => allStrikes.add(parseFloat(k)));
+    if (snap.spot) { minSpot = Math.min(minSpot, snap.spot); maxSpot = Math.max(maxSpot, snap.spot); }
   });
-  chartGammaLines = [];
 
-  if (!gamma || !gamma.king_node) return;
+  // Filter strikes near spot range (±3% from spot range)
+  const spotMid = (minSpot + maxSpot) / 2;
+  const spotRange = Math.max(maxSpot - minSpot, spotMid * 0.01);
+  const viewMin = spotMid - spotRange * 2.5;
+  const viewMax = spotMid + spotRange * 2.5;
+  const strikes = [...allStrikes].filter(s => s >= viewMin && s <= viewMax).sort((a, b) => a - b);
+  if (!strikes.length) return;
 
-  const levels = [
-    { price: gamma.king_node, title: '👑 King', color: '#fbbf24', lineWidth: 2, lineStyle: 0 },
-    { price: gamma.gamma_wall, title: 'Γ Wall', color: '#22c55e', lineWidth: 1, lineStyle: 2 },
-    { price: gamma.put_wall, title: 'P Wall', color: '#ef4444', lineWidth: 1, lineStyle: 2 },
-  ];
+  const strikeMin = strikes[0];
+  const strikeMax = strikes[strikes.length - 1];
+  const strikeRange = strikeMax - strikeMin || 1;
 
-  levels.forEach(lev => {
-    if (!lev.price) return;
-    const line = chartCandleSeries.createPriceLine({
-      price: lev.price,
-      color: lev.color,
-      lineWidth: lev.lineWidth,
-      lineStyle: lev.lineStyle,
-      axisLabelVisible: true,
-      title: lev.title,
+  // Y axis: strike price (top = high, bottom = low)
+  const yForStrike = s => marginTop + plotH - ((s - strikeMin) / strikeRange) * plotH;
+
+  // X axis: time (snapshots)
+  const numSnaps = snaps.length;
+  const colW = plotW / Math.max(numSnaps, 1);
+  const xForSnap = i => marginLeft + i * colW;
+
+  // Find max absolute GEX for bar scaling
+  let maxAbsGex = 0;
+  snaps.forEach(snap => {
+    if (!snap.gex) return;
+    Object.values(snap.gex).forEach(g => {
+      maxAbsGex = Math.max(maxAbsGex, Math.abs(g.n || 0));
     });
-    chartGammaLines.push(line);
+  });
+  if (maxAbsGex === 0) maxAbsGex = 1;
+
+  // Bar height based on strike spacing
+  const strikeStep = strikes.length >= 2 ? strikes[1] - strikes[0] : 5;
+  const barH = Math.max(2, Math.min(12, (plotH / strikes.length) * 0.7));
+
+  // ── Background ──
+  ctx.fillStyle = '#0a0e14';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Grid lines (horizontal at each strike) ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 0.5;
+  strikes.forEach(s => {
+    const y = yForStrike(s);
+    ctx.beginPath();
+    ctx.moveTo(marginLeft, y);
+    ctx.lineTo(marginLeft + plotW, y);
+    ctx.stroke();
   });
 
-  // Update gamma info bar
-  const info = document.getElementById('chartGammaInfo');
-  const net = gamma.total_net_gex || 0;
-  const profile = net > 0 ? 'Positive' : net < 0 ? 'Negative' : 'Neutral';
-  const profileColor = net > 0 ? '#22c55e' : net < 0 ? '#ef4444' : '#9ca3af';
-  info.innerHTML = `
-    <span style="color:#fbbf24;font-weight:700">👑 ${gamma.king_node?.toFixed(0) || '–'}</span>
-    <span style="color:#22c55e">Γ ${gamma.gamma_wall?.toFixed(0) || '–'}</span>
-    <span style="color:#ef4444">P ${gamma.put_wall?.toFixed(0) || '–'}</span>
-    <span style="color:var(--dim)">|</span>
-    <span style="color:${profileColor};font-weight:700">${profile} Gamma</span>
-    <span style="color:var(--dim)">Net: ${fg(net)}</span>
-  `;
+  // ── Draw GEX bars for each snapshot ──
+  snaps.forEach((snap, i) => {
+    if (!snap.gex) return;
+    const x = xForSnap(i);
+    const bw = Math.max(1, colW - 1);
 
-  // Update sidebar
-  const sidebar = document.getElementById('chartSidebar');
-  const sc = document.getElementById('chartSidebarContent');
-  sidebar.style.display = '';
-  const kingDist = gamma.king_node - gamma.spot;
-  const kingPct = ((Math.abs(kingDist) / gamma.spot) * 100).toFixed(2);
-  const kingDir = kingDist >= 0 ? 'above' : 'below';
-  sc.innerHTML = `
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:11px;color:#fbbf24">👑 King</span>
-      <span style="font-size:12px;font-weight:700;color:var(--bright)">${gamma.king_node?.toFixed(0)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:11px;color:#22c55e">Γ Wall</span>
-      <span style="font-size:12px;font-weight:700;color:var(--bright)">${gamma.gamma_wall?.toFixed(0)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:11px;color:#ef4444">P Wall</span>
-      <span style="font-size:12px;font-weight:700;color:var(--bright)">${gamma.put_wall?.toFixed(0)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:11px;color:var(--dim)">Spot</span>
-      <span style="font-size:12px;font-weight:700;color:var(--bright)">$${gamma.spot?.toFixed(2)}</span>
-    </div>
-    <div style="height:1px;background:var(--border);margin:8px 0"></div>
-    <div style="font-size:10px;color:var(--dim)">
-      King is <span style="color:var(--text);font-weight:600">${kingDist >= 0 ? '▲' : '▼'} ${Math.abs(kingDist).toFixed(1)}pts (${kingPct}%)</span> ${kingDir} spot
-    </div>
-    <div style="margin-top:6px;font-size:10px;color:${profileColor};font-weight:600">
-      ${profile} Gamma · ${fg(net)}
-    </div>
-  `;
+    strikes.forEach(s => {
+      const sk = String(s) + '.0';
+      const sk2 = String(s);
+      const g = snap.gex[sk] || snap.gex[sk2];
+      if (!g) return;
+
+      const netGex = g.n || 0;
+      if (Math.abs(netGex) < maxAbsGex * 0.005) return; // skip tiny
+
+      const y = yForStrike(s);
+      // Bar width proportional to GEX magnitude
+      const barW = (Math.abs(netGex) / maxAbsGex) * colW * 0.9;
+
+      // Determine OI vs volume portion
+      // call_gex and put_gex are OI-based; the volume portion is estimated
+      const callOI = g.co || 0;
+      const putOI = g.po || 0;
+      const totalOI = callOI + putOI;
+
+      if (netGex > 0) {
+        // Positive GEX — green bars
+        // Darker green for OI portion, lighter green for volume
+        const oiPortion = totalOI > 0 ? Math.min(1, totalOI / (totalOI + 1)) : 0.5;
+        // OI bar
+        ctx.fillStyle = '#22c55e'; // dark green = OI
+        ctx.fillRect(x, y - barH / 2, barW * oiPortion, barH);
+        // Volume bar (lighter, extends further)
+        ctx.fillStyle = '#4ade80'; // light green = volume
+        ctx.fillRect(x + barW * oiPortion, y - barH / 2, barW * (1 - oiPortion), barH);
+      } else {
+        // Negative GEX — red bars
+        ctx.fillStyle = '#ef4444'; // dark red = OI
+        const oiPortion = totalOI > 0 ? Math.min(1, totalOI / (totalOI + 1)) : 0.5;
+        ctx.fillRect(x, y - barH / 2, barW * oiPortion, barH);
+        ctx.fillStyle = '#f87171'; // light red = volume
+        ctx.fillRect(x + barW * oiPortion, y - barH / 2, barW * (1 - oiPortion), barH);
+      }
+    });
+  });
+
+  // ── Spot price line ──
+  ctx.strokeStyle = '#67e8f9';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  let firstSpot = true;
+  snaps.forEach((snap, i) => {
+    if (!snap.spot) return;
+    const x = xForSnap(i) + colW / 2;
+    const y = yForStrike(snap.spot);
+    if (y < marginTop || y > marginTop + plotH) return;
+    if (firstSpot) { ctx.moveTo(x, y); firstSpot = false; }
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // ── Spot price label (right side) ──
+  const lastSpot = snaps[snaps.length - 1]?.spot;
+  if (lastSpot) {
+    const spotY = yForStrike(lastSpot);
+    ctx.fillStyle = '#0d3a3a';
+    ctx.strokeStyle = '#67e8f9';
+    ctx.lineWidth = 1;
+    const labelW = 65, labelH = 18;
+    ctx.fillRect(W - marginRight + 4, spotY - labelH / 2, labelW, labelH);
+    ctx.strokeRect(W - marginRight + 4, spotY - labelH / 2, labelW, labelH);
+    ctx.fillStyle = '#67e8f9';
+    ctx.font = '600 10px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$' + lastSpot.toFixed(2), W - marginRight + 4 + labelW / 2, spotY);
+  }
+
+  // ── Zero Gamma line (find where GEX flips sign) ──
+  // Use latest snapshot to find zero-crossing strike
+  const lastSnap = snaps[snaps.length - 1];
+  if (lastSnap && lastSnap.gex) {
+    const sortedGex = strikes.map(s => {
+      const sk = String(s) + '.0';
+      const sk2 = String(s);
+      const g = lastSnap.gex[sk] || lastSnap.gex[sk2];
+      return { strike: s, net: g ? (g.n || 0) : 0 };
+    }).sort((a, b) => a.strike - b.strike);
+
+    // Find zero crossing
+    for (let i = 0; i < sortedGex.length - 1; i++) {
+      if (sortedGex[i].net * sortedGex[i + 1].net < 0) {
+        // Interpolate
+        const s1 = sortedGex[i], s2 = sortedGex[i + 1];
+        const zeroStrike = s1.strike + (s2.strike - s1.strike) * (-s1.net / (s2.net - s1.net));
+        const zy = yForStrike(zeroStrike);
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, zy);
+        ctx.lineTo(marginLeft + plotW, zy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '500 9px "Space Grotesk", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Zero Γ', marginLeft + plotW + 4, zy + 3);
+        break;
+      }
+    }
+
+    // Major Pos Gamma line (king positive)
+    const maxPos = sortedGex.reduce((b, s) => s.net > b.net ? s : b, { net: -Infinity });
+    if (maxPos.net > 0) {
+      const y = yForStrike(maxPos.strike);
+      ctx.setLineDash([6, 3]);
+      ctx.strokeStyle = 'rgba(34,197,94,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(marginLeft, y); ctx.lineTo(marginLeft + plotW, y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Major Neg Gamma line
+    const maxNeg = sortedGex.reduce((b, s) => s.net < b.net ? s : b, { net: Infinity });
+    if (maxNeg.net < 0) {
+      const y = yForStrike(maxNeg.strike);
+      ctx.setLineDash([6, 3]);
+      ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(marginLeft, y); ctx.lineTo(marginLeft + plotW, y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // ── Y axis labels (strikes) ──
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = '500 10px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  // Show every Nth strike to avoid overlap
+  const labelStep = Math.max(1, Math.floor(strikes.length / 25));
+  strikes.forEach((s, i) => {
+    if (i % labelStep !== 0) return;
+    const y = yForStrike(s);
+    ctx.fillText(s >= 1000 ? s.toFixed(0) : s.toFixed(2), marginLeft - 6, y);
+  });
+
+  // ── X axis labels (time) ──
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = '500 9px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const timeStep = Math.max(1, Math.floor(numSnaps / 10));
+  snaps.forEach((snap, i) => {
+    if (i % timeStep !== 0) return;
+    const x = xForSnap(i) + colW / 2;
+    const t = new Date(snap.t);
+    const hh = t.getHours().toString().padStart(2, '0');
+    const mm = t.getMinutes().toString().padStart(2, '0');
+    ctx.fillText(`${hh}:${mm}`, x, marginTop + plotH + 6);
+  });
+
+  // ── Title ──
+  ctx.fillStyle = '#e5e7eb';
+  ctx.font = '700 14px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${symbol} Gamma Exposure (Session)`, W / 2, 16);
+
+  // ── Y axis title ──
+  ctx.save();
+  ctx.translate(14, marginTop + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = '600 11px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Strike', 0, 0);
+  ctx.restore();
+
+  // ── X axis title ──
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = '600 10px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Time (EST)', marginLeft + plotW / 2, H - 6);
+
+  // ── Update info bar ──
+  const info = document.getElementById('chartSessionInfo');
+  if (info && lastSnap) {
+    const king = snaps[snaps.length - 1]?.king;
+    info.innerHTML = `
+      <span style="color:#67e8f9;font-weight:700">Spot: $${lastSpot?.toFixed(2) || '–'}</span>
+      <span style="color:#fbbf24;font-weight:700">👑 King: ${king || '–'}</span>
+      <span style="color:var(--dim)">${snaps.length} snapshots</span>
+    `;
+  }
 }
 </script>
 </body></html>
