@@ -380,7 +380,7 @@ def generate_recommendation(symbol, spot, strikes, total_net_gex):
     if max_abs == 0:
         return {"summary": "No significant gamma", "bias": "neutral", "action_items": []}
 
-    king = max(strikes, key=lambda s: abs(s["net_gex"]))
+    king = max(strikes, key=lambda s: abs(s.get("total_gamma", 0)))
     gw = max(strikes, key=lambda s: s["net_gex"])
     pw = min(strikes, key=lambda s: s["net_gex"])
     posA = sorted([s for s in strikes if s["strike"]>spot and s["net_gex"]>max_abs*.15], key=lambda s:s["strike"])
@@ -429,14 +429,14 @@ def fetch_gex(client, symbol, history, expiry=None, num_strikes=30):
     all_s = calculate_gex(chain, spot)
     filtered = filter_near_spot(all_s, spot, num_strikes)
     total = sum(s["net_gex"] for s in filtered)
-    king = max(filtered, key=lambda s: abs(s["net_gex"]))
-    # Debug: show top 3 strikes by abs(net_gex)
-    top3 = sorted(filtered, key=lambda s: abs(s["net_gex"]), reverse=True)[:3]
+    king = max(filtered, key=lambda s: abs(s.get("total_gamma", 0)))
+    # Debug: show top 3 strikes by gross gamma
+    top3 = sorted(filtered, key=lambda s: abs(s.get("total_gamma", 0)), reverse=True)[:3]
     for t in top3:
-        print(f"    strike {t['strike']}: net_gex={t['net_gex']:,.1f} call={t['call_gex']:,.1f} put={t['put_gex']:,.1f}")
+        print(f"    strike {t['strike']}: gross={t.get('total_gamma',0):,.1f} net={t['net_gex']:,.1f} call={t['call_gex']:,.1f} put={t['put_gex']:,.1f}")
 
     vol_surges = detect_volume_surges(history, symbol, filtered)
-    record_snapshot(history, symbol, spot, king["strike"], king["net_gex"], filtered)
+    record_snapshot(history, symbol, spot, king["strike"], king.get("total_gamma", 0), filtered)
     king_timeline = get_king_history(history, symbol)
     rec = generate_recommendation(symbol, spot, filtered, total)
     print(f"  ${spot:,.2f} | {rec['summary']}")
@@ -500,7 +500,7 @@ def fetch_gex_all_expirations(client, symbol, num_strikes=40):
             filtered = []
 
         total = sum(s["net_gex"] for s in filtered)
-        king = max(filtered, key=lambda s: abs(s.get("net_gex",0))) if filtered else None
+        king = max(filtered, key=lambda s: abs(s.get("total_gamma", 0))) if filtered else None
 
         exp_data[exp_d] = {
             "expiration": exp_d,
@@ -534,24 +534,8 @@ def fetch_gex_all_expirations(client, symbol, num_strikes=40):
         cum_filtered = []
 
     cum_total = sum(s["net_gex"] for s in cum_filtered)
-    # King = max abs(net_gex) in 0DTE expiry only (nearest if no 0DTE)
-    from datetime import date
-    today_str = date.today().isoformat()
-    odte_strikes = per_exp.get(today_str, {})
-    if not odte_strikes:
-        # fallback: use the nearest expiry
-        sorted_exps = sorted(per_exp.keys())
-        odte_strikes = per_exp[sorted_exps[0]] if sorted_exps else {}
-    best_strike = None
-    best_val = 0
-    for strike2, sdata in odte_strikes.items():
-        av = abs(sdata.get("net_gex", 0))
-        if av > best_val:
-            best_val = av
-            best_strike = strike2
-    cum_king = next((s for s in cum_filtered if s["strike"] == best_strike), None)
-    if cum_king is None and cum_filtered:
-        cum_king = max(cum_filtered, key=lambda s: abs(s["net_gex"]))
+    # King for cumulative view = max gross gamma in displayed cumulative strikes
+    cum_king = max(cum_filtered, key=lambda s: abs(s.get("total_gamma", 0))) if cum_filtered else None
 
     exp_data["ALL"] = {
         "expiration": "ALL",
