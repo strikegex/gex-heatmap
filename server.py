@@ -153,7 +153,12 @@ def fetch_loop_0dte():
                     msg = str(e)
                     print(f"  ⚠️ {sym} 0DTE: {msg}")
                     # If upstream auth/format failed, recycle client and restart loop.
-                    if "invalid JSON from Schwab" in msg or "401" in msg or "Unauthorized" in msg:
+                    if (
+                        "invalid JSON from Schwab" in msg
+                        or "Expecting value: line 1 column 1 (char 0)" in msg
+                        or "401" in msg
+                        or "Unauthorized" in msg
+                    ):
                         print("  🔁 Rebuilding Schwab client after upstream response/auth failure (0DTE)")
                         client = None
                         break
@@ -210,7 +215,12 @@ def fetch_loop_all():
                 except Exception as e:
                     msg = str(e)
                     print(f"  ⚠️ {sym} ALL-EXP: {msg}")
-                    if "invalid JSON from Schwab" in msg or "401" in msg or "Unauthorized" in msg:
+                    if (
+                        "invalid JSON from Schwab" in msg
+                        or "Expecting value: line 1 column 1 (char 0)" in msg
+                        or "401" in msg
+                        or "Unauthorized" in msg
+                    ):
                         print("  🔁 Rebuilding Schwab client after upstream response/auth failure (StrikeMap)")
                         client = None
                         break
