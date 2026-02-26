@@ -6,7 +6,7 @@
 <title>StrikeGEX — Gamma Exposure Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#070913;
@@ -52,8 +52,9 @@ a{color:inherit}
 .nav{
   position:sticky;top:0;z-index:100;
   backdrop-filter:blur(10px);
-  background:rgba(7,9,19,.84);
+  background:linear-gradient(180deg,rgba(10,12,26,.92),rgba(7,9,19,.82));
   border-bottom:1px solid var(--line);
+  box-shadow:0 10px 40px #0008;
 }
 .nav-inner{height:74px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{display:flex;align-items:center;gap:12px}
@@ -76,7 +77,7 @@ a{color:inherit}
 .hero-grid{display:grid;grid-template-columns:440px minmax(0,1fr);gap:16px}
 .hero-left{background:linear-gradient(180deg,#0f1428,#0b0f1d);border:1px solid var(--line);border-radius:14px;padding:22px}
 .eyebrow{font-size:10px;letter-spacing:1.2px;color:#9cb0ff;text-transform:uppercase;margin-bottom:14px}
-.h1{font-family:'Space Grotesk',sans-serif;font-size:48px;line-height:1.05;letter-spacing:-.6px;margin-bottom:14px}
+.h1{font-family:'Big Shoulders Display',sans-serif;font-size:66px;line-height:.96;letter-spacing:.2px;margin-bottom:14px;text-transform:uppercase}
 .h1 span{color:#8be4ff}
 .hero-copy{font-size:13px;line-height:1.8;color:#aab6df;max-width:360px}
 .hero-actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px}
@@ -113,7 +114,7 @@ a{color:inherit}
 .rk .v{color:#101319;font-weight:700}
 .section{padding:22px 0}
 .kicker{font-size:11px;letter-spacing:1.1px;color:#86a0f0;text-transform:uppercase;margin-bottom:10px}
-.title{font-family:'Space Grotesk',sans-serif;font-size:34px;letter-spacing:-.4px;margin-bottom:12px}
+.title{font-family:'Big Shoulders Display',sans-serif;font-size:48px;letter-spacing:.2px;margin-bottom:12px;text-transform:uppercase;line-height:.95}
 .copy{color:#99a7d4;font-size:13px;line-height:1.8;max-width:940px}
 .gallery{margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .shot{background:#0e1427;border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -178,15 +179,16 @@ a{color:inherit}
   .mini-cards,.heat-panels,.grid-4,.guide,.pricing,.formulas,.gallery{grid-template-columns:1fr}
   .nav-links{display:none}
   .stats{grid-template-columns:1fr 1fr}
-  .title{font-size:28px}
+  .title{font-size:36px}
 }
 @media (max-width:620px){
   .container{padding:0 12px}
   .nav-inner{height:auto;padding:12px 0;flex-wrap:wrap}
-  .h1{font-size:38px}
+  .h1{font-size:50px}
   .stats{grid-template-columns:1fr}
   .hero-actions .btn{width:100%}
   .footer{flex-direction:column;align-items:flex-start}
+  .session-strip{width:100%;justify-content:flex-start;order:3}
 }
 </style>
 </head>
@@ -219,9 +221,9 @@ a{color:inherit}
   <section class="hero" id="overview">
     <div class="hero-grid">
       <aside class="hero-left">
-        <div class="eyebrow">Dealer Positioning Intelligence</div>
+        <div class="eyebrow">Built For Retail Day Traders</div>
         <h1 class="h1">Trade The Tape With<br><span>Gamma Context</span></h1>
-        <p class="hero-copy">StrikeGEX shows where option dealer exposure can pin, reject, or accelerate price. Built around the workflow you already use: StrikeMap, HeatMap, 0DTE, and Chart with king node + wall context.</p>
+        <p class="hero-copy">Know where price is more likely to bounce, stall, or run. StrikeGEX gives you clear levels and simple context before you click buy or sell.</p>
         <div class="hero-actions">
           <a class="btn btn-main" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Join on Whop</a>
           <button class="btn btn-ghost" onclick="openLoginModal()">Member Login</button>
@@ -297,8 +299,8 @@ a{color:inherit}
 
   <section class="section">
     <div class="kicker">Visual Walkthrough</div>
-    <h2 class="title">Every Screenshot Theme Is Built In</h2>
-    <p class="copy">These preview tiles mirror all references you sent: top recommendation cards, multi-panel heat rows, side intel cards, chart with cyan path + legend box, strike matrix behavior, and guide logic.</p>
+    <h2 class="title">Everything You Asked For Is Included</h2>
+    <p class="copy">Same style as your screenshots: top callout cards, SPX/SPY/QQQ rows, side info boxes, cyan chart path, and guide cards.</p>
     <div class="gallery">
       <article class="shot">
         <div class="shot-h"><span>HeatMap Cards</span><span>Range / Drift</span></div>
@@ -355,47 +357,47 @@ a{color:inherit}
 
   <section class="section">
     <div class="kicker">Platform Modules</div>
-    <h2 class="title">Built Around The Exact Workflow In Your Screens</h2>
-    <p class="copy">Use HeatMap for directional row-by-row pressure, StrikeMap for expiry structure, 0DTE for intraday narrative, and Chart for spot path over gamma bars with zero and major gamma context.</p>
+    <h2 class="title">Simple Workflow, Fast Decisions</h2>
+    <p class="copy">Open one tab, get your levels, and decide your plan in seconds. No overthinking, no clutter.</p>
     <div class="grid-4">
-      <article class="card"><h3>🗺️ StrikeMap</h3><p>Cross-expiry structure view. Compare rows across dates, see concentration, and track king as structural context.</p></article>
-      <article class="card"><h3>🔥 HeatMap</h3><p>Fast panel view for SPX/SPY/QQQ with movement commentary, support/resistance rows, and explicit king spotlight.</p></article>
-      <article class="card"><h3>🎯 0DTE</h3><p>Single-symbol execution context: price behavior, key levels, movers, and compact setup language.</p></article>
-      <article class="card"><h3>📈 Chart</h3><p>Session path in cyan with OI/volume bars, zero gamma, and major positive/negative gamma overlays.</p></article>
+      <article class="card"><h3>🗺️ StrikeMap</h3><p>See where the market is heavy across expirations so you can spot likely reaction zones.</p></article>
+      <article class="card"><h3>🔥 HeatMap</h3><p>Quick read for SPX/SPY/QQQ. Colors tell you if tape is likely to chop or trend.</p></article>
+      <article class="card"><h3>🎯 0DTE</h3><p>One-screen day-trade view: key levels, movement bias, and clean context.</p></article>
+      <article class="card"><h3>📈 Chart</h3><p>Watch live price against gamma levels so you react early instead of chasing late.</p></article>
     </div>
   </section>
 
   <section class="section" id="guide">
     <div class="kicker">Gamma Guide</div>
-    <h2 class="title">Read Price Behavior, Not Just Colors</h2>
+    <h2 class="title">Color Rules Made Easy</h2>
     <div class="guide">
-      <article class="g yellow"><h4>🟡 Yellow — Positive Gamma (+GEX)</h4><p>Mean-reverting conditions are more likely. Failed breaks tend to rotate back toward king and nearby high-gamma rows.</p></article>
-      <article class="g purple"><h4>🟣 Purple — Negative Gamma (-GEX)</h4><p>Expansion regime: continuation is more likely, pullbacks can be shallower, and breaks can extend between levels.</p></article>
-      <article class="g green"><h4>🟢 Green — Neutral / Mixed</h4><p>Mixed conviction and chop risk. Look for repeated acceptance above or below key rows before increasing directional bias.</p></article>
-      <article class="g king"><h4>👑 King Node</h4><p>The row with the strongest concentration signal for the current view. Used as a primary magnet/drift reference.</p></article>
+      <article class="g yellow"><h4>🟡 Yellow</h4><p>Price often snaps back. Better for patience, not chasing.</p></article>
+      <article class="g purple"><h4>🟣 Purple</h4><p>Price can run. Breaks are more likely to keep going.</p></article>
+      <article class="g green"><h4>🟢 Green</h4><p>Mixed zone. Expect chop until one side clearly wins.</p></article>
+      <article class="g king"><h4>👑 King Node</h4><p>Main magnet level where price often reacts first.</p></article>
     </div>
 
     <div class="formulas">
       <article class="f">
-        <h4>HeatMap / 0DTE Cards</h4>
-        <code>King = strike with max |net_gex| in displayed rows</code>
+        <h4>HeatMap / 0DTE</h4>
+        <code>King = strongest row on screen\n(short-term magnet level)</code>
       </article>
       <article class="f">
-        <h4>StrikeMap Matrix / Chart Header</h4>
-        <code>King = strike with max total_gamma\ntotal_gamma = |call_gex| + |put_gex|</code>
+        <h4>StrikeMap / Chart</h4>
+        <code>King = biggest concentration row\n(structure reference level)</code>
       </article>
     </div>
   </section>
 
   <section class="section" id="pricing">
     <div class="kicker">Membership</div>
-    <h2 class="title">Pick Your Plan</h2>
+    <h2 class="title">Pick Your Access Plan</h2>
     <div class="pricing">
       <article class="price">
         <h4>Monthly</h4>
         <div class="amount">$299 <span>/mo</span></div>
         <div class="bill">Billed $299 monthly</div>
-        <p>Full platform access with flexible billing.</p>
+        <p>Best if you want flexible month-to-month access.</p>
         <ul>
           <li>HeatMap + StrikeMap + 0DTE + Chart</li>
           <li>SPX / SPY / QQQ focused workflow</li>
@@ -408,7 +410,7 @@ a{color:inherit}
         <span class="disc">-23% Discount</span>
         <div class="amount">$699 <span>/3mo</span></div>
         <div class="bill">Billed $699 every 3 months</div>
-        <p>Most selected for active traders.</p>
+        <p>Most popular for active day traders.</p>
         <ul>
           <li>Everything in Monthly</li>
           <li>Better effective monthly cost</li>
@@ -421,7 +423,7 @@ a{color:inherit}
         <span class="disc">-32% Discount</span>
         <div class="amount">$1,999 <span>/yr</span></div>
         <div class="bill">Billed $1,999 annually</div>
-        <p>Best value for long-term use.</p>
+        <p>Best value if you use this every week all year.</p>
         <ul>
           <li>Everything in Quarterly</li>
           <li>Lowest annual effective rate</li>
