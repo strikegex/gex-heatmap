@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrikeGEX — Gamma Exposure Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070913;
+  --panel:#0c1020;
+  --panel-2:#0f1428;
+  --line:#1b2340;
+  --text:#e8ecff;
+  --muted:#7f8cb8;
+  --cyan:#00eaff;
+  --yellow:#f4c62d;
+  --green:#2fd46f;
+  --purple:#7a3fe2;
+  --red:#ff5a63;
+  --king:#fbbf24;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:radial-gradient(1200px 700px at 10% -10%,#16224a33,transparent 60%),var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+}
+body::after{
+  content:'';
+  position:fixed;
+  inset:-30% -20% auto -20%;
+  height:70vh;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(40% 55% at 15% 25%, #00eaff22, transparent 70%),
+    radial-gradient(38% 52% at 70% 15%, #7a3fe222, transparent 72%),
+    radial-gradient(35% 45% at 90% 40%, #2fd46f18, transparent 75%);
+  filter:blur(24px);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:46px 46px;
+}
+a{color:inherit}
+.container{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 18px}
+.nav{
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(10px);
+  background:linear-gradient(180deg,rgba(10,12,26,.92),rgba(7,9,19,.82));
+  border-bottom:1px solid var(--line);
+  box-shadow:0 10px 40px #0008;
+}
+.nav-inner{height:74px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{height:34px;object-fit:contain}
+.badge{font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:6px 10px;border:1px solid #61222a;border-radius:6px;color:#ff6a73;background:#271117}
+.nav-links{display:flex;gap:18px;color:var(--muted);font-size:12px}
+.nav-links a{text-decoration:none}
+.nav-links a:hover{color:var(--text)}
+.nav-actions{display:flex;gap:10px;align-items:center}
+.session-strip{display:flex;align-items:center;gap:10px;font-size:11px;color:#96a7db}
+.session-dot{width:7px;height:7px;border-radius:50%;background:#2fd46f;box-shadow:0 0 12px #2fd46faa}
+.session-pill{padding:5px 8px;border:1px solid #214f3d;border-radius:6px;background:#10291f;color:#7af0b5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
+.countdown{color:#8ca0ff;font-weight:700}
+.btn{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.4px;border-radius:8px;padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn-ghost{border:1px solid var(--line);color:var(--muted);background:#12182d}
+.btn-ghost:hover{color:var(--text)}
+.btn-main{border:1px solid #214f3d;background:#103027;color:#8cffc5}
+.btn-main:hover{background:#124035;box-shadow:0 0 16px #2fd46f55,0 0 36px #00eaff33}
+@keyframes borderPulse{
+  0%,100%{box-shadow:0 0 0 1px #233561 inset,0 0 0 #0000}
+  50%{box-shadow:0 0 0 1px #365193 inset,0 0 24px #00eaff22}
+}
+@keyframes sweep{
+  0%{transform:translateX(-120%)}
+  100%{transform:translateX(120%)}
+}
+.hero{padding:44px 0 24px}
+.hero-grid{display:grid;grid-template-columns:440px minmax(0,1fr);gap:16px}
+.hero-left{background:linear-gradient(180deg,#0f1428,#0b0f1d);border:1px solid var(--line);border-radius:14px;padding:22px}
+.eyebrow{font-size:10px;letter-spacing:1.2px;color:#9cb0ff;text-transform:uppercase;margin-bottom:14px}
+.h1{font-family:'Big Shoulders Display',sans-serif;font-size:66px;line-height:.96;letter-spacing:.2px;margin-bottom:14px;text-transform:uppercase}
+.h1 span{color:#8be4ff}
+.hero-copy{font-size:13px;line-height:1.8;color:#aab6df;max-width:360px}
+.hero-actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px}
+.stats{margin-top:18px;padding-top:14px;border-top:1px dashed #253158;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#111833;border:1px solid #202b54;border-radius:8px;padding:10px}
+.stat strong{display:block;font-family:'Space Grotesk',sans-serif;font-size:20px;color:#e8f6ff}
+.stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.preview{background:#0a0f1f;border:1px solid var(--line);border-radius:14px;overflow:hidden;animation:borderPulse 4.8s ease-in-out infinite}
+.preview-top{height:48px;padding:0 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.tabs{display:flex;gap:8px;font-size:12px;color:var(--muted)}
+.tab{padding:8px 10px;border-bottom:2px solid transparent}
+.tab.active{color:var(--text);border-bottom-color:#7386ff;background:#141b36}
+.preview-meta{font-size:11px;color:#8ea2df}
+.mini-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:12px;background:#090d1b}
+.mini{border:1px solid var(--line);border-radius:10px;background:#11162a;overflow:hidden}
+.mini-h{display:flex;justify-content:space-between;align-items:center;padding:10px 10px 8px;border-bottom:1px solid #1a2342}
+.mini-h strong{font-family:'Space Grotesk',sans-serif;font-size:16px}
+.mode{font-size:10px;color:var(--yellow);padding:3px 7px;border:1px solid #5a4a13;border-radius:6px;background:#231c08}
+.mini-b{padding:10px;font-size:11px;color:#9ca9d7;line-height:1.55}
+.mini-b .hl{color:#ff6f79;font-weight:700}
+.chips{display:flex;gap:6px;padding:0 10px 10px;flex-wrap:wrap}
+.chip{font-size:10px;border:1px solid #2b355f;border-radius:6px;padding:4px 7px;color:#99a9de;background:#141c37}
+.chip.king{color:#ffd46c;border-color:#6d5617;background:#2b2208}
+.heat-panels{padding:0 12px 12px;background:#090d1b;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
+.panel{border:1px solid var(--line);border-radius:10px;background:#0f152a;overflow:hidden}
+.panel-h{padding:10px;border-bottom:1px solid #1a2342;display:flex;justify-content:space-between;font-size:12px;color:#a3b2e1}
+.rows{padding:0}
+.row{height:28px;display:grid;grid-template-columns:88px 1fr;padding:0 10px;align-items:center;border-top:1px solid #1a2342;font-size:11px}
+.row:first-child{border-top:none}
+.row .v{justify-self:end;color:#dfe8ff}
+.rp{background:linear-gradient(90deg,#2f8a9f,#3a5f99)}
+.rn{background:linear-gradient(90deg,#5b3bb7,#3f5997)}
+.rk{background:linear-gradient(90deg,#e9ce2a,#d4b01f);color:#101319;border-top:1px solid #7c6411;border-bottom:1px solid #7c6411}
+.rk .v{color:#101319;font-weight:700}
+.section{padding:22px 0}
+.kicker{font-size:11px;letter-spacing:1.1px;color:#86a0f0;text-transform:uppercase;margin-bottom:10px}
+.title{font-family:'Big Shoulders Display',sans-serif;font-size:48px;letter-spacing:.2px;margin-bottom:12px;text-transform:uppercase;line-height:.95}
+.copy{color:#99a7d4;font-size:13px;line-height:1.8;max-width:940px}
+.gallery{margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.shot{background:#0e1427;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.shot{position:relative}
+.shot::after{
+  content:'';position:absolute;top:0;left:0;height:100%;width:42%;
+  background:linear-gradient(90deg,#00eaff00,#00eaff11,#00eaff00);
+  transform:translateX(-120%);
+  animation:sweep 6s linear infinite;
+  pointer-events:none;
+}
+.shot-h{padding:10px 12px;border-bottom:1px solid #1a2342;font-size:11px;color:#9db2f2;display:flex;justify-content:space-between}
+.shot-b{padding:12px}
+.bars{display:grid;gap:6px}
+.bar{height:14px;border-radius:4px}
+.bar.c1{background:linear-gradient(90deg,#2f8a9f,#3e5f98)}
+.bar.c2{background:linear-gradient(90deg,#6c3ccf,#42579a)}
+.bar.c3{background:linear-gradient(90deg,#eacc2d,#cda61a)}
+.mini-table{display:grid;grid-template-columns:68px 1fr;gap:2px}
+.mini-table div{padding:5px 8px;font-size:10px;background:#111a33}
+.mini-table .k{background:linear-gradient(90deg,#eacc2d,#cda61a);color:#121313;font-weight:700}
+.intel{display:grid;gap:8px}
+.intel-card{background:#111932;border:1px solid #23305c;border-radius:8px;padding:8px;font-size:11px;line-height:1.55;color:#a9b8e3}
+.intel-card strong{color:#ffd06e}
+.chartbox{height:160px;border:1px solid #26335f;border-radius:8px;background:
+ linear-gradient(#1a2648 1px,transparent 1px),
+ linear-gradient(90deg,#1a2648 1px,transparent 1px),
+ radial-gradient(80% 90% at 50% 20%,#0f1d41,#091126);
+ background-size:100% 22px, 90px 100%, auto;
+ position:relative;overflow:hidden}
+.chartline{position:absolute;left:8px;right:8px;top:18px;bottom:10px}
+.chartline svg{width:100%;height:100%}
+.legendbox{position:absolute;right:8px;top:8px;border:1px solid #7e6617;background:#2a220b;color:#ffdb70;font-size:9px;padding:6px;border-radius:6px}
+.grid-4{margin-top:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.card{background:linear-gradient(180deg,#101628,#0c1120);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card h3{font-size:14px;margin-bottom:8px}
+.card p{font-size:12px;color:#9eacd8;line-height:1.7}
+.card{position:relative;overflow:hidden;animation:borderPulse 5.5s ease-in-out infinite}
+.card::after{
+  content:'';position:absolute;inset:auto -20% 0 -20%;height:1px;
+  background:linear-gradient(90deg,#00eaff00,#00eaff66,#00eaff00);
+}
+.guide{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.guide .g{padding:14px;border:1px solid var(--line);border-radius:12px;background:#101728}
+.g.yellow{border-color:#4f4211;background:#211c0d}
+.g.purple{border-color:#432170;background:#191128}
+.g.green{border-color:#1d5a3b;background:#0f2019}
+.g.king{border-color:#63333a;background:#25161a}
+.g h4{font-size:13px;margin-bottom:8px}
+.g p{font-size:12px;line-height:1.7;color:#b1bee7}
+.formulas{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.f{background:#0f1528;border:1px solid var(--line);border-radius:12px;padding:14px}
+.f h4{font-size:13px;margin-bottom:8px;color:#ffd06e}
+.f code{display:block;background:#0b1020;border:1px solid #25345f;color:#b7cafc;padding:10px;border-radius:8px;font-size:12px;line-height:1.6}
+.pricing{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.price{background:#101628;border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column}
+.price.featured{border-color:#2a6f53;box-shadow:0 0 0 1px #2a6f53 inset}
+.price{animation:borderPulse 6.2s ease-in-out infinite}
+.price h4{font-size:14px;margin-bottom:8px}
+.amount{font-family:'Space Grotesk',sans-serif;font-size:36px;margin-bottom:4px}
+.amount span{font-size:15px;color:var(--muted)}
+.price p{font-size:12px;color:#9fb0e2;line-height:1.7;margin-bottom:12px}
+.price .disc{display:inline-flex;align-self:flex-start;font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:4px 8px;border:1px solid #335b4b;color:#7fe2b4;background:#13271f;border-radius:6px;margin-bottom:10px}
+.price .bill{font-size:10px;color:#6d7db0;letter-spacing:.6px;margin-bottom:10px}
+.price ul{list-style:none;margin-bottom:14px;display:grid;gap:6px}
+.price li{font-size:12px;color:#a9b7e2}
+.price li::before{content:'✓ ';color:var(--green)}
+.footer{margin-top:20px;padding:16px 0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;color:#7484b6;font-size:11px}
+.footer a{text-decoration:none;color:#94a7e6}
+.chart-stage{margin-top:14px;border:1px solid #22325d;border-radius:12px;overflow:hidden;background:#0a0f1f;animation:borderPulse 5.3s ease-in-out infinite}
+.chart-stage-top{height:46px;padding:0 12px;border-bottom:1px solid #1a2447;display:flex;align-items:center;justify-content:space-between}
+.chart-stage-top .left{display:flex;align-items:center;gap:8px;font-size:12px;color:#9aace4}
+.chart-stage-top .pill{padding:5px 8px;border:1px solid #2a3d71;border-radius:6px;background:#111a36}
+.chart-stage-top .right{font-size:11px;color:#9eb0e6}
+.chart-stage-body{position:relative;height:420px;background:
+  linear-gradient(#15214355 1px,transparent 1px),
+  linear-gradient(90deg,#15214355 1px,transparent 1px),
+  radial-gradient(90% 100% at 50% 0%,#0f1a3c,#071025 70%);
+  background-size:100% 26px,120px 100%,auto;
+}
+.chart-legend{position:absolute;right:14px;top:14px;border:1px solid #8b711c;background:#281f0b;color:#ffd96f;padding:8px;border-radius:8px;font-size:10px;line-height:1.6}
+.chart-plot{position:absolute;inset:30px 16px 12px 16px}
+.chart-plot svg{width:100%;height:100%}
+.cy{filter:drop-shadow(0 0 5px #00eaffaa)}
+
+@media (max-width:1200px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-left{max-width:none}
+}
+@media (max-width:980px){
+  .mini-cards,.heat-panels,.grid-4,.guide,.pricing,.formulas,.gallery{grid-template-columns:1fr}
+  .nav-links{display:none}
+  .stats{grid-template-columns:1fr 1fr}
+  .title{font-size:36px}
+}
+@media (max-width:620px){
+  .container{padding:0 12px}
+  .nav-inner{height:auto;padding:12px 0;flex-wrap:wrap}
+  .h1{font-size:50px}
+  .stats{grid-template-columns:1fr}
+  .hero-actions .btn{width:100%}
+  .footer{flex-direction:column;align-items:flex-start}
+  .session-strip{width:100%;justify-content:flex-start;order:3}
+  .chart-stage-body{height:320px}
+}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <div class="brand">
+      <img src="/static/strikegex-logo.png" alt="StrikeGEX">
+      <span class="badge">Power Hour</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#overview">Overview</a>
+      <a href="#guide">Gamma Guide</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div class="nav-actions">
+      <div class="session-strip">
+        <span class="session-pill">Market Open</span>
+        <span class="countdown">Next update in <span id="cd">2:58</span></span>
+        <span class="session-dot"></span>
+        <span id="clock">12:00:00 PM</span>
+      </div>
+      <button class="btn btn-ghost" onclick="openLoginModal()">Login</button>
+      <a class="btn btn-main" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Get Access</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero" id="overview">
+    <div class="hero-grid">
+      <aside class="hero-left">
+        <div class="eyebrow">Built For Retail Day Traders</div>
+        <h1 class="h1">Trade The Tape With<br><span>Gamma Context</span></h1>
+        <p class="hero-copy">Know where price is more likely to bounce, stall, or run. StrikeGEX gives you clear levels and simple context before you click buy or sell.</p>
+        <div class="hero-actions">
+          <a class="btn btn-main" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Join on Whop</a>
+          <button class="btn btn-ghost" onclick="openLoginModal()">Member Login</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><strong>226+</strong><span>symbols tracked</span></div>
+          <div class="stat"><strong>5m</strong><span>0DTE updates</span></div>
+          <div class="stat"><strong>30m</strong><span>strikemap cycle</span></div>
+        </div>
+      </aside>
+
+      <section class="preview" aria-label="Platform Preview">
+        <div class="preview-top">
+          <div class="tabs">
+            <div class="tab">StrikeMap</div>
+            <div class="tab active">HeatMap</div>
+            <div class="tab">0DTE</div>
+            <div class="tab">Chart</div>
+          </div>
+          <div class="preview-meta">Next update in 3:21</div>
+        </div>
+
+        <div class="mini-cards">
+          <article class="mini">
+            <div class="mini-h"><strong>SPX $6907</strong><span class="mode">Range</span></div>
+            <div class="mini-b">PIN &amp; CHOP — King 6900.0. Intraday swings tend to revert unless price decisively breaks <span class="hl">6905</span> or <span class="hl">6910</span>.</div>
+            <div class="chips"><span class="chip king">👑 King 6900</span><span class="chip">Sup 6905</span><span class="chip">Res 6910</span></div>
+          </article>
+          <article class="mini">
+            <div class="mini-h"><strong>SPY $689.12</strong><span class="mode">Range</span></div>
+            <div class="mini-b">PIN &amp; CHOP — King 690.0. Drift target ↑ while above support, fallback to chop if accepted back inside king band.</div>
+            <div class="chips"><span class="chip king">👑 King 690</span><span class="chip">Sup 689</span><span class="chip">Res 690</span></div>
+          </article>
+          <article class="mini">
+            <div class="mini-h"><strong>QQQ $608.92</strong><span class="mode">Range</span></div>
+            <div class="mini-b">DRIFT TO KING — Magnet 610.0. Bias improves with acceptance above 609.0, invalidates under 608.0.</div>
+            <div class="chips"><span class="chip king">👑 King 610</span><span class="chip">Sup 608</span><span class="chip">Res 610</span></div>
+          </article>
+        </div>
+
+        <div class="heat-panels">
+          <article class="panel">
+            <div class="panel-h"><span>SPXW</span><strong>$6907</strong></div>
+            <div class="rows">
+              <div class="row rp"><span>6980</span><span class="v">$0</span></div>
+              <div class="row rn"><span>6950</span><span class="v">-$3,108.3K</span></div>
+              <div class="row rk"><span>👑 6900</span><span class="v">$28,413.8K</span></div>
+              <div class="row rp"><span>6890</span><span class="v">$7,610.5K</span></div>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-h"><span>SPY</span><strong>$689.12</strong></div>
+            <div class="rows">
+              <div class="row rp"><span>704.0</span><span class="v">-$1,144.5K</span></div>
+              <div class="row rn"><span>695.0</span><span class="v">-$6,707.1K</span></div>
+              <div class="row rk"><span>👑 690.0</span><span class="v">$169,163.8K</span></div>
+              <div class="row rp"><span>688.0</span><span class="v">$35,296.8K</span></div>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-h"><span>QQQ</span><strong>$608.92</strong></div>
+            <div class="rows">
+              <div class="row rn"><span>623.0</span><span class="v">-$2,397.4K</span></div>
+              <div class="row rp"><span>616.0</span><span class="v">$179.5K</span></div>
+              <div class="row rk"><span>👑 610.0</span><span class="v">$54,067.0K</span></div>
+              <div class="row rp"><span>608.0</span><span class="v">$29,224.3K</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="kicker">Live Chart Mode</div>
+    <h2 class="title">Cyan Session Path + Gamma Bars</h2>
+    <p class="copy">Same visual style as your Chart tab screenshot: clear bar lanes, cyan price path, and a highlighted legend box for quick reads.</p>
+    <div class="chart-stage">
+      <div class="chart-stage-top">
+        <div class="left">
+          <span class="pill">SYMBOL SPX</span>
+          <span class="pill">GO</span>
+          <span style="color:#6ea3ff">Pos GEX</span>
+          <span style="color:#ff6c73">Neg GEX</span>
+          <span style="color:#00eaff">Spot</span>
+          <span style="color:#f4c62d">Zero Γ</span>
+        </div>
+        <div class="right">Spot: $6907.29 &nbsp; 👑 King: 6900</div>
+      </div>
+      <div class="chart-stage-body">
+        <div class="chart-legend">
+          Pos GEX (OI)<br>
+          Pos GEX (Volume)<br>
+          Neg GEX (OI)<br>
+          Neg GEX (Volume)<br>
+          Spot<br>
+          Zero Gamma<br>
+          Major Pos Gamma<br>
+          Major Neg Gamma
+        </div>
+        <div class="chart-plot">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+            <g opacity="0.95">
+              <rect x="2" y="32" width="10" height="1.8" fill="#43d97d"/>
+              <rect x="2" y="35" width="16" height="1.8" fill="#43d97d"/>
+              <rect x="2" y="40" width="32" height="1.8" fill="#ff6e75"/>
+              <rect x="2" y="44" width="22" height="1.8" fill="#ff6e75"/>
+              <rect x="2" y="48" width="42" height="1.8" fill="#ff6e75"/>
+              <rect x="2" y="52" width="28" height="1.8" fill="#ff6e75"/>
+              <rect x="2" y="56" width="18" height="1.8" fill="#43d97d"/>
+            </g>
+            <line x1="0" y1="44.8" x2="100" y2="44.8" stroke="#f4c62d" stroke-width=".25" stroke-dasharray="1.2 1.2"/>
+            <polyline class="cy" points="0,37 8,35 16,38 24,33 33,34 42,36 50,65 57,49 63,53 70,67 76,62 83,55 90,48 98,51" fill="none" stroke="#00eaff" stroke-width=".75"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="kicker">Visual Walkthrough</div>
+    <h2 class="title">Everything You Asked For Is Included</h2>
+    <p class="copy">Same style as your screenshots: top callout cards, SPX/SPY/QQQ rows, side info boxes, cyan chart path, and guide cards.</p>
+    <div class="gallery">
+      <article class="shot">
+        <div class="shot-h"><span>HeatMap Cards</span><span>Range / Drift</span></div>
+        <div class="shot-b bars">
+          <div class="bar c3"></div><div class="bar c2"></div><div class="bar c1"></div><div class="bar c1"></div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>Panel Matrix</span><span>SPX/SPY/QQQ</span></div>
+        <div class="shot-b mini-table">
+          <div>6950</div><div>-$3,108.3K</div>
+          <div>6910</div><div>$9,772.4K</div>
+          <div class="k">👑 6900</div><div class="k">$28,413.8K</div>
+          <div>6885</div><div>$10,519.8K</div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>0DTE Side Intel</span><span>Behavior + Levels</span></div>
+        <div class="shot-b intel">
+          <div class="intel-card"><strong>Price Behavior:</strong> short gamma expands tape; breaks extend.</div>
+          <div class="intel-card"><strong>Key Levels:</strong> King, Γ wall, put wall, net gex distance.</div>
+          <div class="intel-card"><strong>R/S:</strong> ranked resistance and support rows around spot.</div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>Chart Tab</span><span>Cyan Session Path</span></div>
+        <div class="shot-b">
+          <div class="chartbox">
+            <div class="legendbox">Pos/Neg OI • Pos/Neg Vol • Spot • Zero Γ</div>
+            <div class="chartline">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                <polyline points="0,35 10,34 20,38 30,32 40,45 50,62 60,40 70,48 80,30 90,52 100,44" fill="none" stroke="#00eaff" stroke-width="1.6"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>StrikeMap Matrix</span><span>Cross Expirations</span></div>
+        <div class="shot-b bars">
+          <div class="bar c1"></div><div class="bar c2"></div><div class="bar c1"></div><div class="bar c3"></div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>Guide Cards</span><span>Yellow / Purple / Green / King</span></div>
+        <div class="shot-b intel">
+          <div class="intel-card"><strong>🟡 +Gamma:</strong> mean-reversion + tighter ranges.</div>
+          <div class="intel-card"><strong>🟣 -Gamma:</strong> continuation + wider swings.</div>
+          <div class="intel-card"><strong>👑 King:</strong> tab-specific formula and drift reference.</div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="kicker">Platform Modules</div>
+    <h2 class="title">Simple Workflow, Fast Decisions</h2>
+    <p class="copy">Open one tab, get your levels, and decide your plan in seconds. No overthinking, no clutter.</p>
+    <div class="grid-4">
+      <article class="card"><h3>🗺️ StrikeMap</h3><p>See where the market is heavy across expirations so you can spot likely reaction zones.</p></article>
+      <article class="card"><h3>🔥 HeatMap</h3><p>Quick read for SPX/SPY/QQQ. Colors tell you if tape is likely to chop or trend.</p></article>
+      <article class="card"><h3>🎯 0DTE</h3><p>One-screen day-trade view: key levels, movement bias, and clean context.</p></article>
+      <article class="card"><h3>📈 Chart</h3><p>Watch live price against gamma levels so you react early instead of chasing late.</p></article>
+    </div>
+  </section>
+
+  <section class="section" id="guide">
+    <div class="kicker">Gamma Guide</div>
+    <h2 class="title">Color Rules Made Easy</h2>
+    <div class="guide">
+      <article class="g yellow"><h4>🟡 Yellow</h4><p>Price often snaps back. Better for patience, not chasing.</p></article>
+      <article class="g purple"><h4>🟣 Purple</h4><p>Price can run. Breaks are more likely to keep going.</p></article>
+      <article class="g green"><h4>🟢 Green</h4><p>Mixed zone. Expect chop until one side clearly wins.</p></article>
+      <article class="g king"><h4>👑 King Node</h4><p>Main magnet level where price often reacts first.</p></article>
+    </div>
+
+    <div class="formulas">
+      <article class="f">
+        <h4>HeatMap / 0DTE</h4>
+        <code>King = strongest row on screen\n(short-term magnet level)</code>
+      </article>
+      <article class="f">
+        <h4>StrikeMap / Chart</h4>
+        <code>King = biggest concentration row\n(structure reference level)</code>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="kicker">Membership</div>
+    <h2 class="title">Pick Your Access Plan</h2>
+    <div class="pricing">
+      <article class="price">
+        <h4>Monthly</h4>
+        <div class="amount">$299 <span>/mo</span></div>
+        <div class="bill">Billed $299 monthly</div>
+        <p>Best if you want flexible month-to-month access.</p>
+        <ul>
+          <li>HeatMap + StrikeMap + 0DTE + Chart</li>
+          <li>SPX / SPY / QQQ focused workflow</li>
+          <li>Member login and updates</li>
+        </ul>
+        <a class="btn btn-ghost" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Get Access</a>
+      </article>
+      <article class="price featured">
+        <h4>Quarterly</h4>
+        <span class="disc">-23% Discount</span>
+        <div class="amount">$699 <span>/3mo</span></div>
+        <div class="bill">Billed $699 every 3 months</div>
+        <p>Most popular for active day traders.</p>
+        <ul>
+          <li>Everything in Monthly</li>
+          <li>Better effective monthly cost</li>
+          <li>Priority support</li>
+        </ul>
+        <a class="btn btn-main" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Get Access</a>
+      </article>
+      <article class="price">
+        <h4>Annual</h4>
+        <span class="disc">-32% Discount</span>
+        <div class="amount">$1,999 <span>/yr</span></div>
+        <div class="bill">Billed $1,999 annually</div>
+        <p>Best value if you use this every week all year.</p>
+        <ul>
+          <li>Everything in Quarterly</li>
+          <li>Lowest annual effective rate</li>
+          <li>Locked-in pricing</li>
+        </ul>
+        <a class="btn btn-ghost" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Get Access</a>
+      </article>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div>© 2026 StrikeGEX · Gamma Exposure Intelligence</div>
+    <div>
+      <a href="#overview">Overview</a> ·
+      <a href="#guide">Guide</a> ·
+      <a href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Whop</a>
+    </div>
+  </footer>
+</main>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:10000;align-items:center;justify-content:center">
+  <div style="background:#080d14;border:1px solid #111d2a;padding:40px 34px;width:380px;max-width:92vw;position:relative;border-radius:12px">
+    <button onclick="closeLoginModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#4a6580;font-size:20px;cursor:pointer;line-height:1">✕</button>
+    <img src="/static/strikegex-logo.png" alt="StrikeGEX" style="height:40px;object-fit:contain;margin-bottom:6px;">
+    <div style="font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:#6270a4;margin-bottom:24px">Member Access</div>
+    <div style="margin-bottom:10px">
+      <input id="lm-user" type="text" placeholder="Email or username" autocomplete="username" style="width:100%;padding:13px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#060a14;color:#e8f0ff;border:1px solid #1a2447;outline:none;border-radius:8px">
+    </div>
+    <div style="margin-bottom:18px">
+      <input id="lm-pass" type="password" placeholder="Password or license key" autocomplete="current-password" style="width:100%;padding:13px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#060a14;color:#e8f0ff;border:1px solid #1a2447;outline:none;border-radius:8px">
+    </div>
+    <div id="lm-err" style="display:none;font-size:11px;color:#ff6b7f;letter-spacing:.5px;margin-bottom:12px;padding:10px;border:1px solid #5c2330;background:#2a121a;border-radius:8px"></div>
+    <button id="lm-btn" onclick="doModalLogin()" style="width:100%;padding:13px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#16372c;color:#8cffc5;border:1px solid #2a6f53;cursor:pointer;border-radius:8px">Sign In</button>
+    <p style="font-size:10px;color:#6778b2;letter-spacing:.4px;text-align:center;margin-top:14px;line-height:1.6">
+      Members: use your email + license key from Whop<br>
+      <a href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener" style="color:#9cb0ff;text-decoration:none">Get access →</a>
+    </p>
+  </div>
+</div>
+
+<script>
+function openLoginModal(){
+  const m=document.getElementById('loginModal');
+  m.style.display='flex';
+  setTimeout(()=>document.getElementById('lm-user').focus(),100);
+}
+function closeLoginModal(){
+  document.getElementById('loginModal').style.display='none';
+  document.getElementById('lm-err').style.display='none';
+}
+document.getElementById('loginModal').addEventListener('click',function(e){ if(e.target===this) closeLoginModal(); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeLoginModal(); });
+document.addEventListener('DOMContentLoaded',function(){
+  const pass=document.getElementById('lm-pass');
+  const user=document.getElementById('lm-user');
+  if(pass) pass.addEventListener('keydown',e=>{ if(e.key==='Enter') doModalLogin(); });
+  if(user) user.addEventListener('keydown',e=>{ if(e.key==='Enter') pass.focus(); });
+});
+async function doModalLogin(){
+  const user=document.getElementById('lm-user').value.trim();
+  const pass=document.getElementById('lm-pass').value;
+  const errEl=document.getElementById('lm-err');
+  const btn=document.getElementById('lm-btn');
+  if(!user||!pass){
+    errEl.textContent='Please enter your email and license key.';
+    errEl.style.display='block';
+    return;
+  }
+  btn.textContent='Signing in...';
+  btn.style.opacity='.7';
+  btn.style.cursor='not-allowed';
+  errEl.style.display='none';
+  try{
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    const data=await res.json();
+    if(data.ok){
+      sessionStorage.setItem('gex_auth','1');
+      sessionStorage.setItem('gex_tier',data.tier||'free');
+      sessionStorage.setItem('gex_user',data.user||user);
+      if(data.token) sessionStorage.setItem('gex_token',data.token);
+      window.location.href='/app';
+      return;
+    }
+    errEl.textContent=data.error||'Invalid credentials. Check your email and license key.';
+    errEl.style.display='block';
+  }catch(_e){
+    errEl.textContent='Connection error. Please try again.';
+    errEl.style.display='block';
+  }
+  btn.textContent='Sign In';
+  btn.style.opacity='1';
+  btn.style.cursor='pointer';
+}
+
+// Top session clock + simple countdown loop
+(function(){
+  let remaining = 178; // 2:58
+  const cdEl = document.getElementById('cd');
+  const clockEl = document.getElementById('clock');
+  function tick(){
+    const m = Math.floor(remaining/60), s = remaining%60;
+    if(cdEl) cdEl.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    const now = new Date();
+    if(clockEl) clockEl.textContent = now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    remaining = remaining <= 0 ? 178 : remaining - 1;
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
