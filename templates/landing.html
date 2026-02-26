@@ -29,6 +29,19 @@ body{
   color:var(--text);
   overflow-x:hidden;
 }
+body::after{
+  content:'';
+  position:fixed;
+  inset:-30% -20% auto -20%;
+  height:70vh;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(40% 55% at 15% 25%, #00eaff22, transparent 70%),
+    radial-gradient(38% 52% at 70% 15%, #7a3fe222, transparent 72%),
+    radial-gradient(35% 45% at 90% 40%, #2fd46f18, transparent 75%);
+  filter:blur(24px);
+}
 body::before{
   content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
@@ -50,6 +63,10 @@ a{color:inherit}
 .nav-links a{text-decoration:none}
 .nav-links a:hover{color:var(--text)}
 .nav-actions{display:flex;gap:10px;align-items:center}
+.session-strip{display:flex;align-items:center;gap:10px;font-size:11px;color:#96a7db}
+.session-dot{width:7px;height:7px;border-radius:50%;background:#2fd46f;box-shadow:0 0 12px #2fd46faa}
+.session-pill{padding:5px 8px;border:1px solid #214f3d;border-radius:6px;background:#10291f;color:#7af0b5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
+.countdown{color:#8ca0ff;font-weight:700}
 .btn{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.4px;border-radius:8px;padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .btn-ghost{border:1px solid var(--line);color:var(--muted);background:#12182d}
 .btn-ghost:hover{color:var(--text)}
@@ -98,6 +115,30 @@ a{color:inherit}
 .kicker{font-size:11px;letter-spacing:1.1px;color:#86a0f0;text-transform:uppercase;margin-bottom:10px}
 .title{font-family:'Space Grotesk',sans-serif;font-size:34px;letter-spacing:-.4px;margin-bottom:12px}
 .copy{color:#99a7d4;font-size:13px;line-height:1.8;max-width:940px}
+.gallery{margin-top:14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.shot{background:#0e1427;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.shot-h{padding:10px 12px;border-bottom:1px solid #1a2342;font-size:11px;color:#9db2f2;display:flex;justify-content:space-between}
+.shot-b{padding:12px}
+.bars{display:grid;gap:6px}
+.bar{height:14px;border-radius:4px}
+.bar.c1{background:linear-gradient(90deg,#2f8a9f,#3e5f98)}
+.bar.c2{background:linear-gradient(90deg,#6c3ccf,#42579a)}
+.bar.c3{background:linear-gradient(90deg,#eacc2d,#cda61a)}
+.mini-table{display:grid;grid-template-columns:68px 1fr;gap:2px}
+.mini-table div{padding:5px 8px;font-size:10px;background:#111a33}
+.mini-table .k{background:linear-gradient(90deg,#eacc2d,#cda61a);color:#121313;font-weight:700}
+.intel{display:grid;gap:8px}
+.intel-card{background:#111932;border:1px solid #23305c;border-radius:8px;padding:8px;font-size:11px;line-height:1.55;color:#a9b8e3}
+.intel-card strong{color:#ffd06e}
+.chartbox{height:160px;border:1px solid #26335f;border-radius:8px;background:
+ linear-gradient(#1a2648 1px,transparent 1px),
+ linear-gradient(90deg,#1a2648 1px,transparent 1px),
+ radial-gradient(80% 90% at 50% 20%,#0f1d41,#091126);
+ background-size:100% 22px, 90px 100%, auto;
+ position:relative;overflow:hidden}
+.chartline{position:absolute;left:8px;right:8px;top:18px;bottom:10px}
+.chartline svg{width:100%;height:100%}
+.legendbox{position:absolute;right:8px;top:8px;border:1px solid #7e6617;background:#2a220b;color:#ffdb70;font-size:9px;padding:6px;border-radius:6px}
 .grid-4{margin-top:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .card{background:linear-gradient(180deg,#101628,#0c1120);border:1px solid var(--line);border-radius:12px;padding:14px}
 .card h3{font-size:14px;margin-bottom:8px}
@@ -121,6 +162,8 @@ a{color:inherit}
 .amount{font-family:'Space Grotesk',sans-serif;font-size:36px;margin-bottom:4px}
 .amount span{font-size:15px;color:var(--muted)}
 .price p{font-size:12px;color:#9fb0e2;line-height:1.7;margin-bottom:12px}
+.price .disc{display:inline-flex;align-self:flex-start;font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:4px 8px;border:1px solid #335b4b;color:#7fe2b4;background:#13271f;border-radius:6px;margin-bottom:10px}
+.price .bill{font-size:10px;color:#6d7db0;letter-spacing:.6px;margin-bottom:10px}
 .price ul{list-style:none;margin-bottom:14px;display:grid;gap:6px}
 .price li{font-size:12px;color:#a9b7e2}
 .price li::before{content:'✓ ';color:var(--green)}
@@ -132,7 +175,7 @@ a{color:inherit}
   .hero-left{max-width:none}
 }
 @media (max-width:980px){
-  .mini-cards,.heat-panels,.grid-4,.guide,.pricing,.formulas{grid-template-columns:1fr}
+  .mini-cards,.heat-panels,.grid-4,.guide,.pricing,.formulas,.gallery{grid-template-columns:1fr}
   .nav-links{display:none}
   .stats{grid-template-columns:1fr 1fr}
   .title{font-size:28px}
@@ -160,6 +203,12 @@ a{color:inherit}
       <a href="#pricing">Pricing</a>
     </nav>
     <div class="nav-actions">
+      <div class="session-strip">
+        <span class="session-pill">Market Open</span>
+        <span class="countdown">Next update in <span id="cd">2:58</span></span>
+        <span class="session-dot"></span>
+        <span id="clock">12:00:00 PM</span>
+      </div>
       <button class="btn btn-ghost" onclick="openLoginModal()">Login</button>
       <a class="btn btn-main" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">Get Access</a>
     </div>
@@ -247,6 +296,64 @@ a{color:inherit}
   </section>
 
   <section class="section">
+    <div class="kicker">Visual Walkthrough</div>
+    <h2 class="title">Every Screenshot Theme Is Built In</h2>
+    <p class="copy">These preview tiles mirror all references you sent: top recommendation cards, multi-panel heat rows, side intel cards, chart with cyan path + legend box, strike matrix behavior, and guide logic.</p>
+    <div class="gallery">
+      <article class="shot">
+        <div class="shot-h"><span>HeatMap Cards</span><span>Range / Drift</span></div>
+        <div class="shot-b bars">
+          <div class="bar c3"></div><div class="bar c2"></div><div class="bar c1"></div><div class="bar c1"></div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>Panel Matrix</span><span>SPX/SPY/QQQ</span></div>
+        <div class="shot-b mini-table">
+          <div>6950</div><div>-$3,108.3K</div>
+          <div>6910</div><div>$9,772.4K</div>
+          <div class="k">👑 6900</div><div class="k">$28,413.8K</div>
+          <div>6885</div><div>$10,519.8K</div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>0DTE Side Intel</span><span>Behavior + Levels</span></div>
+        <div class="shot-b intel">
+          <div class="intel-card"><strong>Price Behavior:</strong> short gamma expands tape; breaks extend.</div>
+          <div class="intel-card"><strong>Key Levels:</strong> King, Γ wall, put wall, net gex distance.</div>
+          <div class="intel-card"><strong>R/S:</strong> ranked resistance and support rows around spot.</div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>Chart Tab</span><span>Cyan Session Path</span></div>
+        <div class="shot-b">
+          <div class="chartbox">
+            <div class="legendbox">Pos/Neg OI • Pos/Neg Vol • Spot • Zero Γ</div>
+            <div class="chartline">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                <polyline points="0,35 10,34 20,38 30,32 40,45 50,62 60,40 70,48 80,30 90,52 100,44" fill="none" stroke="#00eaff" stroke-width="1.6"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>StrikeMap Matrix</span><span>Cross Expirations</span></div>
+        <div class="shot-b bars">
+          <div class="bar c1"></div><div class="bar c2"></div><div class="bar c1"></div><div class="bar c3"></div>
+        </div>
+      </article>
+      <article class="shot">
+        <div class="shot-h"><span>Guide Cards</span><span>Yellow / Purple / Green / King</span></div>
+        <div class="shot-b intel">
+          <div class="intel-card"><strong>🟡 +Gamma:</strong> mean-reversion + tighter ranges.</div>
+          <div class="intel-card"><strong>🟣 -Gamma:</strong> continuation + wider swings.</div>
+          <div class="intel-card"><strong>👑 King:</strong> tab-specific formula and drift reference.</div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
     <div class="kicker">Platform Modules</div>
     <h2 class="title">Built Around The Exact Workflow In Your Screens</h2>
     <p class="copy">Use HeatMap for directional row-by-row pressure, StrikeMap for expiry structure, 0DTE for intraday narrative, and Chart for spot path over gamma bars with zero and major gamma context.</p>
@@ -287,6 +394,7 @@ a{color:inherit}
       <article class="price">
         <h4>Monthly</h4>
         <div class="amount">$299 <span>/mo</span></div>
+        <div class="bill">Billed $299 monthly</div>
         <p>Full platform access with flexible billing.</p>
         <ul>
           <li>HeatMap + StrikeMap + 0DTE + Chart</li>
@@ -297,7 +405,9 @@ a{color:inherit}
       </article>
       <article class="price featured">
         <h4>Quarterly</h4>
+        <span class="disc">-23% Discount</span>
         <div class="amount">$699 <span>/3mo</span></div>
+        <div class="bill">Billed $699 every 3 months</div>
         <p>Most selected for active traders.</p>
         <ul>
           <li>Everything in Monthly</li>
@@ -308,7 +418,9 @@ a{color:inherit}
       </article>
       <article class="price">
         <h4>Annual</h4>
+        <span class="disc">-32% Discount</span>
         <div class="amount">$1,999 <span>/yr</span></div>
+        <div class="bill">Billed $1,999 annually</div>
         <p>Best value for long-term use.</p>
         <ul>
           <li>Everything in Quarterly</li>
@@ -404,6 +516,22 @@ async function doModalLogin(){
   btn.style.opacity='1';
   btn.style.cursor='pointer';
 }
+
+// Top session clock + simple countdown loop
+(function(){
+  let remaining = 178; // 2:58
+  const cdEl = document.getElementById('cd');
+  const clockEl = document.getElementById('clock');
+  function tick(){
+    const m = Math.floor(remaining/60), s = remaining%60;
+    if(cdEl) cdEl.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    const now = new Date();
+    if(clockEl) clockEl.textContent = now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'});
+    remaining = remaining <= 0 ? 178 : remaining - 1;
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
 </script>
 </body>
 </html>
