@@ -49,14 +49,24 @@ def record_snapshot(history, symbol, spot, king_strike, king_gex, strikes_data):
     if symbol not in history["snapshots"]:
         history["snapshots"][symbol] = []
     vol_map = {}
+    gex_map = {}
     for s in strikes_data:
-        vol_map[str(s["strike"])] = {
+        sk = str(s["strike"])
+        vol_map[sk] = {
             "cv": s.get("call_volume", 0),
             "pv": s.get("put_volume", 0),
             "tv": s.get("call_volume", 0) + s.get("put_volume", 0),
         }
+        # Store per-strike GEX for session chart
+        gex_map[sk] = {
+            "n": round(s.get("net_gex", 0)),           # net gex
+            "c": round(s.get("call_gex", 0)),           # call gex (OI-based)
+            "p": round(s.get("put_gex", 0)),            # put gex (OI-based)
+            "co": s.get("call_oi", 0),
+            "po": s.get("put_oi", 0),
+        }
     history["snapshots"][symbol].append({
-        "t": ts, "spot": spot, "king": king_strike, "vol": vol_map,
+        "t": ts, "spot": spot, "king": king_strike, "vol": vol_map, "gex": gex_map,
     })
     if len(history["snapshots"][symbol]) > 120:
         history["snapshots"][symbol] = history["snapshots"][symbol][-120:]
@@ -194,7 +204,7 @@ def calculate_gex(chain, spot):
                 strikes[strike]["call_ask"] = float(c.get("ask", 0) or 0)
                 # Debug: log high-OI contracts
                 if oi > 5000:
-                    print(f"      📊 CALL {sym_name} strike={strike} OI={oi} vol={vol} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
+                    print(f"      📊 CALL {sym_name} strike={strike} OI={oi} vol={vol} eff={effective_oi} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
 
     for exp_key, smap in chain.get("putExpDateMap", {}).items():
         exp_date = exp_key.split(":")[0]
@@ -223,7 +233,7 @@ def calculate_gex(chain, spot):
                 strikes[strike]["put_ask"] = float(c.get("ask", 0) or 0)
                 # Debug: log high-OI contracts  
                 if oi > 5000:
-                    print(f"      📊 PUT  {sym_name} strike={strike} OI={oi} vol={vol} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
+                    print(f"      📊 PUT  {sym_name} strike={strike} OI={oi} vol={vol} eff={effective_oi} gamma={gamma:.6f} gex={gex/1e3:,.1f}K")
 
     # total_gamma = call_gex + abs(put_gex)
     for s in strikes.values():

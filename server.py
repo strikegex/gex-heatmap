@@ -427,6 +427,16 @@ def api_gex():
         return jsonify(gex_data)
 
 
+@app.route("/api/session")
+def api_session():
+    """Return session GEX snapshots for the session chart."""
+    import gex_fetcher as gf
+    symbol = request.args.get("symbol", "SPX").upper()
+    history = gf.load_history()
+    snaps = history.get("snapshots", {}).get(symbol, [])
+    return jsonify({"symbol": symbol, "snapshots": snaps})
+
+
 @app.route("/api/gex-all")
 def api_gex_all():
     with fetch_lock:
