@@ -71,9 +71,9 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .sample-banner.vis{display:block}
 
 /* ─── Rec Cards ─── */
-.rec-wrap{display:none;padding:12px 24px;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
-.rec-wrap.vis{display:flex}
-.rec{flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden}
+.rec-wrap{display:none;padding:12px 20px;gap:2px;border-bottom:1px solid var(--border)}
+.rec-wrap.vis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.rec{min-width:0;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden}
 .rec::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .rec.range::before{background:var(--yellow)}.rec.trend::before{background:var(--purple)}.rec.chop::before{background:var(--green)}.rec.bullish::before{background:var(--green)}.rec.bearish::before{background:var(--red)}
 .rec-sym{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--bright);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -142,8 +142,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .strat-disclaimer{font-size:8px;color:var(--dim);padding:8px 16px;border-top:1px solid var(--border);text-align:center;letter-spacing:.3px}
 
 /* ─── Heatmap ─── */
-.hm-wrap{display:flex;gap:2px;padding:12px 20px;overflow-x:auto;min-height:calc(100vh - 300px)}
-.panel{flex:1;min-width:320px;max-width:600px;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.hm-wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:12px 20px;overflow-x:hidden;min-height:calc(100vh - 300px)}
+.panel{min-width:0;max-width:none;background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
 .panel-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
 .panel-sym{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--bright)}
 .panel-price{font-size:20px;font-weight:600;color:var(--bright)}
@@ -181,9 +181,10 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   .topbar-right .disc{display:none}
   .ctrl{padding:6px 12px;gap:6px}
   .legend{padding:3px 12px;gap:8px}
-  .hm-wrap{flex-direction:column;padding:8px 8px;gap:8px;overflow-x:hidden}
+  .hm-wrap{grid-template-columns:1fr;padding:8px 8px;gap:8px;overflow-x:hidden}
   .panel{min-width:100%;max-width:100%}
   .rec-wrap{padding:8px 8px;gap:6px}
+  .rec-wrap.vis{grid-template-columns:1fr}
   .rec{min-width:100%}
   .strat-wrap{padding:8px 8px}
   .strat-card{min-width:100%}
@@ -346,35 +347,33 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
     <div style="background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:6px;padding:12px 14px">
       <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:6px">🟡 Yellow — Positive Gamma (+GEX)</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> Dealers are NET SHORT options at this strike.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>How dealers hedge:</strong> They hedge AGAINST the move. If price rises, they sell. If price falls, they buy. This creates <em>mean reversion</em> — price snaps back.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Price is "sticky." Acts as support (below) or resistance (above). Vol dampens. Range-bound.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ✅ SELL premium here. Iron condors, credit spreads, butterflies. Dealers defend your position.</div>
+      <div style="color:var(--text)"><strong>What to expect:</strong> Mean-reverting behavior is more likely than sustained trend.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Price action:</strong> Failed breaks often snap back toward nearby high-gamma rows and king.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Movement profile:</strong> Compression, slower tape, tighter intraday ranges unless a key level is cleanly accepted.</div>
     </div>
     <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:6px;padding:12px 14px">
       <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:6px">🟣 Purple — Negative Gamma (−GEX)</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> Dealers are NET LONG options at this strike.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>How dealers hedge:</strong> They hedge WITH the move. Price rises → they buy more. Falls → they sell more. This creates <em>momentum</em> — moves accelerate.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Price is "slippery." Breakouts carry through. Vol expands. Trending action.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ⚠️ DO NOT sell premium. Dealers amplify against you. Buy debit spreads, ride momentum, or stay away.</div>
+      <div style="color:var(--text)"><strong>What to expect:</strong> Momentum and continuation become more likely.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Price action:</strong> Breaks can extend quickly; pullbacks are often shallower and less stable.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Movement profile:</strong> Expansion, faster tape, wider swings, more one-way pushes between levels.</div>
     </div>
     <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:6px;padding:12px 14px">
       <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px">🟢 Green — Neutral / Mixed</div>
-      <div style="color:var(--text)"><strong>What it means:</strong> Dealer positioning is roughly balanced. No strong directional bias.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Trading behavior:</strong> Choppy, indecisive. No strong pull either way. Low conviction zone.</div>
-      <div style="color:var(--text);margin-top:4px"><strong>Strategy:</strong> ⚪ Reduce size. Wait for clearer setup. Can flip +/− without warning.</div>
+      <div style="color:var(--text)"><strong>What to expect:</strong> Mixed signals with weaker directional conviction.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Price action:</strong> Two-way chop and whipsaw are common until one side gains acceptance above/below key rows.</div>
+      <div style="color:var(--text);margin-top:4px"><strong>Movement profile:</strong> Transitional state that can flip into either momentum or mean-reversion.</div>
     </div>
     <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:6px;padding:12px 14px">
       <div style="font-size:13px;font-weight:700;color:var(--king);margin-bottom:6px">👑 King Node — Tab-Specific</div>
       <div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #f87171">
-        <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:3px">HeatMap / 0DTE: Max |Net GEX|</div>
-        <div style="color:var(--text);font-size:11px">Directional king from <strong>call GEX − put GEX</strong>. Used as intraday drift/magnet level.</div>
-        <div style="color:var(--dim);font-size:10px;margin-top:3px">Good for short-term direction and pin behavior.</div>
+        <div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:3px">HeatMap / 0DTE cards: max abs directional net</div>
+        <div style="color:var(--text);font-size:11px"><strong>King = strike with max |net_gex|</strong> inside the displayed strike set.</div>
+        <div style="color:var(--dim);font-size:10px;margin-top:3px">Used as the primary intraday magnet/drift reference in these tabs.</div>
       </div>
       <div style="padding:8px 10px;background:rgba(255,255,255,.04);border-radius:5px;border-left:3px solid #fbbf24;margin-top:8px">
-        <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">StrikeMap matrix: Max Gross Gamma</div>
-        <div style="color:var(--text);font-size:11px">Concentration king from <strong>|Call GEX| + |Put GEX|</strong>. Strong S/R and positioning zone.</div>
-        <div style="color:var(--dim);font-size:10px;margin-top:3px">Better for structure across expirations.</div>
+        <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px">StrikeMap matrix / Chart header: max gross concentration</div>
+        <div style="color:var(--text);font-size:11px"><strong>King = strike with max total_gamma</strong>, where total_gamma = |call_gex| + |put_gex|.</div>
+        <div style="color:var(--dim);font-size:10px;margin-top:3px">Used for structural concentration (StrikeMap) and snapshot king label (Chart).</div>
       </div>
     </div>
   </div>
@@ -1086,22 +1085,28 @@ function renderRecs(){
     // Bias
     const bias=r.bias||'chop';
 
-    // Build rich commentary
+    // Support/resistance reference levels for price-action commentary
+    const posAbove=sorted.filter(s=>s.strike>spot&&s.net_gex>mx*.12).slice(0,1);
+    const posBelow=sorted.filter(s=>s.strike<spot&&s.net_gex>mx*.12).reverse().slice(0,1);
+    const resist=posAbove.length?fp(posAbove[0].strike):(gw?fp(gw):'—');
+    const support=posBelow.length?fp(posBelow[0].strike):(pw?fp(pw):'—');
+
+    // Build rich commentary (price-action focused)
     let commentary='';
     if(isNeg && kingD>0){
-      commentary=`<strong>−Gamma + King above</strong> = dealers amplify upward moves. Expect <span class="hl">bullish momentum toward ${fp(king.strike)}</span>. Buy dips, don't fade. Debit call spreads favored.`;
+      commentary=`<strong>−Gamma + King above</strong> = volatility expands and upside breaks tend to extend. Expect <span class="hl">upward drift toward ${fp(king.strike)}</span> with shallow pullbacks. Keep focus on acceptance above <span class="hl">${resist}</span>; loss of <span class="hl">${support}</span> weakens this regime.`;
     } else if(isNeg && kingD<0){
-      commentary=`<strong>−Gamma + King below</strong> = dealers amplify downward moves. Expect <span class="hl">bearish momentum toward ${fp(king.strike)}</span>. Sell rips, buy put spreads. Do NOT sell premium here.`;
+      commentary=`<strong>−Gamma + King below</strong> = downside moves can accelerate and bounces often fail. Expect <span class="hl">pressure toward ${fp(king.strike)}</span> and quick rejection near resistance. Acceptance below <span class="hl">${support}</span> confirms continuation; reclaiming <span class="hl">${resist}</span> reduces downside momentum.`;
     } else if(isNeg && Math.abs(kingD)<spot*.001){
-      commentary=`<strong>−Gamma + King at spot</strong> = explosive either direction. <span class="hl">Wait for break</span>, then ride momentum. Straddles or strangles if IV is low.`;
+      commentary=`<strong>−Gamma + King at spot</strong> = two-way expansion risk. Expect fast rotations until price cleanly leaves the king zone, then follow-through in the break direction. Watch <span class="hl">${support}</span>/<span class="hl">${resist}</span> for confirmation.`;
     } else if(isPos && Math.abs(kingD)<spot*.002){
-      commentary=`<strong>+Gamma + King at spot</strong> = <span class="hl">pin & chop</span>. Dealers suppress moves both ways. Sell premium: iron condors, butterflies centered on ${fp(king.strike)}.`;
+      commentary=`<strong>+Gamma + King at spot</strong> = <span class="hl">pin & chop</span>. Intraday swings are more likely to revert back toward ${fp(king.strike)} after failed pushes. Expect tighter range behavior unless price decisively breaks <span class="hl">${support}</span> or <span class="hl">${resist}</span>.`;
     } else if(isPos && kingD>0){
-      commentary=`<strong>+Gamma + King above</strong> = slow grind up toward <span class="hl">${fp(king.strike)}</span>. Dealers dampen selloffs. Sell put spreads below, or drift-to-king butterflies.`;
+      commentary=`<strong>+Gamma + King above</strong> = controlled upside drift with dampened volatility. Pullbacks are more likely to stabilize and rotate back toward <span class="hl">${fp(king.strike)}</span>. A sustained break above <span class="hl">${resist}</span> signals stronger trend participation.`;
     } else if(isPos && kingD<0){
-      commentary=`<strong>+Gamma + King below</strong> = slow grind down toward <span class="hl">${fp(king.strike)}</span>. Dealers dampen rallies. Sell call spreads above, or drift-to-king butterflies.`;
+      commentary=`<strong>+Gamma + King below</strong> = controlled downside drift with capped rebound strength. Expect rebounds to fade and rotation back toward <span class="hl">${fp(king.strike)}</span>. Holding above <span class="hl">${resist}</span> would challenge this bearish drift.`;
     } else {
-      commentary=`<strong>Mixed gamma</strong> — no strong dealer bias. <span class="hl">Reduce size</span>, wait for clearer setup. King at ${fp(king?king.strike:0)}.`;
+      commentary=`<strong>Mixed gamma</strong> — no dominant dealer regime. Expect whipsaw/chop until one side takes control around <span class="hl">${support}</span>/<span class="hl">${resist}</span>. Bias improves when price shows repeated acceptance away from king ${fp(king?king.strike:0)}.`;
     }
 
     // Directional line
@@ -1110,12 +1115,6 @@ function renderRecs(){
       : kingD<0
       ? `👑 King ${fp(king.strike)} — ${Math.abs(kingD).toFixed(1)}pts <span style="color:var(--red)">below</span> spot (${kingPct}%). Drift target ↓`
       : `👑 King ${fp(king.strike)} — AT spot. Pin expected.`;
-
-    // Support/resistance
-    const posAbove=sorted.filter(s=>s.strike>spot&&s.net_gex>mx*.12).slice(0,1);
-    const posBelow=sorted.filter(s=>s.strike<spot&&s.net_gex>mx*.12).reverse().slice(0,1);
-    const resist=posAbove.length?fp(posAbove[0].strike):(gw?fp(gw):'—');
-    const support=posBelow.length?fp(posBelow[0].strike):(pw?fp(pw):'—');
 
     // King distance line
     const kingDistLine = kingD>0 
@@ -1248,7 +1247,7 @@ function renderPanel(d){
   return p;
 }
 
-function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');const d=s.strike-spot,c=ct(s.net_gex,mx);document.getElementById('tt').textContent=(iK?'👑 ':'')+sym+' — $'+fp(s.strike);document.getElementById('tb').innerHTML=`<div class="tip-r"><span class="tip-l">Net GEX</span><span class="tip-v">${fg(s.net_gex)}</span></div><div class="tip-r"><span class="tip-l">Call GEX</span><span class="tip-v" style="color:#fde68a">${fg(s.call_gex)}</span></div><div class="tip-r"><span class="tip-l">Put GEX</span><span class="tip-v" style="color:#d8b4fe">${fg(s.put_gex)}</span></div><div class="tip-d"></div><div class="tip-r"><span class="tip-l">Call OI</span><span class="tip-v">${(s.call_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put OI</span><span class="tip-v">${(s.put_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Call Vol</span><span class="tip-v">${(s.call_volume||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put Vol</span><span class="tip-v">${(s.put_volume||0).toLocaleString()}</span></div>${s.call_bid?`<div class="tip-r"><span class="tip-l">Call Bid/Ask</span><span class="tip-v">$${s.call_bid.toFixed(2)}/$${s.call_ask.toFixed(2)}</span></div>`:''}${s.put_bid?`<div class="tip-r"><span class="tip-l">Put Bid/Ask</span><span class="tip-v">$${s.put_bid.toFixed(2)}/$${s.put_ask.toFixed(2)}</span></div>`:''}<div class="tip-r"><span class="tip-l">From Spot</span><span class="tip-v">${d>=0?'+':''}${d.toFixed(1)} (${((d/spot)*100).toFixed(2)}%)</span></div><div class="tip-d"></div><div class="tip-b">${bh(c,iK)}</div>`;t.classList.add('vis');moveTip(e)}
+function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');const d=s.strike-spot;const nv=(typeof s.net_gex_view==='number')?s.net_gex_view:s.net_gex;const c=ct(nv,mx);document.getElementById('tt').textContent=(iK?'👑 ':'')+sym+' — $'+fp(s.strike);document.getElementById('tb').innerHTML=`<div class="tip-r"><span class="tip-l">Net GEX</span><span class="tip-v">${fg(nv)}</span></div><div class="tip-r"><span class="tip-l">Call GEX</span><span class="tip-v" style="color:#fde68a">${fg(s.call_gex)}</span></div><div class="tip-r"><span class="tip-l">Put GEX</span><span class="tip-v" style="color:#d8b4fe">${fg(s.put_gex)}</span></div><div class="tip-d"></div><div class="tip-r"><span class="tip-l">Call OI</span><span class="tip-v">${(s.call_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put OI</span><span class="tip-v">${(s.put_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Call Vol</span><span class="tip-v">${(s.call_volume||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put Vol</span><span class="tip-v">${(s.put_volume||0).toLocaleString()}</span></div>${s.call_bid?`<div class="tip-r"><span class="tip-l">Call Bid/Ask</span><span class="tip-v">$${s.call_bid.toFixed(2)}/$${s.call_ask.toFixed(2)}</span></div>`:''}${s.put_bid?`<div class="tip-r"><span class="tip-l">Put Bid/Ask</span><span class="tip-v">$${s.put_bid.toFixed(2)}/$${s.put_ask.toFixed(2)}</span></div>`:''}<div class="tip-r"><span class="tip-l">From Spot</span><span class="tip-v">${d>=0?'+':''}${d.toFixed(1)} (${((d/spot)*100).toFixed(2)}%)</span></div><div class="tip-d"></div><div class="tip-b">${bh(c,iK)}</div>`;t.classList.add('vis');moveTip(e)}
 function moveTip(e){const t=document.getElementById('tip');const x=e.clientX+16,y=e.clientY-10;t.style.left=(x+t.offsetWidth>window.innerWidth?e.clientX-t.offsetWidth-16:x)+'px';t.style.top=(y+t.offsetHeight>window.innerHeight?window.innerHeight-t.offsetHeight-8:y)+'px'}
 function hideTip(){document.getElementById('tip').classList.remove('vis')}
 
@@ -1541,7 +1540,8 @@ function renderLiveHeatmap(){
   filteredExps.forEach(exp => {
     lookup[exp] = {};
     const ed = expData[exp];
-    if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = s.net_gex; });
+    // HeatMap convention: invert backend net sign for display (tab-specific).
+    if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = -(s.net_gex || 0); });
   });
 
   // Per-column [min, max] scaling for diverging color mapping
@@ -1551,8 +1551,9 @@ function renderLiveHeatmap(){
     if(!ed || !ed.strikes){ expMin[exp] = 0; expMax[exp] = 1; return; }
     let mn = 0, mx = 0;
     ed.strikes.forEach(s => {
-      if(s.net_gex < mn) mn = s.net_gex;
-      if(s.net_gex > mx) mx = s.net_gex;
+      const v = -(s.net_gex || 0);
+      if(v < mn) mn = v;
+      if(v > mx) mx = v;
     });
     expMin[exp] = mn;
     expMax[exp] = mx;
@@ -1734,17 +1735,22 @@ function loadOdteSym(sym) {
 }
 
 function renderOdtePanel(d) {
-  const {symbol, spot, strikes, total_net_gex, gamma_wall, put_wall, recommendation} = d;
+  const {symbol, spot, strikes, recommendation} = d;
+  const total_net_gex = -(d.total_net_gex || 0);
   const odteStrikeCount = parseInt(document.getElementById('odteNs').value || '15');
-  const sorted = [...strikes].sort((a, b) => a.strike - b.strike);
+  const sorted = [...strikes]
+    .map(s => ({...s, net_gex_view: -(s.net_gex || 0)}))
+    .sort((a, b) => a.strike - b.strike);
   if (!sorted.length) return document.createElement('div');
 
   const ci = sorted.reduce((b, s, i) => Math.abs(s.strike - spot) < Math.abs(sorted[b].strike - spot) ? i : b, 0);
   const n = odteStrikeCount;
   const vis = sorted.slice(Math.max(0, ci - n), Math.min(sorted.length, ci + n + 1)).reverse();
-  const mx = Math.max(...vis.map(s => Math.abs(s.net_gex)), 1);
+  const mx = Math.max(...vis.map(s => Math.abs(s.net_gex_view)), 1);
   const ss = sorted[ci]?.strike;
-  const ks = vis.reduce((b, s) => Math.abs(s.net_gex) > Math.abs(b.net_gex) ? s : b).strike;
+  const ks = vis.reduce((b, s) => Math.abs(s.net_gex_view) > Math.abs(b.net_gex_view) ? s : b).strike;
+  const gamma_wall = vis.reduce((b, s) => s.net_gex_view > b.net_gex_view ? s : b, vis[0]).strike;
+  const put_wall = vis.reduce((b, s) => s.net_gex_view < b.net_gex_view ? s : b, vis[0]).strike;
   const pc = total_net_gex > mx * .05 ? 'pos' : total_net_gex < -mx * .05 ? 'neg' : 'neu';
   const pl = pc === 'pos' ? '+Gamma' : pc === 'neg' ? '−Gamma' : 'Neutral';
   const surgeStrikes = new Set((d.volume_surges || []).map(v => v.strike));
@@ -1761,11 +1767,11 @@ function renderOdtePanel(d) {
   // Compute price reaction zones
   const aboveSpot = vis.filter(s => s.strike > spot).sort((a,b) => a.strike - b.strike);
   const belowSpot = vis.filter(s => s.strike <= spot).sort((a,b) => b.strike - a.strike);
-  const topResistance = aboveSpot.filter(s => s.net_gex > 0).slice(0, 3);
-  const topSupport = belowSpot.filter(s => s.net_gex < 0).slice(0, 3);
+  const topResistance = aboveSpot.filter(s => s.net_gex_view > 0).slice(0, 3);
+  const topSupport = belowSpot.filter(s => s.net_gex_view < 0).slice(0, 3);
   const callWall = aboveSpot.reduce((b, s) => (s.call_gex || 0) > (b.call_gex || 0) ? s : b, aboveSpot[0] || {});
   const putWall = belowSpot.reduce((b, s) => Math.abs(s.put_gex || 0) > Math.abs(b.put_gex || 0) ? s : b, belowSpot[0] || {});
-  const flipLevel = vis.find(s => Math.abs(s.net_gex) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
+  const flipLevel = vis.find(s => Math.abs(s.net_gex_view) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
 
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:grid;grid-template-columns:minmax(0,1.1fr) 420px 420px;gap:14px;align-items:start';
@@ -1793,19 +1799,19 @@ function renderOdtePanel(d) {
   strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto;max-width:100%';
 
   // Compute data range for competitor-style full-row heat coloring
-  const dataMin = Math.min(...vis.map(s => s.net_gex));
-  const dataMax = Math.max(...vis.map(s => s.net_gex));
+  const dataMin = Math.min(...vis.map(s => s.net_gex_view));
+  const dataMax = Math.max(...vis.map(s => s.net_gex_view));
 
   vis.forEach(s => {
     const iS = s.strike === ss, iK = s.strike === ks, iV = surgeStrikes.has(s.strike);
-    const co = panelHeatColor(s.net_gex, dataMin, dataMax);
+    const co = panelHeatColor(s.net_gex_view, dataMin, dataMax);
     const tco = '#fff';
 
     let chgTag = '';
     if (openSnap) {
       const openVal = openSnap[s.strike];
       if (openVal && Math.abs(openVal) > 1000) {
-        const pctChg = ((s.net_gex - openVal) / Math.abs(openVal)) * 100;
+        const pctChg = (((s.net_gex_view) - (-(openVal || 0))) / Math.abs(openVal)) * 100;
         if (Math.abs(pctChg) >= 25) {
           const sign = pctChg > 0 ? '+' : '';
           const clr = pctChg > 0 ? '#4ade80' : '#f87171';
@@ -1817,7 +1823,7 @@ function renderOdtePanel(d) {
     const row = document.createElement('div');
     row.className = 'sr' + (iS ? ' spot' : '') + (iK ? ' king' : '');
     if (iV) row.style.borderRight = '3px solid var(--cyan)';
-    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:100%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iV?' 📈':''}</span></div>`;
+    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:100%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex_view)}${iV?' 📈':''}</span></div>`;
     row.onmouseenter = e => showTip(e, s, symbol, spot, mx, iK);
     row.onmousemove = moveTip;
     row.onmouseleave = hideTip;
@@ -1876,7 +1882,7 @@ function renderOdtePanel(d) {
       const dist = ((s.strike - spot) / spot * 100).toFixed(1);
       resSupHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:5px">
         <span style="font-size:13px;font-weight:700;color:var(--green)">$${fp(s.strike)}</span>
-        <span style="font-size:11px;color:var(--dim)">+${dist}% · ${fg(s.net_gex)}</span>
+        <span style="font-size:11px;color:var(--dim)">+${dist}% · ${fg(s.net_gex_view)}</span>
       </div>`;
     });
   }
@@ -1886,7 +1892,7 @@ function renderOdtePanel(d) {
       const dist = ((spot - s.strike) / spot * 100).toFixed(1);
       resSupHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:5px">
         <span style="font-size:13px;font-weight:700;color:var(--purple)">$${fp(s.strike)}</span>
-        <span style="font-size:11px;color:var(--dim)">-${dist}% · ${fg(s.net_gex)}</span>
+        <span style="font-size:11px;color:var(--dim)">-${dist}% · ${fg(s.net_gex_view)}</span>
       </div>`;
     });
   }
