@@ -561,6 +561,23 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 var userTier = 'free'; // declared first to avoid hoisting issues
 let D=null;
 let openingGEX={}; // Store first fetch of day as baseline
+const _nativeFetch = window.fetch.bind(window);
+window.fetch = function(input, init){
+  const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+  const isApi = url.includes('/api/');
+  const skip = url.includes('/api/login') || url.includes('/api/whop/webhook');
+  if (isApi && !skip) {
+    const token = sessionStorage.getItem('gex_token');
+    if (token) {
+      const nextInit = init ? Object.assign({}, init) : {};
+      const headers = new Headers(nextInit.headers || undefined);
+      headers.set('X-Auth-Token', token);
+      nextInit.headers = headers;
+      return _nativeFetch(input, nextInit);
+    }
+  }
+  return _nativeFetch(input, init);
+};
 
 // ═══ TAB SWITCHING ═══
 function switchTab(tab) {
@@ -600,6 +617,7 @@ function doLogin(){
         sessionStorage.setItem('gex_auth','1');
         userTier = d.tier || 'free';
         sessionStorage.setItem('gex_tier', userTier);
+        if (d.token) sessionStorage.setItem('gex_token', d.token);
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
         startServerFetch(); fetchLiveData();
@@ -609,8 +627,9 @@ function doLogin(){
       }else{err.textContent=d.error||'Invalid credentials';err.style.display='block'}
     }).catch(()=>{
       // Fallback for local/file mode
-      if(user==='admin'&&pass==='strikegex'){
+      if(window.location.protocol==='file:'&&user==='admin'&&pass==='strikegex'){
         sessionStorage.setItem('gex_auth','1');
+        sessionStorage.setItem('gex_tier','approved');
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
       }else{err.textContent='Invalid credentials';err.style.display='block'}
@@ -621,7 +640,7 @@ document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPass').focus()});
 
 // Check session on load
-if(sessionStorage.getItem('gex_auth')==='1'){ userTier = sessionStorage.getItem('gex_tier') || 'free';
+if((sessionStorage.getItem('gex_auth')==='1' && sessionStorage.getItem('gex_token')) || window.location.protocol==='file:'){ userTier = sessionStorage.getItem('gex_tier') || 'free';
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('appWrap').style.display='';
 }
