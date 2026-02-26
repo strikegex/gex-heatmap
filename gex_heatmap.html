@@ -262,12 +262,12 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .lhm-table{border-collapse:collapse;font-size:12px;width:100%}
 .lhm-header-row th{position:sticky;top:0;z-index:20;background:var(--panel);padding:6px 4px;font-size:10px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;min-width:90px}
 .lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:44px;max-width:44px;font-size:8px;text-align:center}
-.lhm-row td{padding:4px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);min-width:90px;cursor:default;transition:filter .1s}
+.lhm-row td{padding:4px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);min-width:90px;cursor:default;transition:filter .1s;text-shadow:0 1px 2px rgba(0,0,0,.95)}
 .lhm-row td:hover{filter:brightness(1.4)}
 .lhm-row td.strike-col{position:sticky;left:0;z-index:12;background:rgba(8,8,13,.94);backdrop-filter:blur(1px);font-size:10px;font-weight:700;color:#e7ebff;border-right:1px solid var(--border);text-align:center;padding:0 2px;min-width:44px;max-width:44px;text-shadow:0 1px 2px rgba(0,0,0,.9)}
 .lhm-row.is-spot td.strike-col{color:#ffffff;background:rgba(16,22,38,.95)}
-.lhm-row.is-king td.strike-col{color:#ffd36a;font-weight:800;background:rgba(34,20,6,.95)}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
-.lhm-row.is-spot.is-king td.strike-col{color:#ffe08a;background:rgba(34,20,6,.95)}
+.lhm-row.is-king td.strike-col{color:#ffffff;font-weight:800;background:rgba(34,20,6,.95)}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
+.lhm-row.is-spot.is-king td.strike-col{color:#ffffff;background:rgba(34,20,6,.95)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
 
 /* ═══ LOGIN OVERLAY ═══ */
@@ -1248,7 +1248,7 @@ function renderPanel(d){
   return p;
 }
 
-function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');const d=s.strike-spot,c=ct(s.net_gex,mx);document.getElementById('tt').textContent=(iK?'👑 ':'')+sym+' — $'+fp(s.strike);document.getElementById('tb').innerHTML=`<div class="tip-r"><span class="tip-l">Net GEX</span><span class="tip-v">${fg(s.net_gex)}</span></div><div class="tip-r"><span class="tip-l">Call GEX</span><span class="tip-v" style="color:#fde68a">${fg(s.call_gex)}</span></div><div class="tip-r"><span class="tip-l">Put GEX</span><span class="tip-v" style="color:#d8b4fe">${fg(s.put_gex)}</span></div><div class="tip-d"></div><div class="tip-r"><span class="tip-l">Call OI</span><span class="tip-v">${(s.call_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put OI</span><span class="tip-v">${(s.put_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Call Vol</span><span class="tip-v">${(s.call_volume||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put Vol</span><span class="tip-v">${(s.put_volume||0).toLocaleString()}</span></div>${s.call_bid?`<div class="tip-r"><span class="tip-l">Call Bid/Ask</span><span class="tip-v">$${s.call_bid.toFixed(2)}/$${s.call_ask.toFixed(2)}</span></div>`:''}${s.put_bid?`<div class="tip-r"><span class="tip-l">Put Bid/Ask</span><span class="tip-v">$${s.put_bid.toFixed(2)}/$${s.put_ask.toFixed(2)}</span></div>`:''}<div class="tip-r"><span class="tip-l">From Spot</span><span class="tip-v">${d>=0?'+':''}${d.toFixed(1)} (${((d/spot)*100).toFixed(2)}%)</span></div><div class="tip-d"></div><div class="tip-b">${bh(c,iK)}</div>`;t.classList.add('vis');moveTip(e)}
+function showTip(e,s,sym,spot,mx,iK){const t=document.getElementById('tip');const d=s.strike-spot;const nv=(typeof s.net_gex_view==='number')?s.net_gex_view:s.net_gex;const c=ct(nv,mx);document.getElementById('tt').textContent=(iK?'👑 ':'')+sym+' — $'+fp(s.strike);document.getElementById('tb').innerHTML=`<div class="tip-r"><span class="tip-l">Net GEX</span><span class="tip-v">${fg(nv)}</span></div><div class="tip-r"><span class="tip-l">Call GEX</span><span class="tip-v" style="color:#fde68a">${fg(s.call_gex)}</span></div><div class="tip-r"><span class="tip-l">Put GEX</span><span class="tip-v" style="color:#d8b4fe">${fg(s.put_gex)}</span></div><div class="tip-d"></div><div class="tip-r"><span class="tip-l">Call OI</span><span class="tip-v">${(s.call_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put OI</span><span class="tip-v">${(s.put_oi||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Call Vol</span><span class="tip-v">${(s.call_volume||0).toLocaleString()}</span></div><div class="tip-r"><span class="tip-l">Put Vol</span><span class="tip-v">${(s.put_volume||0).toLocaleString()}</span></div>${s.call_bid?`<div class="tip-r"><span class="tip-l">Call Bid/Ask</span><span class="tip-v">$${s.call_bid.toFixed(2)}/$${s.call_ask.toFixed(2)}</span></div>`:''}${s.put_bid?`<div class="tip-r"><span class="tip-l">Put Bid/Ask</span><span class="tip-v">$${s.put_bid.toFixed(2)}/$${s.put_ask.toFixed(2)}</span></div>`:''}<div class="tip-r"><span class="tip-l">From Spot</span><span class="tip-v">${d>=0?'+':''}${d.toFixed(1)} (${((d/spot)*100).toFixed(2)}%)</span></div><div class="tip-d"></div><div class="tip-b">${bh(c,iK)}</div>`;t.classList.add('vis');moveTip(e)}
 function moveTip(e){const t=document.getElementById('tip');const x=e.clientX+16,y=e.clientY-10;t.style.left=(x+t.offsetWidth>window.innerWidth?e.clientX-t.offsetWidth-16:x)+'px';t.style.top=(y+t.offsetHeight>window.innerHeight?window.innerHeight-t.offsetHeight-8:y)+'px'}
 function hideTip(){document.getElementById('tip').classList.remove('vis')}
 
@@ -1476,10 +1476,7 @@ function gexColor(v, dataMin, dataMax){
 }
 
 function textColor(v, dataMin, dataMax){
-  const scale = Math.max(Math.abs(dataMin || 0), Math.abs(dataMax || 0), 1);
-  const mag = Math.min(1, Math.abs(v) / scale);
-  if(v > 0 && mag > 0.72) return 'rgba(0,0,0,.72)';
-  return 'rgba(255,255,255,.9)';
+  return 'rgba(255,255,255,.96)';
 }
 
 function fmtGex(v){
@@ -1544,7 +1541,8 @@ function renderLiveHeatmap(){
   filteredExps.forEach(exp => {
     lookup[exp] = {};
     const ed = expData[exp];
-    if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = s.net_gex; });
+    // HeatMap convention: invert backend net sign for display (tab-specific).
+    if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = -(s.net_gex || 0); });
   });
 
   // Per-column [min, max] scaling for diverging color mapping
@@ -1554,8 +1552,9 @@ function renderLiveHeatmap(){
     if(!ed || !ed.strikes){ expMin[exp] = 0; expMax[exp] = 1; return; }
     let mn = 0, mx = 0;
     ed.strikes.forEach(s => {
-      if(s.net_gex < mn) mn = s.net_gex;
-      if(s.net_gex > mx) mx = s.net_gex;
+      const v = -(s.net_gex || 0);
+      if(v < mn) mn = v;
+      if(v > mx) mx = v;
     });
     expMin[exp] = mn;
     expMax[exp] = mx;
@@ -1608,8 +1607,9 @@ function renderLiveHeatmap(){
 
     html += `<tr class="${rowCls}">`;
     const strikeLabel = strike % 1 ? strike.toFixed(1) : strike.toFixed(0);
-    const marker = isSpot && isKing ? '◂ 👑 ' : (isSpot ? '◂ ' : (isKing ? '👑 ' : ''));
-    html += `<td class="strike-col"><span style="display:inline-flex;align-items:center;gap:2px;white-space:nowrap;color:inherit;text-shadow:0 1px 2px rgba(0,0,0,.95)">${marker}${strikeLabel}</span></td>`;
+    const spotMark = isSpot ? '<span style="color:#fff">◂</span>' : '';
+    const kingMark = isKing ? '<span style="color:#ffd36a">👑</span>' : '';
+    html += `<td class="strike-col"><span style="display:inline-flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.98)">${spotMark}${kingMark}<span>${strikeLabel}</span></span></td>`;
 
     filteredExps.forEach(exp => {
       const v = lookup[exp][strike];
@@ -1620,7 +1620,7 @@ function renderLiveHeatmap(){
       } else {
         const bg = gexColor(v, cMin, cMax);
         const fg = textColor(v, cMin, cMax);
-        html += `<td style="background:${bg};color:${fg}" title="${strike} ${exp}: ${fmtGex(v)}">${fmtGex(v)}</td>`;
+        html += `<td style="background:${bg};color:${fg};text-shadow:0 1px 2px rgba(0,0,0,.98)" title="${strike} ${exp}: ${fmtGex(v)}">${fmtGex(v)}</td>`;
       }
     });
 
@@ -1736,17 +1736,22 @@ function loadOdteSym(sym) {
 }
 
 function renderOdtePanel(d) {
-  const {symbol, spot, strikes, total_net_gex, gamma_wall, put_wall, recommendation} = d;
+  const {symbol, spot, strikes, recommendation} = d;
+  const total_net_gex = -(d.total_net_gex || 0);
   const odteStrikeCount = parseInt(document.getElementById('odteNs').value || '15');
-  const sorted = [...strikes].sort((a, b) => a.strike - b.strike);
+  const sorted = [...strikes]
+    .map(s => ({...s, net_gex_view: -(s.net_gex || 0)}))
+    .sort((a, b) => a.strike - b.strike);
   if (!sorted.length) return document.createElement('div');
 
   const ci = sorted.reduce((b, s, i) => Math.abs(s.strike - spot) < Math.abs(sorted[b].strike - spot) ? i : b, 0);
   const n = odteStrikeCount;
   const vis = sorted.slice(Math.max(0, ci - n), Math.min(sorted.length, ci + n + 1)).reverse();
-  const mx = Math.max(...vis.map(s => Math.abs(s.net_gex)), 1);
+  const mx = Math.max(...vis.map(s => Math.abs(s.net_gex_view)), 1);
   const ss = sorted[ci]?.strike;
-  const ks = vis.reduce((b, s) => Math.abs(s.net_gex) > Math.abs(b.net_gex) ? s : b).strike;
+  const ks = vis.reduce((b, s) => Math.abs(s.net_gex_view) > Math.abs(b.net_gex_view) ? s : b).strike;
+  const gamma_wall = vis.reduce((b, s) => s.net_gex_view > b.net_gex_view ? s : b, vis[0]).strike;
+  const put_wall = vis.reduce((b, s) => s.net_gex_view < b.net_gex_view ? s : b, vis[0]).strike;
   const pc = total_net_gex > mx * .05 ? 'pos' : total_net_gex < -mx * .05 ? 'neg' : 'neu';
   const pl = pc === 'pos' ? '+Gamma' : pc === 'neg' ? '−Gamma' : 'Neutral';
   const surgeStrikes = new Set((d.volume_surges || []).map(v => v.strike));
@@ -1763,11 +1768,11 @@ function renderOdtePanel(d) {
   // Compute price reaction zones
   const aboveSpot = vis.filter(s => s.strike > spot).sort((a,b) => a.strike - b.strike);
   const belowSpot = vis.filter(s => s.strike <= spot).sort((a,b) => b.strike - a.strike);
-  const topResistance = aboveSpot.filter(s => s.net_gex > 0).slice(0, 3);
-  const topSupport = belowSpot.filter(s => s.net_gex < 0).slice(0, 3);
+  const topResistance = aboveSpot.filter(s => s.net_gex_view > 0).slice(0, 3);
+  const topSupport = belowSpot.filter(s => s.net_gex_view < 0).slice(0, 3);
   const callWall = aboveSpot.reduce((b, s) => (s.call_gex || 0) > (b.call_gex || 0) ? s : b, aboveSpot[0] || {});
   const putWall = belowSpot.reduce((b, s) => Math.abs(s.put_gex || 0) > Math.abs(b.put_gex || 0) ? s : b, belowSpot[0] || {});
-  const flipLevel = vis.find(s => Math.abs(s.net_gex) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
+  const flipLevel = vis.find(s => Math.abs(s.net_gex_view) < mx * 0.02 && Math.abs(s.strike - spot) > 2);
 
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:grid;grid-template-columns:minmax(0,1.1fr) 420px 420px;gap:14px;align-items:start';
@@ -1795,19 +1800,19 @@ function renderOdtePanel(d) {
   strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto;max-width:100%';
 
   // Compute data range for competitor-style full-row heat coloring
-  const dataMin = Math.min(...vis.map(s => s.net_gex));
-  const dataMax = Math.max(...vis.map(s => s.net_gex));
+  const dataMin = Math.min(...vis.map(s => s.net_gex_view));
+  const dataMax = Math.max(...vis.map(s => s.net_gex_view));
 
   vis.forEach(s => {
     const iS = s.strike === ss, iK = s.strike === ks, iV = surgeStrikes.has(s.strike);
-    const co = panelHeatColor(s.net_gex, dataMin, dataMax);
+    const co = panelHeatColor(s.net_gex_view, dataMin, dataMax);
     const tco = '#fff';
 
     let chgTag = '';
     if (openSnap) {
       const openVal = openSnap[s.strike];
       if (openVal && Math.abs(openVal) > 1000) {
-        const pctChg = ((s.net_gex - openVal) / Math.abs(openVal)) * 100;
+        const pctChg = (((s.net_gex_view) - (-(openVal || 0))) / Math.abs(openVal)) * 100;
         if (Math.abs(pctChg) >= 25) {
           const sign = pctChg > 0 ? '+' : '';
           const clr = pctChg > 0 ? '#4ade80' : '#f87171';
@@ -1819,7 +1824,7 @@ function renderOdtePanel(d) {
     const row = document.createElement('div');
     row.className = 'sr' + (iS ? ' spot' : '') + (iK ? ' king' : '');
     if (iV) row.style.borderRight = '3px solid var(--cyan)';
-    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:100%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iV?' 📈':''}</span></div>`;
+    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:100%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex_view)}${iV?' 📈':''}</span></div>`;
     row.onmouseenter = e => showTip(e, s, symbol, spot, mx, iK);
     row.onmousemove = moveTip;
     row.onmouseleave = hideTip;
@@ -1878,7 +1883,7 @@ function renderOdtePanel(d) {
       const dist = ((s.strike - spot) / spot * 100).toFixed(1);
       resSupHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:5px">
         <span style="font-size:13px;font-weight:700;color:var(--green)">$${fp(s.strike)}</span>
-        <span style="font-size:11px;color:var(--dim)">+${dist}% · ${fg(s.net_gex)}</span>
+        <span style="font-size:11px;color:var(--dim)">+${dist}% · ${fg(s.net_gex_view)}</span>
       </div>`;
     });
   }
@@ -1888,7 +1893,7 @@ function renderOdtePanel(d) {
       const dist = ((spot - s.strike) / spot * 100).toFixed(1);
       resSupHtml += `<div style="display:flex;justify-content:space-between;margin-bottom:5px">
         <span style="font-size:13px;font-weight:700;color:var(--purple)">$${fp(s.strike)}</span>
-        <span style="font-size:11px;color:var(--dim)">-${dist}% · ${fg(s.net_gex)}</span>
+        <span style="font-size:11px;color:var(--dim)">-${dist}% · ${fg(s.net_gex_view)}</span>
       </div>`;
     });
   }
@@ -2248,7 +2253,8 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
     const g = lastSnap.gex[sk] || lastSnap.gex[sk2];
     if (!g) return;
 
-    const netGex = g.n || 0;
+    // Backend net sign is opposite of chart convention; invert for display.
+    const netGex = -(g.n || 0);
     if (Math.abs(netGex) < maxAbsLatest * 0.005) return;
     const y = yForStrike(s);
     const barW = (Math.abs(netGex) / maxAbsLatest) * (plotW * 0.95);
@@ -2335,7 +2341,7 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
       const sk = String(s) + '.0';
       const sk2 = String(s);
       const g = lastSnap.gex[sk] || lastSnap.gex[sk2];
-      return { strike: s, net: g ? (g.n || 0) : 0 };
+      return { strike: s, net: g ? (-(g.n || 0)) : 0 };
     }).sort((a, b) => a.strike - b.strike);
 
     // Find zero crossing
