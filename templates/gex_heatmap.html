@@ -264,9 +264,10 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:44px;max-width:44px;font-size:8px;text-align:center}
 .lhm-row td{padding:4px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);min-width:90px;cursor:default;transition:filter .1s}
 .lhm-row td:hover{filter:brightness(1.4)}
-.lhm-row td.strike-col{position:sticky;left:0;z-index:10;background:var(--bg);font-size:10px;font-weight:600;color:var(--dim);border-right:1px solid var(--border);text-align:center;padding:0 2px;min-width:44px;max-width:44px}
-.lhm-row.is-spot td.strike-col{color:#fff;background:rgba(255,255,255,.07)}
-.lhm-row.is-king td.strike-col{color:var(--king);font-weight:800}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
+.lhm-row td.strike-col{position:sticky;left:0;z-index:12;background:rgba(8,8,13,.94);backdrop-filter:blur(1px);font-size:10px;font-weight:700;color:#e7ebff;border-right:1px solid var(--border);text-align:center;padding:0 2px;min-width:44px;max-width:44px;text-shadow:0 1px 2px rgba(0,0,0,.9)}
+.lhm-row.is-spot td.strike-col{color:#ffffff;background:rgba(16,22,38,.95)}
+.lhm-row.is-king td.strike-col{color:#ffd36a;font-weight:800;background:rgba(34,20,6,.95)}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
+.lhm-row.is-spot.is-king td.strike-col{color:#ffe08a;background:rgba(34,20,6,.95)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
 
 /* ═══ LOGIN OVERLAY ═══ */
@@ -1606,7 +1607,9 @@ function renderLiveHeatmap(){
     if(isAboveSpot) rowCls += ' lhm-spot-line';
 
     html += `<tr class="${rowCls}">`;
-    html += `<td class="strike-col">${isKing ? "👑 " : ""}${strike % 1 ? strike.toFixed(1) : strike.toFixed(0)}</td>`;
+    const strikeLabel = strike % 1 ? strike.toFixed(1) : strike.toFixed(0);
+    const marker = isSpot && isKing ? '◂ 👑 ' : (isSpot ? '◂ ' : (isKing ? '👑 ' : ''));
+    html += `<td class="strike-col"><span style="display:inline-flex;align-items:center;gap:2px;white-space:nowrap;color:inherit;text-shadow:0 1px 2px rgba(0,0,0,.95)">${marker}${strikeLabel}</span></td>`;
 
     filteredExps.forEach(exp => {
       const v = lookup[exp][strike];
@@ -2245,7 +2248,8 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
     const g = lastSnap.gex[sk] || lastSnap.gex[sk2];
     if (!g) return;
 
-    const netGex = g.n || 0;
+    // Backend net sign is opposite of chart convention; invert for display.
+    const netGex = -(g.n || 0);
     if (Math.abs(netGex) < maxAbsLatest * 0.005) return;
     const y = yForStrike(s);
     const barW = (Math.abs(netGex) / maxAbsLatest) * (plotW * 0.95);
@@ -2332,7 +2336,7 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
       const sk = String(s) + '.0';
       const sk2 = String(s);
       const g = lastSnap.gex[sk] || lastSnap.gex[sk2];
-      return { strike: s, net: g ? (g.n || 0) : 0 };
+      return { strike: s, net: g ? (-(g.n || 0)) : 0 };
     }).sort((a, b) => a.strike - b.strike);
 
     // Find zero crossing
