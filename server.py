@@ -430,6 +430,7 @@ def api_gex():
 @app.route("/api/session")
 def api_session():
     """Return session GEX snapshots for the session chart."""
+    from flask import request
     import gex_fetcher as gf
     symbol = request.args.get("symbol", "SPX").upper()
     history = gf.load_history()
