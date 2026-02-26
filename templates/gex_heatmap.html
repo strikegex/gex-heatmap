@@ -1791,15 +1791,14 @@ function renderOdtePanel(d) {
   const strikesDiv = document.createElement('div');
   strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto;max-width:100%';
 
-  // Compute data range for legend-matched diverging color mapping
+  // Compute data range for competitor-style full-row heat coloring
   const dataMin = Math.min(...vis.map(s => s.net_gex));
   const dataMax = Math.max(...vis.map(s => s.net_gex));
 
   vis.forEach(s => {
     const iS = s.strike === ss, iK = s.strike === ks, iV = surgeStrikes.has(s.strike);
-    const co = gc(s.net_gex, mx, iK, dataMin, dataMax);
-    const tco = tc(s.net_gex, mx, iK, dataMin, dataMax);
-    const barPct = Math.max(3, Math.min(100, Math.round(Math.abs(s.net_gex) / mx * 100)));
+    const co = panelHeatColor(s.net_gex, dataMin, dataMax);
+    const tco = '#fff';
 
     let chgTag = '';
     if (openSnap) {
@@ -1814,15 +1813,10 @@ function renderOdtePanel(d) {
       }
     }
 
-    // For king row: use gross gamma for bar width to reflect true concentration
-    const grossGamma = Math.abs(s.call_gex||0) + Math.abs(s.put_gex||0);
-    const grossMax = Math.max(...vis.map(x => Math.abs(x.call_gex||0) + Math.abs(x.put_gex||0)), 1);
-    const kingBarPct = iK ? Math.max(10, Math.min(100, Math.round(grossGamma / grossMax * 100))) : barPct;
-
     const row = document.createElement('div');
     row.className = 'sr' + (iS ? ' spot' : '') + (iK ? ' king' : '');
     if (iV) row.style.borderRight = '3px solid var(--cyan)';
-    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:${kingBarPct}%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iV?' 📈':''}</span></div>`;
+    row.innerHTML = `<div class="sr-bg" style="background:rgb(${co.r},${co.g},${co.b});width:100%;right:0"></div><span class="sr-lbl">${chgTag}${fp(s.strike)}</span><div class="gbar-c"><span class="gval" style="color:${tco}">${fg(s.net_gex)}${iV?' 📈':''}</span></div>`;
     row.onmouseenter = e => showTip(e, s, symbol, spot, mx, iK);
     row.onmousemove = moveTip;
     row.onmouseleave = hideTip;
