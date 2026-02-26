@@ -5,9 +5,10 @@ Serves gex_heatmap.html and fetches fresh data every 5 minutes.
 Deploy to Railway with env vars:
   SCHWAB_APP_KEY, SCHWAB_APP_SECRET, SCHWAB_TOKEN_B64
 """
-import os, json, threading, time, base64
-from datetime import datetime
-from flask import Flask, send_from_directory, jsonify
+import os, json, threading, time, base64, secrets
+from datetime import datetime, timedelta
+from functools import wraps
+from flask import Flask, send_from_directory, jsonify, request
 
 app = Flask(__name__)
 
@@ -16,6 +17,9 @@ gex_data = {}
 gex_all_data = {}   # multi-expiry data for GEX Live view
 last_fetch = None
 fetch_lock = threading.Lock()
+auth_lock = threading.Lock()
+auth_sessions = {}  # token -> {user, tier, is_admin, expires_at}
+login_attempts = {}  # ip -> [timestamps]
 
 # ─── Load existing data from disk if available (survives restarts) ───
 if os.path.exists("gex_data.json"):
@@ -42,6 +46,9 @@ TOKEN_PATH = os.environ.get("SCHWAB_TOKEN_PATH", "schwab_token.json")
 FETCH_INTERVAL = int(os.environ.get("FETCH_INTERVAL", "300"))  # 0DTE: 5 min default
 FETCH_INTERVAL_ALL = int(os.environ.get("FETCH_INTERVAL_ALL", "1800"))  # StrikeMap: 30 min default
 print(f"⏱️ 0DTE interval = {FETCH_INTERVAL}s ({FETCH_INTERVAL//60}m) | StrikeMap interval = {FETCH_INTERVAL_ALL}s ({FETCH_INTERVAL_ALL//60}m)")
+AUTH_SESSION_TTL_SECONDS = int(os.environ.get("AUTH_SESSION_TTL_SECONDS", "43200"))  # 12h
+LOGIN_WINDOW_SECONDS = int(os.environ.get("LOGIN_WINDOW_SECONDS", "300"))            # 5m
+MAX_LOGIN_ATTEMPTS = int(os.environ.get("MAX_LOGIN_ATTEMPTS", "10"))
 
 # Full symbol list — env var overrides if set
 _DEFAULT_SYMBOLS = (
@@ -232,8 +239,10 @@ def static_files(filename):
 
 # ─── User database (in production, use a real DB) ───
 # ─── Admin credentials (internal access) ───
-ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
-ADMIN_PASS = os.environ.get("ADMIN_PASS", "strikegex")
+ADMIN_USER = os.environ.get("ADMIN_USER", "").strip()
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "").strip()
+if not ADMIN_USER or not ADMIN_PASS:
+    print("⚠️ ADMIN_USER/ADMIN_PASS not set — admin login disabled")
 
 # ─── Whop config ───
 WHOP_API_KEY      = os.environ.get("WHOP_API_KEY", "")        # Bearer token from Whop dashboard
@@ -261,6 +270,105 @@ members_db = load_members()
 print(f"✅ Loaded {len(members_db)} Whop members")
 
 
+def _now_utc():
+    return datetime.utcnow()
+
+
+def _client_ip():
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
+def _cleanup_login_attempts(ip, now_ts):
+    attempts = login_attempts.get(ip, [])
+    cutoff = now_ts - LOGIN_WINDOW_SECONDS
+    attempts = [t for t in attempts if t >= cutoff]
+    if attempts:
+        login_attempts[ip] = attempts
+    elif ip in login_attempts:
+        del login_attempts[ip]
+    return attempts
+
+
+def _check_login_rate_limit(ip):
+    now_ts = time.time()
+    with auth_lock:
+        attempts = _cleanup_login_attempts(ip, now_ts)
+        if len(attempts) >= MAX_LOGIN_ATTEMPTS:
+            retry_after = int(LOGIN_WINDOW_SECONDS - (now_ts - attempts[0]))
+            return False, max(retry_after, 1)
+    return True, 0
+
+
+def _record_login_failure(ip):
+    now_ts = time.time()
+    with auth_lock:
+        attempts = _cleanup_login_attempts(ip, now_ts)
+        attempts.append(now_ts)
+        login_attempts[ip] = attempts
+
+
+def _clear_login_failures(ip):
+    with auth_lock:
+        if ip in login_attempts:
+            del login_attempts[ip]
+
+
+def _new_session(user, tier, is_admin=False):
+    token = secrets.token_urlsafe(32)
+    exp = _now_utc() + timedelta(seconds=AUTH_SESSION_TTL_SECONDS)
+    with auth_lock:
+        auth_sessions[token] = {
+            "user": user,
+            "tier": tier,
+            "is_admin": bool(is_admin),
+            "expires_at": exp.isoformat(),
+        }
+    return token, AUTH_SESSION_TTL_SECONDS
+
+
+def _session_from_request():
+    token = request.headers.get("X-Auth-Token", "").strip()
+    authz = request.headers.get("Authorization", "").strip()
+    if not token and authz.startswith("Bearer "):
+        token = authz[7:].strip()
+    if not token:
+        return None
+
+    with auth_lock:
+        sess = auth_sessions.get(token)
+        if not sess:
+            # Backward-compat for admin scripts using Bearer ADMIN_PASS
+            if ADMIN_PASS and token == ADMIN_PASS:
+                return {"user": ADMIN_USER or "admin", "tier": "approved", "is_admin": True}
+            return None
+        try:
+            exp = datetime.fromisoformat(sess.get("expires_at", ""))
+        except Exception:
+            del auth_sessions[token]
+            return None
+        if exp <= _now_utc():
+            del auth_sessions[token]
+            return None
+        return sess
+
+
+def require_auth(admin=False):
+    def deco(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            sess = _session_from_request()
+            if not sess:
+                return jsonify({"error": "Unauthorized"}), 401
+            if admin and not sess.get("is_admin"):
+                return jsonify({"error": "Forbidden"}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return deco
+
+
 def verify_whop_webhook(request_body: bytes, headers: dict) -> bool:
     """Verify webhook signature - handles Whop HMAC-SHA256.
     Header: X-Whop-Signature (hex digest, optionally prefixed sha256=)
@@ -268,8 +376,8 @@ def verify_whop_webhook(request_body: bytes, headers: dict) -> bool:
     """
     import hmac as hmac_mod, hashlib
     if not WHOP_WEBHOOK_SECRET:
-        print("WARNING: WHOP_WEBHOOK_SECRET not set - skipping sig check")
-        return True
+        print("ERROR: WHOP_WEBHOOK_SECRET not set - rejecting webhook")
+        return False
     sig = (headers.get("x-whop-signature") or
            headers.get("X-Whop-Signature", "")).strip()
     if not sig:
@@ -295,29 +403,47 @@ def get_whop_member_tier(email: str) -> str:
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    from flask import request
-    data = request.get_json() or {}
-    username = data.get("username", "").strip()
+    data = request.get_json(silent=True) or {}
+    username = data.get("username", "")
     password = data.get("password", "")
+    if not isinstance(username, str):
+        username = ""
+    if not isinstance(password, str):
+        password = ""
+    username = username.strip()
+    ip = _client_ip()
+
+    allowed, retry_after = _check_login_rate_limit(ip)
+    if not allowed:
+        return jsonify({"ok": False, "error": "Too many login attempts. Try again shortly."}), 429, {"Retry-After": str(retry_after)}
 
     # Admin login
-    if username == ADMIN_USER and password == ADMIN_PASS:
-        return jsonify({"ok": True, "user": username, "tier": "approved"})
+    if ADMIN_USER and ADMIN_PASS and username == ADMIN_USER and secrets.compare_digest(password, ADMIN_PASS):
+        token, ttl = _new_session(username, "approved", is_admin=True)
+        _clear_login_failures(ip)
+        return jsonify({"ok": True, "user": username, "tier": "approved", "token": token, "expires_in": ttl})
 
     # Whop member login — username is their email, password is their license key
     email = username.lower()
     with members_lock:
         member = members_db.get(email)
 
-    if member:
-        # Verify license key matches
-        if password == member.get("license_key", "") or member.get("valid"):
-            tier = "approved" if member.get("valid") else "free"
-            return jsonify({"ok": True, "user": email, "tier": tier,
-                            "membership": member.get("membership_id", "")})
-        return jsonify({"ok": False, "error": "Invalid license key"}), 401
+    if member and member.get("valid"):
+        license_key = str(member.get("license_key", "") or "")
+        if license_key and secrets.compare_digest(password, license_key):
+            token, ttl = _new_session(email, "approved", is_admin=False)
+            _clear_login_failures(ip)
+            return jsonify({
+                "ok": True,
+                "user": email,
+                "tier": "approved",
+                "membership": member.get("membership_id", ""),
+                "token": token,
+                "expires_in": ttl,
+            })
 
-    return jsonify({"ok": False, "error": "Account not found. Purchase a membership at whop.com/strikegex"}), 401
+    _record_login_failure(ip)
+    return jsonify({"ok": False, "error": "Invalid credentials"}), 401
 
 
 @app.route("/api/whop/webhook", methods=["POST"])
@@ -411,26 +537,30 @@ def whop_webhook():
 
 
 @app.route("/api/whop/members", methods=["GET"])
+@require_auth(admin=True)
 def whop_members_list():
     """Admin endpoint — list all members."""
-    from flask import request
-    auth = request.headers.get("Authorization", "")
-    if auth != f"Bearer {ADMIN_PASS}":
-        return jsonify({"error": "Unauthorized"}), 401
     with members_lock:
-        return jsonify({"members": members_db, "count": len(members_db)})
+        redacted = {}
+        for email, rec in members_db.items():
+            item = dict(rec)
+            if item.get("license_key"):
+                item["license_key"] = "***REDACTED***"
+            redacted[email] = item
+        return jsonify({"members": redacted, "count": len(redacted)})
 
 
 @app.route("/api/gex")
+@require_auth()
 def api_gex():
     with fetch_lock:
         return jsonify(gex_data)
 
 
 @app.route("/api/session")
+@require_auth()
 def api_session():
     """Return session GEX snapshots for the session chart."""
-    from flask import request
     import gex_fetcher as gf
     symbol = request.args.get("symbol", "SPX").upper()
     history = gf.load_history()
@@ -439,12 +569,14 @@ def api_session():
 
 
 @app.route("/api/gex-all")
+@require_auth()
 def api_gex_all():
     with fetch_lock:
         return jsonify(gex_all_data)
 
 
 @app.route("/api/candles")
+@require_auth()
 def api_candles():
     """Fetch price history candles from Schwab API.
     Params:
@@ -453,12 +585,18 @@ def api_candles():
       days    - lookback days (default: 5 for intraday, 365 for daily)
     Returns JSON: {symbol, timeframe, candles: [{time, open, high, low, close, volume}, ...]}
     """
-    from flask import request
     from datetime import datetime, timedelta
 
     symbol = request.args.get("symbol", "SPX").upper()
     tf = request.args.get("tf", "15")
     days = request.args.get("days", None)
+    if days is not None:
+        try:
+            days = int(days)
+        except ValueError:
+            return jsonify({"error": "Invalid days parameter"}), 400
+        if days < 1 or days > 730:
+            return jsonify({"error": "days out of range (1-730)"}), 400
 
     # Symbol mapping for Schwab API
     INDEX_MAP = {"SPX": "$SPX", "NDX": "$NDX", "RUT": "$RUT", "DJX": "$DJX", "VIX": "$VIX"}
@@ -484,28 +622,28 @@ def api_candles():
         # Map timeframe to schwab-py method
         end_dt = datetime.now()
         if tf == "1":
-            default_days = int(days) if days else 2
+            default_days = days if days else 2
             start_dt = end_dt - timedelta(days=default_days)
             resp = client.get_price_history_every_minute(
                 api_sym, start_datetime=start_dt, end_datetime=end_dt,
                 need_extended_hours_data=False
             )
         elif tf == "5":
-            default_days = int(days) if days else 5
+            default_days = days if days else 5
             start_dt = end_dt - timedelta(days=default_days)
             resp = client.get_price_history_every_five_minutes(
                 api_sym, start_datetime=start_dt, end_datetime=end_dt,
                 need_extended_hours_data=False
             )
         elif tf == "15":
-            default_days = int(days) if days else 5
+            default_days = days if days else 5
             start_dt = end_dt - timedelta(days=default_days)
             resp = client.get_price_history_every_fifteen_minutes(
                 api_sym, start_datetime=start_dt, end_datetime=end_dt,
                 need_extended_hours_data=False
             )
         elif tf == "30":
-            default_days = int(days) if days else 10
+            default_days = days if days else 10
             start_dt = end_dt - timedelta(days=default_days)
             resp = client.get_price_history_every_thirty_minutes(
                 api_sym, start_datetime=start_dt, end_datetime=end_dt,
@@ -513,7 +651,7 @@ def api_candles():
             )
         elif tf == "60":
             # No native hourly — use 30min and aggregate on frontend
-            default_days = int(days) if days else 20
+            default_days = days if days else 20
             start_dt = end_dt - timedelta(days=default_days)
             resp = client.get_price_history_every_thirty_minutes(
                 api_sym, start_datetime=start_dt, end_datetime=end_dt,
@@ -521,14 +659,14 @@ def api_candles():
             )
         elif tf == "240":
             # 4H — use daily for now, frontend can aggregate
-            default_days = int(days) if days else 90
+            default_days = days if days else 90
             start_dt = end_dt - timedelta(days=default_days)
             resp = client.get_price_history_every_day(
                 api_sym, start_datetime=start_dt, end_datetime=end_dt,
                 need_extended_hours_data=False
             )
         elif tf == "D":
-            default_days = int(days) if days else 365
+            default_days = days if days else 365
             start_dt = end_dt - timedelta(days=default_days)
             resp = client.get_price_history_every_day(
                 api_sym, start_datetime=start_dt, end_datetime=end_dt,
