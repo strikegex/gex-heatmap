@@ -262,12 +262,12 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .lhm-table{border-collapse:collapse;font-size:12px;width:100%}
 .lhm-header-row th{position:sticky;top:0;z-index:20;background:var(--panel);padding:6px 4px;font-size:10px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;min-width:90px}
 .lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:44px;max-width:44px;font-size:8px;text-align:center}
-.lhm-row td{padding:4px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);min-width:90px;cursor:default;transition:filter .1s}
+.lhm-row td{padding:4px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);min-width:90px;cursor:default;transition:filter .1s;text-shadow:0 1px 2px rgba(0,0,0,.95)}
 .lhm-row td:hover{filter:brightness(1.4)}
 .lhm-row td.strike-col{position:sticky;left:0;z-index:12;background:rgba(8,8,13,.94);backdrop-filter:blur(1px);font-size:10px;font-weight:700;color:#e7ebff;border-right:1px solid var(--border);text-align:center;padding:0 2px;min-width:44px;max-width:44px;text-shadow:0 1px 2px rgba(0,0,0,.9)}
 .lhm-row.is-spot td.strike-col{color:#ffffff;background:rgba(16,22,38,.95)}
-.lhm-row.is-king td.strike-col{color:#ffd36a;font-weight:800;background:rgba(34,20,6,.95)}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
-.lhm-row.is-spot.is-king td.strike-col{color:#ffe08a;background:rgba(34,20,6,.95)}
+.lhm-row.is-king td.strike-col{color:#ffffff;font-weight:800;background:rgba(34,20,6,.95)}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
+.lhm-row.is-spot.is-king td.strike-col{color:#ffffff;background:rgba(34,20,6,.95)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
 
 /* ═══ LOGIN OVERLAY ═══ */
@@ -1476,10 +1476,7 @@ function gexColor(v, dataMin, dataMax){
 }
 
 function textColor(v, dataMin, dataMax){
-  const scale = Math.max(Math.abs(dataMin || 0), Math.abs(dataMax || 0), 1);
-  const mag = Math.min(1, Math.abs(v) / scale);
-  if(v > 0 && mag > 0.72) return 'rgba(0,0,0,.72)';
-  return 'rgba(255,255,255,.9)';
+  return 'rgba(255,255,255,.96)';
 }
 
 function fmtGex(v){
@@ -1608,8 +1605,9 @@ function renderLiveHeatmap(){
 
     html += `<tr class="${rowCls}">`;
     const strikeLabel = strike % 1 ? strike.toFixed(1) : strike.toFixed(0);
-    const marker = isSpot && isKing ? '◂ 👑 ' : (isSpot ? '◂ ' : (isKing ? '👑 ' : ''));
-    html += `<td class="strike-col"><span style="display:inline-flex;align-items:center;gap:2px;white-space:nowrap;color:inherit;text-shadow:0 1px 2px rgba(0,0,0,.95)">${marker}${strikeLabel}</span></td>`;
+    const spotMark = isSpot ? '<span style="color:#fff">◂</span>' : '';
+    const kingMark = isKing ? '<span style="color:#ffd36a">👑</span>' : '';
+    html += `<td class="strike-col"><span style="display:inline-flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.98)">${spotMark}${kingMark}<span>${strikeLabel}</span></span></td>`;
 
     filteredExps.forEach(exp => {
       const v = lookup[exp][strike];
@@ -1620,7 +1618,7 @@ function renderLiveHeatmap(){
       } else {
         const bg = gexColor(v, cMin, cMax);
         const fg = textColor(v, cMin, cMax);
-        html += `<td style="background:${bg};color:${fg}" title="${strike} ${exp}: ${fmtGex(v)}">${fmtGex(v)}</td>`;
+        html += `<td style="background:${bg};color:${fg};text-shadow:0 1px 2px rgba(0,0,0,.98)" title="${strike} ${exp}: ${fmtGex(v)}">${fmtGex(v)}</td>`;
       }
     });
 
