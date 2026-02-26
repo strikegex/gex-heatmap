@@ -428,6 +428,23 @@ def fetch_gex(client, symbol, history, expiry=None, num_strikes=30):
     print(f"  📋 Chain expirations: {exps}")
     all_s = calculate_gex(chain, spot)
     filtered = filter_near_spot(all_s, spot, num_strikes)
+    if not filtered:
+        print(f"  ⚠️ {symbol}: no 0DTE strikes available in chain")
+        rec = {"summary": "No 0DTE strikes available", "bias": "neutral", "action_items": []}
+        return {
+            "symbol": symbol,
+            "spot": spot,
+            "timestamp": datetime.now().isoformat(),
+            "expirations": exps,
+            "total_net_gex": 0,
+            "gamma_wall": 0,
+            "put_wall": 0,
+            "king_node": 0,
+            "strikes": [],
+            "recommendation": rec,
+            "king_history": get_king_history(history, symbol),
+            "volume_surges": [],
+        }
     total = sum(s["net_gex"] for s in filtered)
     king = max(filtered, key=lambda s: abs(s.get("total_gamma", 0)))
     # Debug: show top 3 strikes by gross gamma
