@@ -511,7 +511,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
         style="background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:800;padding:6px 16px;border-radius:6px;cursor:pointer;letter-spacing:.5px">GO</button>
     </div>
     <!-- Legend -->
-    <div style="display:flex;align-items:center;gap:12px;font-size:10px;padding:0 8px">
+    <div style="display:flex;align-items:center;gap:12px;font-size:10px;padding:0 8px;flex-wrap:wrap">
       <span style="color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.5px">Legend:</span>
       <div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:6px;border-radius:1px;background:#22c55e"></div><span style="color:#22c55e">Pos GEX (OI)</span></div>
       <div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:6px;border-radius:1px;background:#ef4444"></div><span style="color:#ef4444">Neg GEX (OI)</span></div>
@@ -519,6 +519,9 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
       <div style="display:flex;align-items:center;gap:4px"><div style="width:14px;height:6px;border-radius:1px;background:#f87171"></div><span style="color:#f87171">Neg GEX (Vol)</span></div>
       <div style="display:flex;align-items:center;gap:4px"><div style="width:2px;height:10px;border-radius:1px;background:#67e8f9"></div><span style="color:#67e8f9">Spot</span></div>
       <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:0;border-top:1px dashed #fbbf24"></div><span style="color:#fbbf24">Zero Gamma</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:0;border-top:1px dashed rgba(34,197,94,.7)"></div><span style="color:#22c55e">Major Pos Γ</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:0;border-top:1px dashed rgba(239,68,68,.7)"></div><span style="color:#ef4444">Major Neg Γ</span></div>
+      <button onclick="toggleChartGuide()" style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">Guide</button>
     </div>
     <!-- Session info -->
     <div id="chartSessionInfo" style="display:flex;gap:14px;margin-left:auto;font-size:11px;flex-wrap:wrap"></div>
@@ -533,6 +536,10 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
         <div style="font-size:12px">Gamma exposure by strike over the trading session</div>
       </div>
     </div>
+  </div>
+  <div id="chartGuide" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#0d1117;font-size:11px;color:var(--text);line-height:1.55">
+    Cyan line = spot path through session snapshots. Bars are latest strike GEX: dark tone is OI share, light tone is volume share.
+    Dashed yellow = zero gamma, green/red dashed = strongest positive/negative gamma strikes.
   </div>
 </div>
 
@@ -657,8 +664,9 @@ function gc(n, m, k, dataMin, dataMax) {
   const maxV = (dataMax !== undefined) ? dataMax : Math.abs(m || 1);
   const scale = Math.max(Math.abs(minV), Math.abs(maxV), 1);
   const mag = Math.min(1, Math.abs(n) / scale);
-  if (Math.abs(n) < scale * 0.04) return { r: NEU_RGB[0], g: NEU_RGB[1], b: NEU_RGB[2] };
-  return n >= 0 ? _lerpRGB(NEU_RGB, POS_RGB, mag) : _lerpRGB(NEU_RGB, NEG_RGB, mag);
+  if (Math.abs(n) < scale * 0.01) return { r: NEU_RGB[0], g: NEU_RGB[1], b: NEU_RGB[2] };
+  const t = 0.25 + (0.75 * mag); // force clearer polarity color
+  return n >= 0 ? _lerpRGB(NEU_RGB, POS_RGB, t) : _lerpRGB(NEU_RGB, NEG_RGB, t);
 }
 function tc(n, m, k, dataMin, dataMax) {
   const minV = (dataMin !== undefined) ? dataMin : -Math.abs(m || 1);
@@ -1293,6 +1301,11 @@ function toggleColorGuide(){
   const d=document.getElementById('legend-detail');
   d.style.display=d.style.display==='none'?'block':'none';
 }
+function toggleChartGuide(){
+  const d=document.getElementById('chartGuide');
+  if(!d) return;
+  d.style.display=d.style.display==='none'?'block':'none';
+}
 
 // ═══ AUTO-RELOAD ═══
 let autoFile=null,autoInterval=null;
@@ -1429,8 +1442,11 @@ function gexColor(v, dataMin, dataMax){
   const scale = Math.max(Math.abs(dataMin || 0), Math.abs(dataMax || 0), 1);
   const mag = Math.min(1, Math.abs(v) / scale);
   let c;
-  if(Math.abs(v) < scale * 0.04) c = {r: NEU_RGB[0], g: NEU_RGB[1], b: NEU_RGB[2]};
-  else c = v >= 0 ? _lerpRGB(NEU_RGB, POS_RGB, mag) : _lerpRGB(NEU_RGB, NEG_RGB, mag);
+  if(Math.abs(v) < scale * 0.01) c = {r: NEU_RGB[0], g: NEU_RGB[1], b: NEU_RGB[2]};
+  else {
+    const t = 0.25 + (0.75 * mag);
+    c = v >= 0 ? _lerpRGB(NEU_RGB, POS_RGB, t) : _lerpRGB(NEU_RGB, NEG_RGB, t);
+  }
   return `rgb(${c.r},${c.g},${c.b})`;
 }
 
@@ -2082,6 +2098,7 @@ document.addEventListener('click', e => {
 // ═══ SESSION GEX CHART ═══
 let sessionChartLoaded = false;
 let sessionChartTimer = null;
+let sessionPriceSeries = [];
 
 async function loadSessionChart() {
   const sym = document.getElementById('chartSymInput').value.trim().toUpperCase() || 'SPX';
@@ -2090,8 +2107,14 @@ async function loadSessionChart() {
   const empty = document.getElementById('chartEmpty');
 
   try {
-    const resp = await fetch(`/api/session?symbol=${sym}`);
+    const [resp, candleResp] = await Promise.all([
+      fetch(`/api/session?symbol=${sym}`),
+      fetch(`/api/candles?symbol=${sym}&tf=1&days=1`)
+    ]);
     const data = await resp.json();
+    let candleData = {};
+    try { candleData = await candleResp.json(); } catch(e) { candleData = {}; }
+    sessionPriceSeries = Array.isArray(candleData.candles) ? candleData.candles : [];
     const snaps = data.snapshots || [];
     if (!snaps.length || !snaps[0].gex) {
       if (empty) { empty.querySelector('div:last-child').textContent = 'No session data yet. Waiting for first GEX fetch...'; }
@@ -2099,7 +2122,7 @@ async function loadSessionChart() {
     }
     if (empty) empty.style.display = 'none';
     canvas.style.display = 'block';
-    renderSessionChart(canvas, snaps, sym);
+    renderSessionChart(canvas, snaps, sym, sessionPriceSeries);
     sessionChartLoaded = true;
 
     // Auto-refresh every 60s
@@ -2111,7 +2134,7 @@ async function loadSessionChart() {
   }
 }
 
-function renderSessionChart(canvas, snaps, symbol) {
+function renderSessionChart(canvas, snaps, symbol, priceSeries) {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.parentElement.getBoundingClientRect();
   const W = rect.width;
@@ -2152,10 +2175,19 @@ function renderSessionChart(canvas, snaps, symbol) {
   // Y axis: strike price (top = high, bottom = low)
   const yForStrike = s => marginTop + plotH - ((s - strikeMin) / strikeRange) * plotH;
 
-  // X axis: time (snapshots)
+  // X axis: time (snapshots/candles)
   const numSnaps = snaps.length;
   const colW = plotW / Math.max(numSnaps, 1);
   const xForSnap = i => marginLeft + i * colW;
+  const snapTimes = snaps.map(s => new Date(s.t).getTime()).filter(Number.isFinite);
+  const priceTimes = (priceSeries || []).map(c => {
+    const t = c.time || 0;
+    return t > 1e12 ? t : t * 1000;
+  }).filter(Number.isFinite);
+  const minTime = Math.min(...(snapTimes.length ? snapTimes : [Date.now()]), ...(priceTimes.length ? priceTimes : [Date.now()]));
+  const maxTimeRaw = Math.max(...(snapTimes.length ? snapTimes : [Date.now()]), ...(priceTimes.length ? priceTimes : [Date.now()]));
+  const maxTime = maxTimeRaw <= minTime ? (minTime + 60 * 1000) : maxTimeRaw;
+  const xForTime = ms => marginLeft + ((ms - minTime) / (maxTime - minTime)) * plotW;
 
   // Bar height based on strike spacing
   const barH = Math.max(2, Math.min(12, (plotH / strikes.length) * 0.7));
@@ -2202,7 +2234,10 @@ function renderSessionChart(canvas, snaps, symbol) {
     const callOI = g.co || 0;
     const putOI = g.po || 0;
     const totalOI = callOI + putOI;
-    const oiPortion = totalOI > 0 ? Math.min(1, totalOI / (totalOI + 1)) : 0.5;
+    const vrec = (lastSnap.vol && (lastSnap.vol[sk] || lastSnap.vol[sk2])) || null;
+    const totalVol = vrec ? (vrec.tv || 0) : 0;
+    const denom = totalOI + totalVol;
+    const oiPortion = denom > 0 ? Math.max(0.18, Math.min(0.92, totalOI / denom)) : 0.6;
 
     if (netGex > 0) {
       ctx.fillStyle = '#1f9d55'; // Pos GEX (OI)
@@ -2218,19 +2253,42 @@ function renderSessionChart(canvas, snaps, symbol) {
   });
 
   // ── Spot price line ──
-  ctx.strokeStyle = '#67e8f9';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#00f5ff';
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
-  let firstSpot = true;
-  snaps.forEach((snap, i) => {
-    if (!snap.spot) return;
-    const x = xForSnap(i) + colW / 2;
-    const y = yForStrike(snap.spot);
-    if (y < marginTop || y > marginTop + plotH) return;
-    if (firstSpot) { ctx.moveTo(x, y); firstSpot = false; }
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+  const spotPts = [];
+  if (priceSeries && priceSeries.length > 1) {
+    priceSeries.forEach(c => {
+      const t = c.time || 0;
+      const ms = t > 1e12 ? t : t * 1000;
+      const px = Number(c.close || 0);
+      if (!ms || !px) return;
+      const x = xForTime(ms);
+      const y = yForStrike(px);
+      if (y < marginTop || y > marginTop + plotH) return;
+      spotPts.push({x, y});
+    });
+  } else {
+    snaps.forEach((snap, i) => {
+      if (!snap.spot) return;
+      const x = xForSnap(i) + colW / 2;
+      const y = yForStrike(snap.spot);
+      if (y < marginTop || y > marginTop + plotH) return;
+      spotPts.push({x, y});
+    });
+  }
+  if (spotPts.length >= 2) {
+    ctx.moveTo(spotPts[0].x, spotPts[0].y);
+    for (let i = 1; i < spotPts.length; i++) ctx.lineTo(spotPts[i].x, spotPts[i].y);
+    ctx.stroke();
+  } else if (spotPts.length === 1) {
+    // With one snapshot, draw a horizontal guide so spot is still visible.
+    ctx.setLineDash([4, 4]);
+    ctx.moveTo(marginLeft, spotPts[0].y);
+    ctx.lineTo(marginLeft + plotW, spotPts[0].y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   // ── Spot price label (right side) ──
   const lastSpot = lastSnap?.spot;
@@ -2343,15 +2401,15 @@ function renderSessionChart(canvas, snaps, symbol) {
   ctx.font = '500 9px "Space Grotesk", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  const timeStep = Math.max(1, Math.floor(numSnaps / 10));
-  snaps.forEach((snap, i) => {
-    if (i % timeStep !== 0) return;
-    const x = xForSnap(i) + colW / 2;
-    const t = new Date(snap.t);
-    const hh = t.getHours().toString().padStart(2, '0');
-    const mm = t.getMinutes().toString().padStart(2, '0');
+  const tickCount = 8;
+  for (let i = 0; i <= tickCount; i++) {
+    const t = minTime + ((maxTime - minTime) * i / tickCount);
+    const x = xForTime(t);
+    const dt = new Date(t);
+    const hh = dt.getHours().toString().padStart(2, '0');
+    const mm = dt.getMinutes().toString().padStart(2, '0');
     ctx.fillText(`${hh}:${mm}`, x, marginTop + plotH + 6);
-  });
+  }
 
   // ── Title ──
   ctx.fillStyle = '#e5e7eb';
