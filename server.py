@@ -5,7 +5,7 @@ Serves gex_heatmap.html and fetches fresh data every 5 minutes.
 Deploy to Railway with env vars:
   SCHWAB_APP_KEY, SCHWAB_APP_SECRET, SCHWAB_TOKEN_B64
 """
-import os, json, threading, time, base64, secrets
+import os, json, threading, time, base64, secrets, hashlib
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, send_from_directory, jsonify, request
@@ -49,6 +49,7 @@ print(f"⏱️ 0DTE interval = {FETCH_INTERVAL}s ({FETCH_INTERVAL//60}m) | Strik
 AUTH_SESSION_TTL_SECONDS = int(os.environ.get("AUTH_SESSION_TTL_SECONDS", "43200"))  # 12h
 LOGIN_WINDOW_SECONDS = int(os.environ.get("LOGIN_WINDOW_SECONDS", "300"))            # 5m
 MAX_LOGIN_ATTEMPTS = int(os.environ.get("MAX_LOGIN_ATTEMPTS", "10"))
+PASSWORD_HASH_ITERATIONS = int(os.environ.get("PASSWORD_HASH_ITERATIONS", "200000"))
 
 # Full symbol list — env var overrides if set
 _DEFAULT_SYMBOLS = (
@@ -291,6 +292,35 @@ members_db = load_members()
 print(f"✅ Loaded {len(members_db)} Whop members")
 
 
+def _hash_password(password: str) -> str:
+    """Return salted PBKDF2 hash string."""
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        PASSWORD_HASH_ITERATIONS,
+    )
+    return f"pbkdf2_sha256${PASSWORD_HASH_ITERATIONS}${salt.hex()}${digest.hex()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    """Verify PBKDF2 hash string."""
+    try:
+        algo, iterations, salt_hex, digest_hex = stored.split("$", 3)
+        if algo != "pbkdf2_sha256":
+            return False
+        calc = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            bytes.fromhex(salt_hex),
+            int(iterations),
+        ).hex()
+        return secrets.compare_digest(calc, digest_hex)
+    except Exception:
+        return False
+
+
 def _now_utc():
     return datetime.utcnow()
 
@@ -450,6 +480,19 @@ def api_login():
         member = members_db.get(email)
 
     if member and member.get("valid"):
+        password_hash = str(member.get("password_hash", "") or "")
+        if password_hash and _verify_password(password, password_hash):
+            token, ttl = _new_session(email, "approved", is_admin=False)
+            _clear_login_failures(ip)
+            return jsonify({
+                "ok": True,
+                "user": email,
+                "tier": "approved",
+                "membership": member.get("membership_id", ""),
+                "token": token,
+                "expires_in": ttl,
+            })
+
         license_key = str(member.get("license_key", "") or "")
         if license_key and secrets.compare_digest(password, license_key):
             token, ttl = _new_session(email, "approved", is_admin=False)
@@ -465,6 +508,59 @@ def api_login():
 
     _record_login_failure(ip)
     return jsonify({"ok": False, "error": "Invalid credentials"}), 401
+
+
+@app.route("/api/member/set-password", methods=["POST"])
+def api_member_set_password():
+    """
+    First-time password setup:
+    requires active Whop email + matching license key.
+    """
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "") or "").strip().lower()
+    license_key = str(data.get("license_key", "") or "")
+    new_password = str(data.get("new_password", "") or "")
+    confirm_password = str(data.get("confirm_password", "") or "")
+    ip = _client_ip()
+
+    allowed, retry_after = _check_login_rate_limit(ip)
+    if not allowed:
+        return jsonify({"ok": False, "error": "Too many attempts. Try again shortly."}), 429, {"Retry-After": str(retry_after)}
+
+    if not email or "@" not in email:
+        return jsonify({"ok": False, "error": "Enter a valid Whop email."}), 400
+    if not license_key:
+        return jsonify({"ok": False, "error": "License key is required."}), 400
+    if not new_password or len(new_password) < 8:
+        return jsonify({"ok": False, "error": "Password must be at least 8 characters."}), 400
+    if confirm_password and not secrets.compare_digest(new_password, confirm_password):
+        return jsonify({"ok": False, "error": "Passwords do not match."}), 400
+
+    with members_lock:
+        member = members_db.get(email)
+        if not member or not member.get("valid"):
+            _record_login_failure(ip)
+            return jsonify({"ok": False, "error": "No active Whop membership found for this email."}), 403
+
+        stored_license = str(member.get("license_key", "") or "")
+        if not stored_license or not secrets.compare_digest(license_key, stored_license):
+            _record_login_failure(ip)
+            return jsonify({"ok": False, "error": "Invalid Whop email or license key."}), 401
+
+        member["password_hash"] = _hash_password(new_password)
+        member["password_set_at"] = datetime.now().isoformat()
+        save_members(members_db)
+
+    token, ttl = _new_session(email, "approved", is_admin=False)
+    _clear_login_failures(ip)
+    return jsonify({
+        "ok": True,
+        "user": email,
+        "tier": "approved",
+        "token": token,
+        "expires_in": ttl,
+        "message": "Password created successfully.",
+    })
 
 
 @app.route("/api/whop/webhook", methods=["POST"])
@@ -519,6 +615,7 @@ def whop_webhook():
 
     with members_lock:
         if action in ACTIVATE_EVENTS:
+            existing = members_db.get(email, {})
             members_db[email] = {
                 "whop_user_id":   user.get("id", ""),
                 "username":       user.get("username", ""),
@@ -529,6 +626,9 @@ def whop_webhook():
                 "tier":           "approved",
                 "activated_at":   datetime.now().isoformat(),
                 "expires_at":     expires_at,
+                # Preserve site password across membership renewals/re-activations.
+                "password_hash":  existing.get("password_hash", ""),
+                "password_set_at": existing.get("password_set_at", ""),
             }
             save_members(members_db)
             print(f"✅ Whop member activated: {email} ({plan_name})")
@@ -567,6 +667,8 @@ def whop_members_list():
             item = dict(rec)
             if item.get("license_key"):
                 item["license_key"] = "***REDACTED***"
+            if item.get("password_hash"):
+                item["password_hash"] = "***REDACTED***"
             redacted[email] = item
         return jsonify({"members": redacted, "count": len(redacted)})
 
