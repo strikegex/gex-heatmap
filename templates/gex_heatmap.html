@@ -298,10 +298,10 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .kl-row{display:flex;align-items:center;padding:3px 0;font-size:11px}
 .kl-dot{width:7px;height:7px;border-radius:50%;margin-right:7px;flex-shrink:0}
 .kl-nm{flex:1;color:var(--text)}.kl-pr{font-weight:600;color:var(--bright);margin-right:6px}.kl-pct{font-size:10px;font-weight:600}
-@media(max-width:900px){.live-oi-col,.live-vol-col,.live-oi,.live-vol{display:none}#liveSidebar{display:none}}
+@media(max-width:900px){.live-oi-col,.live-vol-col,.live-oi,.live-vol{display:none}#liveSidebar{display:none}.lhm-main{width:max-content;min-width:max-content}.lhm-table{table-layout:auto;width:auto;min-width:max-content}}
 
 /* ── GEX Live Heatmap ── */
-.lhm-table{border-collapse:collapse;font-size:12px;width:100%}
+.lhm-table{border-collapse:collapse;font-size:12px;width:100%;table-layout:fixed}
 .lhm-header-row th{position:sticky;top:0;z-index:20;background:var(--panel);padding:6px 4px;font-size:10px;font-weight:700;color:var(--dim);text-align:center;letter-spacing:.4px;border-bottom:2px solid var(--border);white-space:nowrap;min-width:90px}
 .lhm-header-row th.strike-col{position:sticky;left:0;z-index:30;min-width:44px;max-width:44px;font-size:8px;text-align:center}
 .lhm-row td{padding:4px 6px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);min-width:90px;cursor:default;transition:filter .1s;text-shadow:0 1px 2px rgba(0,0,0,.95)}
@@ -311,7 +311,8 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .lhm-row.is-king td.strike-col{color:#ffffff;font-weight:800;background:rgba(34,20,6,.95)}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
 .lhm-row.is-spot.is-king td.strike-col{color:#ffffff;background:rgba(34,20,6,.95)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
-.lhm-wrap{display:flex;align-items:flex-start;gap:12px;padding-right:10px}
+.lhm-wrap{display:flex;align-items:flex-start;gap:12px;padding-right:10px;width:100%;min-width:0}
+.lhm-main{flex:1 1 auto;min-width:0;width:100%}
 .lhm-scale{display:flex;flex-direction:column;align-items:center;gap:6px;position:sticky;right:0;top:58px}
 .lhm-scale-val{font-size:10px;font-weight:700;color:#c7d2fe;line-height:1}
 .lhm-scale-mid{font-size:10px;color:#9aa6cb;line-height:1}
@@ -627,7 +628,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     </div>
     <!-- Heatmap grid -->
     <div style="flex:1;overflow:auto;padding:0">
-      <div id="liveHeatmapWrap" style="min-width:max-content;padding-bottom:24px"></div>
+      <div id="liveHeatmapWrap" style="width:100%;min-width:100%;padding-bottom:24px"></div>
     </div>
   </div>
 </div>
@@ -1149,6 +1150,36 @@ function _lerpRGB(a, b, t){
     b: Math.round(a[2] + (b[2] - a[2]) * t),
   };
 }
+function _quantile(sortedVals, q){
+  if(!sortedVals || !sortedVals.length) return 0;
+  const n = sortedVals.length;
+  if(n === 1) return sortedVals[0];
+  const pos = Math.max(0, Math.min(n - 1, (n - 1) * q));
+  const lo = Math.floor(pos), hi = Math.ceil(pos);
+  if(lo === hi) return sortedVals[lo];
+  const w = pos - lo;
+  return sortedVals[lo] + (sortedVals[hi] - sortedVals[lo]) * w;
+}
+function _robustDivergingRange(values){
+  const vals = (values || []).filter(v => Number.isFinite(v));
+  if(!vals.length) return { min: -1, max: 1 };
+
+  const pos = vals.filter(v => v > 0).sort((a,b)=>a-b);
+  const neg = vals.filter(v => v < 0).map(v => Math.abs(v)).sort((a,b)=>a-b);
+  const clipQ = vals.length >= 80 ? 0.95 : (vals.length >= 30 ? 0.92 : 0.88);
+
+  let maxPos = pos.length ? _quantile(pos, clipQ) : 0;
+  let maxNeg = neg.length ? _quantile(neg, clipQ) : 0;
+
+  if(maxPos <= 0 && pos.length) maxPos = pos[pos.length - 1];
+  if(maxNeg <= 0 && neg.length) maxNeg = neg[neg.length - 1];
+
+  if(maxPos <= 0 && maxNeg <= 0) return { min: -1, max: 1 };
+  if(maxPos <= 0) maxPos = Math.max(1, maxNeg * 0.25);
+  if(maxNeg <= 0) maxNeg = Math.max(1, maxPos * 0.25);
+
+  return { min: -maxNeg, max: maxPos };
+}
 function gc(n, m, k, dataMin, dataMax) {
   const minV = (dataMin !== undefined) ? dataMin : -Math.abs(m || 1);
   const maxV = (dataMax !== undefined) ? dataMax : Math.abs(m || 1);
@@ -1172,11 +1203,11 @@ function panelHeatColor(v, minV, maxV){
   const POS = [246, 218, 54];
   if (v >= 0){
     const den = Math.max(maxV, 1);
-    const t = Math.max(0, Math.min(1, v / den));
+    const t = Math.pow(Math.max(0, Math.min(1, v / den)), 0.72);
     return _lerpRGB(MID, POS, t);
   }
   const den = Math.max(Math.abs(minV), 1);
-  const t = Math.max(0, Math.min(1, Math.abs(v) / den));
+  const t = Math.pow(Math.max(0, Math.min(1, Math.abs(v) / den)), 0.72);
   return _lerpRGB(MID, NEG, t);
 }
 
@@ -1695,8 +1726,9 @@ function renderPanel(d){
   const surgeStrikes = new Set((d.volume_surges||[]).map(v=>v.strike));
 
   // Compute data range for full-row competitor-style heatmap
-  const dataMin = Math.min(...vis.map(s => s.net_gex));
-  const dataMax = Math.max(...vis.map(s => s.net_gex));
+  const panelScale = _robustDivergingRange(vis.map(s => s.net_gex));
+  const dataMin = panelScale.min;
+  const dataMax = panelScale.max;
 
   vis.forEach(s=>{
     const iS=s.strike===ss,iK=s.strike===ks,iV=surgeStrikes.has(s.strike);
@@ -1964,11 +1996,11 @@ function gexColor(v, dataMin, dataMax){
   let c;
   if(v >= 0){
     const mag = Math.max(0, Math.min(1, v / posDen));
-    const t = Math.pow(mag, 0.85);
+    const t = Math.pow(mag, 0.72);
     c = _lerpRGB(MID, POS, t);
   } else {
     const mag = Math.max(0, Math.min(1, Math.abs(v) / negDen));
-    const t = Math.pow(mag, 0.85);
+    const t = Math.pow(mag, 0.72);
     c = _lerpRGB(MID, NEG, t);
   }
   return `rgb(${c.r},${c.g},${c.b})`;
@@ -2033,6 +2065,7 @@ function renderLiveHeatmap(){
     const hi = Math.min(allStrikes.length-1, idx + strikeN);
     allStrikes = allStrikes.slice(lo, hi+1);
   }
+  const visibleStrikeSet = new Set(allStrikes);
 
   // Build lookup: exp -> strike -> gex value
   const lookup = {};
@@ -2044,22 +2077,17 @@ function renderLiveHeatmap(){
   });
 
   // Global scale across visible matrix (matches target style/colorbar behavior).
-  const expMin = {}, expMax = {};
-  let globalMin = 0, globalMax = 0;
+  const matrixValues = [];
   filteredExps.forEach(exp => {
     const ed = expData[exp];
-    if(!ed || !ed.strikes){ expMin[exp] = 0; expMax[exp] = 1; return; }
-    let mn = 0, mx = 0;
+    if(!ed || !ed.strikes) return;
     ed.strikes.forEach(s => {
-      const v = (s.net_gex || 0);
-      if(v < mn) mn = v;
-      if(v > mx) mx = v;
+      if(visibleStrikeSet.has(s.strike)) matrixValues.push(s.net_gex || 0);
     });
-    expMin[exp] = mn;
-    expMax[exp] = mx;
-    if(mn < globalMin) globalMin = mn;
-    if(mx > globalMax) globalMax = mx;
   });
+  const scale = _robustDivergingRange(matrixValues);
+  const globalMin = scale.min;
+  const globalMax = scale.max;
 
   // Find spot row
   const nearSpot = allStrikes.reduce((b,s) => Math.abs(s-spot) < Math.abs(b-spot) ? s : b, allStrikes[0]);
@@ -2071,8 +2099,10 @@ function renderLiveHeatmap(){
   const kingExp = odteExp || nearestExp;
   if(kingExp && expData[kingExp]?.strikes){
     expData[kingExp].strikes.forEach(s => {
-      const av = Math.abs(s.total_gamma || 0);
-      if(av > kingVal){ kingVal = av; kingStrike = s.strike; }
+      const gross = Math.abs(s.total_gamma || 0);
+      const fallback = Math.abs(s.net_gex || 0);
+      const score = gross > 0 ? gross : fallback;
+      if(score > kingVal){ kingVal = score; kingStrike = s.strike; }
     });
   }
 
@@ -2134,7 +2164,7 @@ function renderLiveHeatmap(){
   const botM = (globalMin/1e6).toFixed(1);
   wrap.innerHTML = `
     <div class="lhm-wrap">
-      <div>${html}</div>
+      <div class="lhm-main">${html}</div>
       <div class="lhm-scale" aria-hidden="true">
         <div class="lhm-scale-val">+${topM}</div>
         <div class="lhm-scale-bar"></div>
@@ -2325,8 +2355,9 @@ function renderOdtePanel(d) {
   strikesDiv.style.cssText = 'padding:4px 0;max-height:calc(100vh - 260px);overflow-y:auto;max-width:100%';
 
   // Compute data range for competitor-style full-row heat coloring
-  const dataMin = Math.min(...vis.map(s => s.net_gex_view));
-  const dataMax = Math.max(...vis.map(s => s.net_gex_view));
+  const odteScale = _robustDivergingRange(vis.map(s => s.net_gex_view));
+  const dataMin = odteScale.min;
+  const dataMax = odteScale.max;
 
   vis.forEach(s => {
     const iS = s.strike === ss, iK = s.strike === ks, iV = surgeStrikes.has(s.strike);
