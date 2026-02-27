@@ -471,6 +471,42 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
             </div>
             <div id="acctPrefMsg" class="acct-msg"></div>
           </article>
+          <article class="acct-box" id="acctAdminBox" style="display:none;grid-column:1/-1">
+            <h4>Admin: Create / Update Member</h4>
+            <div class="acct-note" style="margin-bottom:10px">Creates or updates a member account immediately. No restart required.</div>
+            <div class="acct-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+              <div class="acct-field">
+                <label for="admEmail">Member Email</label>
+                <input id="admEmail" type="email" placeholder="member@domain.com" autocomplete="off">
+              </div>
+              <div class="acct-field">
+                <label for="admPassword">Member Password</label>
+                <input id="admPassword" type="password" placeholder="Minimum 8 characters" autocomplete="new-password">
+              </div>
+              <div class="acct-field">
+                <label for="admLicense">License Key (optional)</label>
+                <input id="admLicense" type="text" placeholder="Auto-generate if blank" autocomplete="off">
+              </div>
+              <div class="acct-field">
+                <label for="admMembership">Membership ID (optional)</label>
+                <input id="admMembership" type="text" placeholder="manual-member@domain.com" autocomplete="off">
+              </div>
+            </div>
+            <div class="acct-btn-row">
+              <a class="acct-cta primary" href="#" onclick="event.preventDefault();adminCreateMember()">➕ Create / Update Member</a>
+              <label class="acct-cta" style="cursor:default">
+                <input id="admValid" type="checkbox" checked style="margin-right:6px">Active Member
+              </label>
+              <label class="acct-cta" style="cursor:default">
+                Tier:
+                <select id="admTier" style="margin-left:6px;background:#0b0f1e;color:var(--text);border:1px solid #1e2948;border-radius:4px;padding:2px 6px">
+                  <option value="approved" selected>approved</option>
+                  <option value="free">free</option>
+                </select>
+              </label>
+            </div>
+            <div id="acctAdminMsg" class="acct-msg"></div>
+          </article>
         </div>
       </section>
     </div>
@@ -931,6 +967,7 @@ async function loadAccountProfile(){
 function populateAccountCenter(){
   const email = (accountProfile && accountProfile.email) || sessionStorage.getItem('gex_user') || '-';
   const tier = (accountProfile && accountProfile.tier) || sessionStorage.getItem('gex_tier') || 'free';
+  const isAdmin = !!(accountProfile && accountProfile.is_admin);
   const plan = (accountProfile && accountProfile.plan_label) || (tier === 'approved' ? 'Pro Access' : 'Free');
   const status = accountProfile ? (accountProfile.valid ? 'Active' : 'Inactive') : (tier === 'approved' ? 'Active' : 'Free');
   const memberId = (accountProfile && accountProfile.membership_id) || '-';
@@ -962,6 +999,9 @@ function populateAccountCenter(){
 
   const emailInput = document.getElementById('acctSetEmail');
   if(emailInput && email !== '-' && !emailInput.value) emailInput.value = email;
+
+  const adminBox = document.getElementById('acctAdminBox');
+  if(adminBox) adminBox.style.display = isAdmin ? 'block' : 'none';
 }
 
 async function openAccountCenter(panel='dashboard'){
@@ -1047,6 +1087,47 @@ async function signOutUser(){
   sessionStorage.removeItem('gex_user');
   sessionStorage.removeItem('gex_token');
   window.location.reload();
+}
+
+async function adminCreateMember(){
+  const msg = document.getElementById('acctAdminMsg');
+  if(msg){ msg.className='acct-msg'; msg.textContent=''; }
+
+  const email = (document.getElementById('admEmail')?.value || '').trim().toLowerCase();
+  const password = (document.getElementById('admPassword')?.value || '');
+  const license_key = (document.getElementById('admLicense')?.value || '').trim();
+  const membership_id = (document.getElementById('admMembership')?.value || '').trim();
+  const valid = !!document.getElementById('admValid')?.checked;
+  const tier = (document.getElementById('admTier')?.value || 'approved');
+
+  if(!email || !email.includes('@')){
+    if(msg){ msg.className='acct-msg err'; msg.textContent='Enter a valid member email.'; }
+    return;
+  }
+  if(!password || password.length < 8){
+    if(msg){ msg.className='acct-msg err'; msg.textContent='Password must be at least 8 characters.'; }
+    return;
+  }
+
+  try{
+    const res = await fetch('/api/admin/member/create', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email, password, license_key, membership_id, tier, valid})
+    });
+    const data = await res.json();
+    if(res.ok && data && data.ok){
+      const mode = data.created ? 'Created' : 'Updated';
+      const extra = data.license_key_generated ? ` Generated license key: ${data.license_key}` : '';
+      if(msg){ msg.className='acct-msg ok'; msg.textContent=`${mode} ${data.email}.${extra}`; }
+      const p = document.getElementById('admPassword');
+      if(p) p.value = '';
+      return;
+    }
+    if(msg){ msg.className='acct-msg err'; msg.textContent = (data && data.error) ? data.error : 'Unable to create member.'; }
+  }catch(_e){
+    if(msg){ msg.className='acct-msg err'; msg.textContent='Connection error. Try again.'; }
+  }
 }
 
 // ═══ COLOR — Legend-matched diverging scale ═══
