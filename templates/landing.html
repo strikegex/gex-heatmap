@@ -1220,24 +1220,86 @@ a { color: inherit; }
   <div style="background:#080d14;border:1px solid #111d2a;padding:40px 34px;width:380px;max-width:92vw;position:relative;border-radius:12px">
     <button onclick="closeLoginModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#4a6580;font-size:20px;cursor:pointer;line-height:1">✕</button>
     <img src="/static/strikegex-logo.png" alt="StrikeGEX" style="height:40px;object-fit:contain;margin-bottom:6px;">
-    <div style="font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:#6270a4;margin-bottom:24px">Member Access</div>
+    <div style="font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:#6270a4;margin-bottom:14px">Member Access</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button id="lm-mode-login" onclick="setAuthMode('login')" style="flex:1;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.8px;text-transform:uppercase;border-radius:8px;border:1px solid #2a6f53;background:#16372c;color:#8cffc5;cursor:pointer">Sign In</button>
+      <button id="lm-mode-create" onclick="setAuthMode('create')" style="flex:1;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.8px;text-transform:uppercase;border-radius:8px;border:1px solid #1a2447;background:#060a14;color:#8ca1d1;cursor:pointer">Create Password</button>
+    </div>
     <div style="margin-bottom:10px">
       <input id="lm-user" type="text" placeholder="Email or username" autocomplete="username" style="width:100%;padding:13px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#060a14;color:#e8f0ff;border:1px solid #1a2447;outline:none;border-radius:8px">
     </div>
-    <div style="margin-bottom:18px">
+    <div id="lm-pass-row" style="margin-bottom:18px">
       <input id="lm-pass" type="password" placeholder="Password or license key" autocomplete="current-password" style="width:100%;padding:13px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#060a14;color:#e8f0ff;border:1px solid #1a2447;outline:none;border-radius:8px">
+    </div>
+    <div id="lm-license-row" style="display:none;margin-bottom:10px">
+      <input id="lm-license" type="password" placeholder="Whop license key" autocomplete="off" style="width:100%;padding:13px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#060a14;color:#e8f0ff;border:1px solid #1a2447;outline:none;border-radius:8px">
+    </div>
+    <div id="lm-new-pass-row" style="display:none;margin-bottom:10px">
+      <input id="lm-new-pass" type="password" placeholder="Create password (min 8 chars)" autocomplete="new-password" style="width:100%;padding:13px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#060a14;color:#e8f0ff;border:1px solid #1a2447;outline:none;border-radius:8px">
+    </div>
+    <div id="lm-confirm-row" style="display:none;margin-bottom:18px">
+      <input id="lm-confirm-pass" type="password" placeholder="Confirm password" autocomplete="new-password" style="width:100%;padding:13px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#060a14;color:#e8f0ff;border:1px solid #1a2447;outline:none;border-radius:8px">
     </div>
     <div id="lm-err" style="display:none;font-size:11px;color:#ff6b7f;letter-spacing:.5px;margin-bottom:12px;padding:10px;border:1px solid #5c2330;background:#2a121a;border-radius:8px"></div>
     <button id="lm-btn" onclick="doModalLogin()" style="width:100%;padding:13px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:#16372c;color:#8cffc5;border:1px solid #2a6f53;cursor:pointer;border-radius:8px">Sign In</button>
-    <p style="font-size:10px;color:#6778b2;letter-spacing:.4px;text-align:center;margin-top:14px;line-height:1.6">
-      Members: use your email + license key from Whop<br>
+    <p id="lm-help" style="font-size:10px;color:#6778b2;letter-spacing:.4px;text-align:center;margin-top:14px;line-height:1.6">
+      Members: sign in with your email and password.<br>
+      First time? Use <b>Create Password</b> with your Whop email + license key.<br>
       <a href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener" style="color:#9cb0ff;text-decoration:none">Get access →</a>
     </p>
   </div>
 </div>
 
 <script>
-function openLoginModal(){
+let authMode='login';
+
+function setAuthMode(mode){
+  authMode=(mode==='create')?'create':'login';
+
+  const loginMode=authMode==='login';
+  const loginTab=document.getElementById('lm-mode-login');
+  const createTab=document.getElementById('lm-mode-create');
+  const passRow=document.getElementById('lm-pass-row');
+  const licenseRow=document.getElementById('lm-license-row');
+  const newPassRow=document.getElementById('lm-new-pass-row');
+  const confirmRow=document.getElementById('lm-confirm-row');
+  const userInput=document.getElementById('lm-user');
+  const btn=document.getElementById('lm-btn');
+  const help=document.getElementById('lm-help');
+  const errEl=document.getElementById('lm-err');
+
+  if(loginTab) {
+    loginTab.style.borderColor=loginMode?'#2a6f53':'#1a2447';
+    loginTab.style.background=loginMode?'#16372c':'#060a14';
+    loginTab.style.color=loginMode?'#8cffc5':'#8ca1d1';
+  }
+  if(createTab) {
+    createTab.style.borderColor=loginMode?'#1a2447':'#2a6f53';
+    createTab.style.background=loginMode?'#060a14':'#16372c';
+    createTab.style.color=loginMode?'#8ca1d1':'#8cffc5';
+  }
+
+  if(passRow) passRow.style.display=loginMode?'block':'none';
+  if(licenseRow) licenseRow.style.display=loginMode?'none':'block';
+  if(newPassRow) newPassRow.style.display=loginMode?'none':'block';
+  if(confirmRow) confirmRow.style.display=loginMode?'none':'block';
+
+  if(userInput) userInput.placeholder=loginMode?'Email or username':'Whop account email';
+  if(btn) btn.textContent=loginMode?'Sign In':'Create Password';
+
+  if(help){
+    if(loginMode){
+      help.innerHTML='Members: sign in with your email and password.<br>First time? Use <b>Create Password</b> with your Whop email + license key.<br><a href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener" style="color:#9cb0ff;text-decoration:none">Get access →</a>';
+    } else {
+      help.innerHTML='Create your site password using your Whop email + license key.<br>After setup, log in with email + new password.<br><a href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener" style="color:#9cb0ff;text-decoration:none">Get access →</a>';
+    }
+  }
+
+  if(errEl) errEl.style.display='none';
+}
+
+function openLoginModal(mode='login'){
+  setAuthMode(mode);
   const m=document.getElementById('loginModal');
   m.style.display='flex';
   setTimeout(()=>document.getElementById('lm-user').focus(),100);
@@ -1254,18 +1316,98 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeLogi
 document.addEventListener('DOMContentLoaded', function(){
   const pass=document.getElementById('lm-pass');
   const user=document.getElementById('lm-user');
+  const license=document.getElementById('lm-license');
+  const newPass=document.getElementById('lm-new-pass');
+  const confirm=document.getElementById('lm-confirm-pass');
+
   if(pass) pass.addEventListener('keydown', e=>{ if(e.key==='Enter') doModalLogin(); });
-  if(user) user.addEventListener('keydown', e=>{ if(e.key==='Enter') pass.focus(); });
+  if(license) license.addEventListener('keydown', e=>{ if(e.key==='Enter') doModalLogin(); });
+  if(newPass) newPass.addEventListener('keydown', e=>{ if(e.key==='Enter') doModalLogin(); });
+  if(confirm) confirm.addEventListener('keydown', e=>{ if(e.key==='Enter') doModalLogin(); });
+  if(user) user.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){
+      if(authMode==='create') {
+        const l=document.getElementById('lm-license');
+        if(l) l.focus();
+      } else if(pass) {
+        pass.focus();
+      }
+    }
+  });
+
+  setAuthMode('login');
 });
 
 async function doModalLogin(){
-  const user=document.getElementById('lm-user').value.trim();
-  const pass=document.getElementById('lm-pass').value;
   const errEl=document.getElementById('lm-err');
   const btn=document.getElementById('lm-btn');
+  const user=document.getElementById('lm-user').value.trim();
 
+  errEl.style.display='none';
+
+  if(authMode==='create'){
+    const license=document.getElementById('lm-license').value;
+    const newPass=document.getElementById('lm-new-pass').value;
+    const confirmPass=document.getElementById('lm-confirm-pass').value;
+
+    if(!user || !license || !newPass || !confirmPass){
+      errEl.textContent='Enter Whop email, license key, and both password fields.';
+      errEl.style.display='block';
+      return;
+    }
+    if(newPass.length < 8){
+      errEl.textContent='Password must be at least 8 characters.';
+      errEl.style.display='block';
+      return;
+    }
+    if(newPass !== confirmPass){
+      errEl.textContent='Passwords do not match.';
+      errEl.style.display='block';
+      return;
+    }
+
+    btn.textContent='Creating...';
+    btn.style.opacity='.7';
+    btn.style.cursor='not-allowed';
+
+    try {
+      const res=await fetch('/api/member/set-password', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          email:user,
+          license_key:license,
+          new_password:newPass,
+          confirm_password:confirmPass
+        })
+      });
+      const data=await res.json();
+
+      if(data.ok){
+        sessionStorage.setItem('gex_auth','1');
+        sessionStorage.setItem('gex_tier',data.tier||'free');
+        sessionStorage.setItem('gex_user',data.user||user);
+        if(data.token) sessionStorage.setItem('gex_token',data.token);
+        window.location.href='/app';
+        return;
+      }
+
+      errEl.textContent=data.error||'Unable to create password.';
+      errEl.style.display='block';
+    } catch(_e) {
+      errEl.textContent='Connection error. Please try again.';
+      errEl.style.display='block';
+    }
+
+    btn.textContent='Create Password';
+    btn.style.opacity='1';
+    btn.style.cursor='pointer';
+    return;
+  }
+
+  const pass=document.getElementById('lm-pass').value;
   if(!user || !pass){
-    errEl.textContent='Please enter your email and license key.';
+    errEl.textContent='Please enter your email and password.';
     errEl.style.display='block';
     return;
   }
@@ -1273,7 +1415,6 @@ async function doModalLogin(){
   btn.textContent='Signing in...';
   btn.style.opacity='.7';
   btn.style.cursor='not-allowed';
-  errEl.style.display='none';
 
   try {
     const res=await fetch('/api/login', {
@@ -1293,7 +1434,7 @@ async function doModalLogin(){
       return;
     }
 
-    errEl.textContent=data.error||'Invalid credentials. Check your email and license key.';
+    errEl.textContent=data.error||'Invalid credentials. Check your email/password.';
     errEl.style.display='block';
   } catch(_e) {
     errEl.textContent='Connection error. Please try again.';
