@@ -311,6 +311,12 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
 .lhm-row.is-king td.strike-col{color:#ffffff;font-weight:800;background:rgba(34,20,6,.95)}.lhm-row.is-king td{outline:1px solid rgba(239,68,68,0.6);outline-offset:-1px}.lhm-row.is-king{background:rgba(239,68,68,0.05)}
 .lhm-row.is-spot.is-king td.strike-col{color:#ffffff;background:rgba(34,20,6,.95)}
 .lhm-spot-line td{border-top:1px solid rgba(255,255,255,.25)!important}
+.lhm-wrap{display:flex;align-items:flex-start;gap:12px;padding-right:10px}
+.lhm-scale{display:flex;flex-direction:column;align-items:center;gap:6px;position:sticky;right:0;top:58px}
+.lhm-scale-val{font-size:10px;font-weight:700;color:#c7d2fe;line-height:1}
+.lhm-scale-mid{font-size:10px;color:#9aa6cb;line-height:1}
+.lhm-scale-unit{font-size:9px;color:#5f709b;line-height:1}
+.lhm-scale-bar{width:22px;height:250px;border-radius:3px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgb(246,218,54) 0%,rgb(46,116,160) 50%,rgb(76,22,138) 100%);box-shadow:inset 0 0 10px rgba(0,0,0,.45)}
 
 /* ═══ LOGIN OVERLAY ═══ */
 .login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
@@ -597,7 +603,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
         <span style="color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Legend:</span>
         <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:rgb(253,231,37)"></div><span style="color:rgb(253,231,37)">+Gamma</span></div>
         <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:rgb(68,1,84)"></div><span style="color:rgb(160,80,200)">−Gamma</span></div>
-        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:rgb(33,145,140)"></div><span style="color:var(--dim)">Neutral</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:14px;height:14px;border-radius:2px;background:rgb(52,93,148)"></div><span style="color:var(--dim)">Neutral</span></div>
         <div style="display:flex;align-items:center;gap:5px"><span>🔥</span><span style="color:var(--king)">👑 King</span></div>
       </div>
       <button onclick="toggleColorGuide()" style="font-size:10px;padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--dim);border-radius:4px;cursor:pointer">? Guide</button>
@@ -1949,29 +1955,36 @@ async function fetchLiveData(){
 
 // ── StrikeMap matrix color scale (legend-matched) ──
 function gexColor(v, dataMin, dataMax){
-  const scale = Math.max(Math.abs(dataMin || 0), Math.abs(dataMax || 0), 1);
-  const mag = Math.min(1, Math.abs(v) / scale);
+  // StrikeMap target style (img1): blue midpoint with yellow/purple tails.
+  const POS = [246, 218, 54];
+  const MID = [52, 93, 148];
+  const NEG = [76, 22, 138];
+  const posDen = Math.max(dataMax || 0, 1);
+  const negDen = Math.max(Math.abs(dataMin || 0), 1);
   let c;
-  if(Math.abs(v) < scale * 0.01) c = {r: NEU_RGB[0], g: NEU_RGB[1], b: NEU_RGB[2]};
-  else {
-    const t = 0.25 + (0.75 * mag);
-    c = v >= 0 ? _lerpRGB(NEU_RGB, POS_RGB, t) : _lerpRGB(NEU_RGB, NEG_RGB, t);
+  if(v >= 0){
+    const mag = Math.max(0, Math.min(1, v / posDen));
+    const t = Math.pow(mag, 0.85);
+    c = _lerpRGB(MID, POS, t);
+  } else {
+    const mag = Math.max(0, Math.min(1, Math.abs(v) / negDen));
+    const t = Math.pow(mag, 0.85);
+    c = _lerpRGB(MID, NEG, t);
   }
   return `rgb(${c.r},${c.g},${c.b})`;
 }
 
 function textColor(v, dataMin, dataMax){
+  const posDen = Math.max(dataMax || 0, 1);
+  if(v > 0 && (v / posDen) > 0.72) return 'rgba(12,18,34,.92)';
   return 'rgba(255,255,255,.96)';
 }
 
 function fmtGex(v){
   const a=Math.abs(v);
   const s=v>=0?'':'-';
-  if(a===0) return '–';
-  function commaK(n){const k=(n/1e3).toFixed(1);const p=k.split('.');return p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',')+'.'+p[1]+'K'}
   if(a>=1e9) return s+'$'+(a/1e9).toFixed(1)+'B';
-  if(a>=1e3) return s+'$'+commaK(a);
-  return s+'$'+a.toFixed(0);
+  return s+'$'+(a/1e3).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+'K';
 }
 
 function renderLiveHeatmap(){
@@ -2026,23 +2039,26 @@ function renderLiveHeatmap(){
   filteredExps.forEach(exp => {
     lookup[exp] = {};
     const ed = expData[exp];
-    // HeatMap convention: invert backend net sign for display (tab-specific).
-    if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = -(s.net_gex || 0); });
+    // StrikeMap uses backend net_gex direction directly (no sign inversion).
+    if(ed && ed.strikes) ed.strikes.forEach(s => { lookup[exp][s.strike] = (s.net_gex || 0); });
   });
 
-  // Per-column [min, max] scaling for diverging color mapping
+  // Global scale across visible matrix (matches target style/colorbar behavior).
   const expMin = {}, expMax = {};
+  let globalMin = 0, globalMax = 0;
   filteredExps.forEach(exp => {
     const ed = expData[exp];
     if(!ed || !ed.strikes){ expMin[exp] = 0; expMax[exp] = 1; return; }
     let mn = 0, mx = 0;
     ed.strikes.forEach(s => {
-      const v = -(s.net_gex || 0);
+      const v = (s.net_gex || 0);
       if(v < mn) mn = v;
       if(v > mx) mx = v;
     });
     expMin[exp] = mn;
     expMax[exp] = mx;
+    if(mn < globalMin) globalMin = mn;
+    if(mx > globalMax) globalMax = mx;
   });
 
   // Find spot row
@@ -2098,8 +2114,8 @@ function renderLiveHeatmap(){
 
     filteredExps.forEach(exp => {
       const v = lookup[exp][strike];
-      const cMin = expMin[exp] || 0, cMax = expMax[exp] || 1;
-      if(v === undefined || v === 0){
+      const cMin = globalMin, cMax = globalMax;
+      if(v === undefined){
         const bg = gexColor(0, cMin, cMax);
         html += `<td style="background:${bg};color:rgba(255,255,255,.15)">–</td>`;
       } else {
@@ -2113,7 +2129,21 @@ function renderLiveHeatmap(){
   });
 
   html += `</tbody></table>`;
-  wrap.innerHTML = html;
+
+  const topM = (globalMax/1e6).toFixed(1);
+  const botM = (globalMin/1e6).toFixed(1);
+  wrap.innerHTML = `
+    <div class="lhm-wrap">
+      <div>${html}</div>
+      <div class="lhm-scale" aria-hidden="true">
+        <div class="lhm-scale-val">+${topM}</div>
+        <div class="lhm-scale-bar"></div>
+        <div class="lhm-scale-mid">0</div>
+        <div class="lhm-scale-val">${botM}</div>
+        <div class="lhm-scale-unit">M</div>
+      </div>
+    </div>
+  `;
 
   // Scroll near-spot row into view
   setTimeout(() => {
@@ -2701,10 +2731,28 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
   const colW = plotW / Math.max(numSnaps, 1);
   const xForSnap = i => marginLeft + i * colW;
   const snapTimes = snaps.map(s => new Date(s.t).getTime()).filter(Number.isFinite);
-  const priceTimes = (priceSeries || []).map(c => {
+  const snapMinTime = snapTimes.length ? Math.min(...snapTimes) : 0;
+  const snapMaxTime = snapTimes.length ? Math.max(...snapTimes) : 0;
+  const normalizedCandles = (priceSeries || []).map(c => {
     const t = c.time || 0;
-    return t > 1e12 ? t : t * 1000;
-  }).filter(Number.isFinite);
+    const ms = t > 1e12 ? t : t * 1000;
+    return { ms, close: Number(c.close || 0) };
+  }).filter(c => Number.isFinite(c.ms) && c.ms > 0 && Number.isFinite(c.close) && c.close > 0)
+    .sort((a, b) => a.ms - b.ms);
+
+  // Keep the spot path in the same session window as snapshots to avoid fake overnight diagonals.
+  let displayCandles = normalizedCandles;
+  if (snapMinTime && snapMaxTime && snapMaxTime > snapMinTime && normalizedCandles.length) {
+    const beforeBuffer = 90 * 60 * 1000;
+    const afterBuffer = 20 * 60 * 1000;
+    const filtered = normalizedCandles.filter(c => c.ms >= (snapMinTime - beforeBuffer) && c.ms <= (snapMaxTime + afterBuffer));
+    displayCandles = filtered.length >= 2 ? filtered : [];
+  }
+  if (displayCandles.length > 600) {
+    displayCandles = displayCandles.slice(-600);
+  }
+
+  const priceTimes = displayCandles.map(c => c.ms);
   const minTime = Math.min(...(snapTimes.length ? snapTimes : [Date.now()]), ...(priceTimes.length ? priceTimes : [Date.now()]));
   const maxTimeRaw = Math.max(...(snapTimes.length ? snapTimes : [Date.now()]), ...(priceTimes.length ? priceTimes : [Date.now()]));
   const maxTime = maxTimeRaw <= minTime ? (minTime + 60 * 1000) : maxTimeRaw;
@@ -2779,16 +2827,14 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
   ctx.lineWidth = 1.6;
   ctx.beginPath();
   const spotPts = [];
-  if (priceSeries && priceSeries.length > 1) {
-    priceSeries.forEach(c => {
-      const t = c.time || 0;
-      const ms = t > 1e12 ? t : t * 1000;
-      const px = Number(c.close || 0);
-      if (!ms || !px) return;
+  if (displayCandles.length > 1) {
+    displayCandles.forEach(c => {
+      const ms = c.ms;
+      const px = c.close;
       const x = xForTime(ms);
       const y = yForStrike(px);
       if (y < marginTop || y > marginTop + plotH) return;
-      spotPts.push({x, y});
+      spotPts.push({x, y, ms});
     });
   } else {
     snaps.forEach((snap, i) => {
@@ -2796,13 +2842,37 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
       const x = xForSnap(i) + colW / 2;
       const y = yForStrike(snap.spot);
       if (y < marginTop || y > marginTop + plotH) return;
-      spotPts.push({x, y});
+      spotPts.push({x, y, ms: snapTimes[i] || 0});
     });
   }
   if (spotPts.length >= 2) {
-    ctx.moveTo(spotPts[0].x, spotPts[0].y);
-    for (let i = 1; i < spotPts.length; i++) ctx.lineTo(spotPts[i].x, spotPts[i].y);
-    ctx.stroke();
+    const deltas = [];
+    for (let i = 1; i < spotPts.length; i++) {
+      const dt = spotPts[i].ms - spotPts[i - 1].ms;
+      if (Number.isFinite(dt) && dt > 0) deltas.push(dt);
+    }
+    deltas.sort((a, b) => a - b);
+    const medianGap = deltas.length ? deltas[Math.floor(deltas.length / 2)] : 60 * 1000;
+    const maxGap = Math.max(15 * 60 * 1000, medianGap * 8);
+
+    let segmentOpen = false;
+    for (let i = 0; i < spotPts.length; i++) {
+      if (!segmentOpen) {
+        ctx.beginPath();
+        ctx.moveTo(spotPts[i].x, spotPts[i].y);
+        segmentOpen = true;
+        continue;
+      }
+      const gap = spotPts[i].ms - spotPts[i - 1].ms;
+      if (Number.isFinite(gap) && gap > maxGap) {
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(spotPts[i].x, spotPts[i].y);
+      } else {
+        ctx.lineTo(spotPts[i].x, spotPts[i].y);
+      }
+    }
+    if (segmentOpen) ctx.stroke();
   } else if (spotPts.length === 1) {
     // With one snapshot, draw a horizontal guide so spot is still visible.
     ctx.setLineDash([4, 4]);
@@ -2906,10 +2976,13 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   const gexTickCount = 5;
+  const gexScale = maxAbsLatest >= 1e9 ? 1e9 : 1e6;
+  const gexMaxDisplay = maxAbsLatest / gexScale;
+  const gexPrecision = gexMaxDisplay < 1 ? 2 : (gexMaxDisplay < 10 ? 1 : 0);
   for (let i = 0; i <= gexTickCount; i++) {
     const x = marginLeft + (plotW * i / gexTickCount);
-    const valBn = (maxAbsLatest / 1e9) * (i / gexTickCount);
-    ctx.fillText(valBn.toFixed(valBn >= 10 ? 0 : 1), x, marginTop - 6);
+    const val = gexMaxDisplay * (i / gexTickCount);
+    ctx.fillText(val.toFixed(gexPrecision), x, marginTop - 6);
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 0.5;
     ctx.beginPath();
@@ -2937,7 +3010,8 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
   ctx.fillStyle = '#e5e7eb';
   ctx.font = '700 14px "Space Grotesk", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`${symbol} Gamma Exposure (Bn)`, W / 2, 16);
+  const gexUnit = gexScale === 1e9 ? 'Bn' : 'M';
+  ctx.fillText(`${symbol} Gamma Exposure (${gexUnit})`, W / 2, 16);
 
   // ── In-chart legend box (yellow outline, reference style) ──
   const legendItems = [
@@ -2950,38 +3024,46 @@ function renderSessionChart(canvas, snaps, symbol, priceSeries) {
     {type:'lineDash', color:'rgba(34,197,94,0.8)', text:'Major Pos Gamma'},
     {type:'lineDash', color:'rgba(239,68,68,0.8)', text:'Major Neg Gamma'},
   ];
-  const lPad = 12, lineH = 22;
-  const lW = 240, lH = (legendItems.length * lineH) + lPad * 2;
-  const lx = marginLeft + plotW - lW - 14;
-  const ly = marginTop + 10;
-  ctx.fillStyle = 'rgba(0,0,0,0.72)';
-  ctx.strokeStyle = '#facc15';
-  ctx.lineWidth = 1.5;
-  ctx.fillRect(lx, ly, lW, lH);
-  ctx.strokeRect(lx, ly, lW, lH);
-  legendItems.forEach((it, i) => {
-    const y = ly + lPad + i * lineH + 11;
-    if (it.type === 'bar') {
-      ctx.fillStyle = it.color;
-      ctx.fillRect(lx + 12, y - 5, 28, 10);
-    } else if (it.type === 'line') {
-      ctx.strokeStyle = it.color;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([]);
-      ctx.beginPath(); ctx.moveTo(lx + 12, y); ctx.lineTo(lx + 40, y); ctx.stroke();
-    } else {
-      ctx.strokeStyle = it.color;
-      ctx.lineWidth = 1.4;
-      ctx.setLineDash([4,3]);
-      ctx.beginPath(); ctx.moveTo(lx + 12, y); ctx.lineTo(lx + 40, y); ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    ctx.fillStyle = '#e5e7eb';
-    ctx.font = '500 11px "Space Grotesk", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(it.text, lx + 52, y);
-  });
+  const showInChartLegend = W >= 900;
+  if (showInChartLegend) {
+    const compact = W < 1220;
+    const lPad = compact ? 9 : 12;
+    const lineH = compact ? 19 : 22;
+    const lW = compact ? 214 : 240;
+    const lH = (legendItems.length * lineH) + lPad * 2;
+    const lx = marginLeft + plotW - lW - 14;
+    const ly = marginTop + 10;
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(lx, ly, lW, lH);
+    ctx.strokeRect(lx, ly, lW, lH);
+    legendItems.forEach((it, i) => {
+      const y = ly + lPad + i * lineH + (compact ? 9 : 11);
+      const markX0 = lx + (compact ? 10 : 12);
+      const markX1 = markX0 + (compact ? 24 : 28);
+      if (it.type === 'bar') {
+        ctx.fillStyle = it.color;
+        ctx.fillRect(markX0, y - 5, markX1 - markX0, 10);
+      } else if (it.type === 'line') {
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(markX0, y); ctx.lineTo(markX1, y); ctx.stroke();
+      } else {
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([4,3]);
+        ctx.beginPath(); ctx.moveTo(markX0, y); ctx.lineTo(markX1, y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.fillStyle = '#e5e7eb';
+      ctx.font = compact ? '500 10px "Space Grotesk", sans-serif' : '500 11px "Space Grotesk", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(it.text, lx + (compact ? 44 : 52), y);
+    });
+  }
 
   // ── Y axis title ──
   ctx.save();
