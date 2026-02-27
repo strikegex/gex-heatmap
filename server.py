@@ -586,6 +586,7 @@ def api_member_profile():
     if is_admin:
         return jsonify({
             "ok": True,
+            "is_admin": True,
             "email": user or (ADMIN_USER or "admin"),
             "tier": tier,
             "membership_id": "",
@@ -607,6 +608,7 @@ def api_member_profile():
 
     return jsonify({
         "ok": True,
+        "is_admin": False,
         "email": user,
         "tier": tier_name,
         "membership_id": member.get("membership_id", ""),
@@ -631,6 +633,71 @@ def api_logout():
             if token in auth_sessions:
                 del auth_sessions[token]
     return jsonify({"ok": True})
+
+
+@app.route("/api/admin/member/create", methods=["POST"])
+@require_auth(admin=True)
+def api_admin_member_create():
+    """Admin endpoint — create or update a member login without restart."""
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "") or "").strip().lower()
+    password = str(data.get("password", "") or "")
+    tier_in = str(data.get("tier", "approved") or "approved").strip().lower()
+    valid = bool(data.get("valid", True))
+    membership_id = str(data.get("membership_id", "") or "").strip()
+    plan = str(data.get("plan", "") or "").strip()
+    whop_user_id = str(data.get("whop_user_id", "") or "").strip()
+    license_key = str(data.get("license_key", "") or "").strip()
+
+    if not email or "@" not in email:
+        return jsonify({"ok": False, "error": "Enter a valid email."}), 400
+    if not password or len(password) < 8:
+        return jsonify({"ok": False, "error": "Password must be at least 8 characters."}), 400
+
+    allowed_tiers = {"approved", "free"}
+    tier = tier_in if tier_in in allowed_tiers else "approved"
+    if not valid:
+        tier = "free"
+
+    generated_license = False
+    if not license_key:
+        license_key = secrets.token_urlsafe(12)
+        generated_license = True
+
+    now_iso = datetime.now().isoformat()
+    with members_lock:
+        existing = dict(members_db.get(email, {}))
+        was_existing = bool(existing)
+        rec = dict(existing)
+
+        rec["whop_user_id"] = whop_user_id or rec.get("whop_user_id", "manual")
+        rec["membership_id"] = membership_id or rec.get("membership_id", f"manual-{email}")
+        rec["license_key"] = license_key
+        rec["plan"] = plan or rec.get("plan", "manual")
+        rec["valid"] = valid
+        rec["tier"] = tier
+        rec["password_hash"] = _hash_password(password)
+        rec["password_set_at"] = now_iso
+        rec["updated_at"] = now_iso
+
+        if not rec.get("created_at"):
+            rec["created_at"] = now_iso
+        if valid and not rec.get("activated_at"):
+            rec["activated_at"] = now_iso
+
+        members_db[email] = rec
+        save_members(members_db)
+
+    return jsonify({
+        "ok": True,
+        "created": not was_existing,
+        "email": email,
+        "tier": tier,
+        "valid": valid,
+        "membership_id": rec.get("membership_id", ""),
+        "license_key_generated": generated_license,
+        "license_key": license_key if generated_license else "",
+    })
 
 
 @app.route("/api/whop/webhook", methods=["POST"])
