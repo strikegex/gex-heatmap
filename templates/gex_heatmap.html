@@ -39,6 +39,47 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 .acct-drop a{display:block;padding:8px 14px;font-size:12px;color:var(--text);text-decoration:none;transition:background .1s}
 .acct-drop a:hover{background:rgba(255,255,255,.05);color:var(--bright)}
 
+/* ═══ ACCOUNT CENTER MODAL ═══ */
+.acct-modal{display:none;position:fixed;inset:0;background:rgba(4,6,14,.84);backdrop-filter:blur(5px);z-index:1300;align-items:center;justify-content:center;padding:20px}
+.acct-modal.vis{display:flex}
+.acct-card{width:min(980px,96vw);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#0f1426,#0b1020);border:1px solid #253659;border-radius:10px;box-shadow:0 20px 55px rgba(0,0,0,.6)}
+.acct-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid var(--border)}
+.acct-hd-title{font-family:'Space Grotesk',sans-serif;color:var(--bright);font-size:22px;font-weight:700;line-height:1}
+.acct-hd-sub{font-size:11px;color:var(--dim);margin-top:6px}
+.acct-close{font-size:18px;line-height:1;background:transparent;border:1px solid var(--border);color:var(--dim);padding:5px 9px;border-radius:5px;cursor:pointer}
+.acct-close:hover{color:var(--bright);border-color:var(--accent);background:rgba(255,255,255,.04)}
+.acct-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--border)}
+.acct-tab{padding:7px 12px;border-radius:5px;border:1px solid var(--border);font-size:11px;font-weight:600;letter-spacing:.3px;color:var(--dim);background:rgba(255,255,255,.02);cursor:pointer}
+.acct-tab:hover{color:var(--text);border-color:#2b426f}
+.acct-tab.active{color:var(--bright);border-color:var(--accent);background:rgba(99,102,241,.15)}
+.acct-body{padding:16px 18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.acct-panel{display:none;grid-column:1/-1}
+.acct-panel.active{display:block}
+.acct-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.acct-box{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:13px 14px}
+.acct-box h4{font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--bright);margin-bottom:9px}
+.acct-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.06);font-size:12px}
+.acct-row:last-child{border-bottom:none}
+.acct-k{color:var(--dim)}
+.acct-v{color:var(--bright);font-weight:600;text-align:right}
+.acct-btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.acct-cta{font-size:11px;padding:8px 12px;border-radius:6px;border:1px solid var(--border);text-decoration:none;color:var(--text);background:#161e34;display:inline-flex;align-items:center;gap:6px}
+.acct-cta:hover{border-color:var(--accent);color:var(--bright)}
+.acct-cta.primary{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.28);color:#9ceec0}
+.acct-note{font-size:10px;color:var(--dim);line-height:1.6;margin-top:8px}
+.acct-field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.acct-field label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px}
+.acct-field input{width:100%;padding:9px 10px;background:#0b0f1e;color:var(--bright);border:1px solid #1e2948;border-radius:5px;font-size:12px;font-family:'JetBrains Mono',monospace;outline:none}
+.acct-field input:focus{border-color:var(--accent)}
+.acct-msg{display:none;margin-top:8px;padding:8px 10px;border-radius:6px;font-size:11px}
+.acct-msg.ok{display:block;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.28);color:#8ce8b5}
+.acct-msg.err{display:block;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ff96a0}
+
+@media(max-width:900px){
+  .acct-body,.acct-grid{grid-template-columns:1fr}
+  .acct-hd-title{font-size:18px}
+}
+
 /* ═══ TABS ═══ */
 .tabs{display:flex;gap:0;padding:0 24px;border-bottom:2px solid var(--border);background:var(--panel)}
 .tab{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--dim);padding:12px 20px;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;position:relative;top:2px}
@@ -311,15 +352,127 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
     <div class="status-dot" id="sd"></div>
     <span class="status-text" id="st">Connecting...</span>
     <div class="acct-menu">
-      <button onclick="document.getElementById('acctDrop').classList.toggle('vis')" class="acct-btn">👤 Account</button>
+      <button onclick="toggleAccountDropdown(event)" class="acct-btn" id="acctBtn">👤 Account</button>
       <div class="acct-drop" id="acctDrop">
-        <a href="#" onclick="event.preventDefault()">📊 Dashboard</a>
-        <a href="#" onclick="event.preventDefault()">💳 Billing</a>
-        <a href="#" onclick="event.preventDefault()">⚙️ Settings</a>
-        <a href="#" onclick="event.preventDefault()">📱 API Keys</a>
+        <a href="#" onclick="event.preventDefault();openAccountCenter('dashboard')">📊 Dashboard</a>
+        <a href="#" onclick="event.preventDefault();openAccountCenter('billing')">💳 Billing & Card</a>
+        <a href="#" onclick="event.preventDefault();openAccountCenter('settings')">⚙️ Settings</a>
+        <a href="#" onclick="event.preventDefault();openDiscordLink()">💬 Join Discord</a>
         <div style="border-top:1px solid var(--border);margin:4px 0"></div>
-        <a href="#" onclick="event.preventDefault()">🚪 Sign Out</a>
+        <a href="#" onclick="event.preventDefault();signOutUser()">🚪 Sign Out</a>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ACCOUNT CENTER ═══ -->
+<div id="acctModal" class="acct-modal">
+  <div class="acct-card">
+    <div class="acct-hd">
+      <div>
+        <div class="acct-hd-title">Account Center</div>
+        <div class="acct-hd-sub">Manage your profile, billing, Discord access, and security in one place.</div>
+      </div>
+      <button class="acct-close" onclick="closeAccountCenter()" aria-label="Close account center">✕</button>
+    </div>
+    <div class="acct-tabs">
+      <button class="acct-tab active" id="acctTab-dashboard" onclick="switchAccountPanel('dashboard')">Dashboard</button>
+      <button class="acct-tab" id="acctTab-billing" onclick="switchAccountPanel('billing')">Billing</button>
+      <button class="acct-tab" id="acctTab-settings" onclick="switchAccountPanel('settings')">Settings</button>
+    </div>
+    <div class="acct-body">
+      <section class="acct-panel active" id="acctPanel-dashboard">
+        <div class="acct-grid">
+          <article class="acct-box">
+            <h4>Profile Snapshot</h4>
+            <div class="acct-row"><span class="acct-k">Email</span><span class="acct-v" id="acctEmail">-</span></div>
+            <div class="acct-row"><span class="acct-k">Plan</span><span class="acct-v" id="acctPlan">-</span></div>
+            <div class="acct-row"><span class="acct-k">Status</span><span class="acct-v" id="acctStatus">-</span></div>
+            <div class="acct-row"><span class="acct-k">Membership ID</span><span class="acct-v" id="acctMemberId">-</span></div>
+            <div class="acct-btn-row">
+              <a class="acct-cta" href="#" onclick="event.preventDefault();openAccountCenter('billing')">💳 Manage Billing</a>
+              <a class="acct-cta" href="#" onclick="event.preventDefault();openDiscordLink()">💬 Join Discord</a>
+            </div>
+          </article>
+          <article class="acct-box">
+            <h4>Quick Actions</h4>
+            <div class="acct-row"><span class="acct-k">Current Tab</span><span class="acct-v" id="acctCurrentTab">StrikeMap</span></div>
+            <div class="acct-row"><span class="acct-k">Session Token</span><span class="acct-v" id="acctTokenState">Active</span></div>
+            <div class="acct-row"><span class="acct-k">Local Time</span><span class="acct-v" id="acctLocalTime">-</span></div>
+            <div class="acct-btn-row">
+              <a class="acct-cta primary" href="#" onclick="event.preventDefault();goToHeatmap()">🔥 Open HeatMap</a>
+              <a class="acct-cta" href="#" onclick="event.preventDefault();goToOdte()">🎯 Open 0DTE</a>
+              <a class="acct-cta" href="#" onclick="event.preventDefault();goToChart()">📈 Open Chart</a>
+              <a class="acct-cta" href="#" onclick="event.preventDefault();signOutUser()">🚪 Sign Out</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="acct-panel" id="acctPanel-billing">
+        <div class="acct-grid">
+          <article class="acct-box">
+            <h4>Billing & Card</h4>
+            <div class="acct-row"><span class="acct-k">Provider</span><span class="acct-v">Whop</span></div>
+            <div class="acct-row"><span class="acct-k">Current Plan</span><span class="acct-v" id="billPlan">-</span></div>
+            <div class="acct-row"><span class="acct-k">Renewal / Expiry</span><span class="acct-v" id="billExpiry">-</span></div>
+            <div class="acct-row"><span class="acct-k">Card on File</span><span class="acct-v" id="billCard">Managed on Whop</span></div>
+            <div class="acct-btn-row">
+              <a class="acct-cta primary" id="billManageBtn" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">💳 Update Card & Billing</a>
+              <a class="acct-cta" href="https://whop.com/strikegex/strikegex-pro-access/" target="_blank" rel="noopener">🧾 View Membership</a>
+            </div>
+            <div class="acct-note">For security and PCI compliance, card details are managed directly in Whop billing.</div>
+          </article>
+          <article class="acct-box">
+            <h4>Billing Help</h4>
+            <div class="acct-row"><span class="acct-k">Need invoice / receipt?</span><span class="acct-v">Open Whop membership</span></div>
+            <div class="acct-row"><span class="acct-k">Need plan change?</span><span class="acct-v">Upgrade/Downgrade on Whop</span></div>
+            <div class="acct-row"><span class="acct-k">Need support?</span><span class="acct-v">Use Discord help channel</span></div>
+            <div class="acct-btn-row">
+              <a class="acct-cta" href="#" onclick="event.preventDefault();openDiscordLink()">💬 Open Discord</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="acct-panel" id="acctPanel-settings">
+        <div class="acct-grid">
+          <article class="acct-box">
+            <h4>Password Setup / Reset</h4>
+            <div class="acct-field">
+              <label for="acctSetEmail">Whop Email</label>
+              <input id="acctSetEmail" type="email" placeholder="you@domain.com" autocomplete="username">
+            </div>
+            <div class="acct-field">
+              <label for="acctSetLicense">Whop License Key</label>
+              <input id="acctSetLicense" type="password" placeholder="Enter license key" autocomplete="off">
+            </div>
+            <div class="acct-field">
+              <label for="acctSetPass">New Password</label>
+              <input id="acctSetPass" type="password" placeholder="Minimum 8 characters" autocomplete="new-password">
+            </div>
+            <div class="acct-field">
+              <label for="acctSetPass2">Confirm Password</label>
+              <input id="acctSetPass2" type="password" placeholder="Re-enter password" autocomplete="new-password">
+            </div>
+            <div class="acct-btn-row">
+              <a class="acct-cta primary" href="#" onclick="event.preventDefault();saveAccountPassword()">🔐 Save Password</a>
+            </div>
+            <div id="acctPassMsg" class="acct-msg"></div>
+          </article>
+          <article class="acct-box">
+            <h4>Preferences</h4>
+            <div class="acct-row"><span class="acct-k">Auto refresh data</span><span class="acct-v"><input id="prefAutoRefresh" type="checkbox" checked></span></div>
+            <div class="acct-row"><span class="acct-k">Show strategy panel</span><span class="acct-v"><input id="prefShowStrategy" type="checkbox" checked></span></div>
+            <div class="acct-row"><span class="acct-k">Join community</span><span class="acct-v">Discord + Announcements</span></div>
+            <div class="acct-btn-row">
+              <a class="acct-cta" href="#" onclick="event.preventDefault();saveAccountPrefs()">💾 Save Preferences</a>
+              <a class="acct-cta" href="#" onclick="event.preventDefault();openDiscordLink()">💬 Join Discord</a>
+            </div>
+            <div id="acctPrefMsg" class="acct-msg"></div>
+          </article>
+        </div>
+      </section>
     </div>
   </div>
 </div>
@@ -557,7 +710,7 @@ button:hover{background:var(--border);color:var(--bright);border-color:var(--acc
   <div class="footer-left">
     <div class="footer-social">
       <a href="https://x.com" target="_blank" rel="noopener">𝕏 Follow on X</a>
-      <a href="https://discord.gg" target="_blank" rel="noopener" style="margin-left:12px">💬 Discord</a>
+      <a href="https://discord.gg/strikegex" target="_blank" rel="noopener" style="margin-left:12px">💬 Discord</a>
     </div>
   </div>
   <span class="footer-copy">© 2025 StrikeGEX — Gamma Exposure Intelligence. All rights reserved.</span>
@@ -624,10 +777,19 @@ function doLogin(){
         sessionStorage.setItem('gex_auth','1');
         userTier = d.tier || 'free';
         sessionStorage.setItem('gex_tier', userTier);
+        sessionStorage.setItem('gex_user', d.user || user);
         if (d.token) sessionStorage.setItem('gex_token', d.token);
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
-        startServerFetch(); fetchLiveData();
+        updateAccountButtonLabel();
+        loadAccountProfile();
+        const prefs = loadAccountPrefs();
+        if(prefs.autoRefresh === false){
+          fetchFromServer();
+        } else {
+          startServerFetch();
+        }
+        fetchLiveData();
         // Default to live tab — hide heatmap legend
         const lb2=document.getElementById('legendBar');
         if(lb2)lb2.style.display='none';
@@ -637,8 +799,10 @@ function doLogin(){
       if(window.location.protocol==='file:'&&user==='admin'&&pass==='strikegex'){
         sessionStorage.setItem('gex_auth','1');
         sessionStorage.setItem('gex_tier','approved');
+        sessionStorage.setItem('gex_user','admin');
         document.getElementById('loginOverlay').classList.add('hidden');
         document.getElementById('appWrap').style.display='';
+        updateAccountButtonLabel();
       }else{err.textContent='Invalid credentials';err.style.display='block'}
     });
 }
@@ -650,6 +814,239 @@ document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='
 if((sessionStorage.getItem('gex_auth')==='1' && sessionStorage.getItem('gex_token')) || window.location.protocol==='file:'){ userTier = sessionStorage.getItem('gex_tier') || 'free';
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('appWrap').style.display='';
+  updateAccountButtonLabel();
+  loadAccountProfile();
+}
+
+// ═══ ACCOUNT CENTER ═══
+const DISCORD_INVITE_URL = 'https://discord.gg/strikegex';
+const DEFAULT_BILLING_URL = 'https://whop.com/strikegex/strikegex-pro-access/';
+const ACCOUNT_PREF_KEY = 'gex_account_prefs_v1';
+let accountProfile = null;
+
+function updateAccountButtonLabel(){
+  const btn = document.getElementById('acctBtn');
+  if(!btn) return;
+  const email = sessionStorage.getItem('gex_user') || '';
+  if(!email || email === 'admin'){
+    btn.textContent = '👤 Account';
+    return;
+  }
+  const name = email.split('@')[0].slice(0, 12);
+  btn.textContent = `👤 ${name}`;
+}
+
+function toggleAccountDropdown(e){
+  if(e) e.stopPropagation();
+  const drop = document.getElementById('acctDrop');
+  if(!drop) return;
+  drop.classList.toggle('vis');
+}
+
+function closeAccountDropdown(){
+  const drop = document.getElementById('acctDrop');
+  if(drop) drop.classList.remove('vis');
+}
+
+function switchAccountPanel(panel){
+  ['dashboard','billing','settings'].forEach(id => {
+    const p = document.getElementById(`acctPanel-${id}`);
+    const t = document.getElementById(`acctTab-${id}`);
+    if(p) p.classList.toggle('active', id === panel);
+    if(t) t.classList.toggle('active', id === panel);
+  });
+}
+
+function formatLocalDate(iso){
+  if(!iso) return '-';
+  const d = new Date(iso);
+  if(Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+function activeTabLabel(){
+  const active = document.querySelector('.tabs .tab.active');
+  if(!active) return 'StrikeMap';
+  return active.textContent.replace(/[^\w\s]/g, '').trim();
+}
+
+function loadAccountPrefs(){
+  try{
+    const raw = localStorage.getItem(ACCOUNT_PREF_KEY);
+    return raw ? JSON.parse(raw) : {autoRefresh:true, showStrategy:true};
+  }catch(_e){
+    return {autoRefresh:true, showStrategy:true};
+  }
+}
+
+function applyPrefControls(){
+  const prefs = loadAccountPrefs();
+  const autoEl = document.getElementById('prefAutoRefresh');
+  const stratEl = document.getElementById('prefShowStrategy');
+  if(autoEl) autoEl.checked = prefs.autoRefresh !== false;
+  if(stratEl) stratEl.checked = prefs.showStrategy !== false;
+}
+
+function saveAccountPrefs(){
+  const autoRefresh = !!document.getElementById('prefAutoRefresh')?.checked;
+  const showStrategy = !!document.getElementById('prefShowStrategy')?.checked;
+  localStorage.setItem(ACCOUNT_PREF_KEY, JSON.stringify({autoRefresh, showStrategy}));
+
+  const stratWrap = document.getElementById('stratWrap');
+  if(stratWrap){
+    stratWrap.style.display = showStrategy ? '' : 'none';
+  }
+
+  if(autoRefresh){
+    if(sessionStorage.getItem('gex_auth') === '1') startServerFetch();
+  } else if (typeof serverInterval !== 'undefined' && serverInterval) {
+    clearInterval(serverInterval);
+    serverInterval = null;
+    const st = document.getElementById('st');
+    if(st) st.textContent = 'Auto-refresh paused';
+  }
+
+  const msg = document.getElementById('acctPrefMsg');
+  if(msg){
+    msg.className = 'acct-msg ok';
+    msg.textContent = 'Preferences saved.';
+  }
+}
+
+async function loadAccountProfile(){
+  try{
+    const res = await fetch('/api/member/profile');
+    const data = await res.json();
+    if(res.ok && data && data.ok){
+      accountProfile = data;
+      if(data.email) sessionStorage.setItem('gex_user', data.email);
+      if(data.tier) sessionStorage.setItem('gex_tier', data.tier);
+      updateAccountButtonLabel();
+      return;
+    }
+  }catch(_e){}
+  accountProfile = null;
+}
+
+function populateAccountCenter(){
+  const email = (accountProfile && accountProfile.email) || sessionStorage.getItem('gex_user') || '-';
+  const tier = (accountProfile && accountProfile.tier) || sessionStorage.getItem('gex_tier') || 'free';
+  const plan = (accountProfile && accountProfile.plan_label) || (tier === 'approved' ? 'Pro Access' : 'Free');
+  const status = accountProfile ? (accountProfile.valid ? 'Active' : 'Inactive') : (tier === 'approved' ? 'Active' : 'Free');
+  const memberId = (accountProfile && accountProfile.membership_id) || '-';
+  const card = (accountProfile && accountProfile.payment_method && accountProfile.payment_method.last4)
+    ? `${(accountProfile.payment_method.brand || 'Card').toUpperCase()} •••• ${accountProfile.payment_method.last4}`
+    : 'Managed on Whop';
+  const expires = (accountProfile && accountProfile.expires_at) ? formatLocalDate(accountProfile.expires_at) : 'Managed on Whop';
+  const manageUrl = (accountProfile && accountProfile.manage_billing_url) || DEFAULT_BILLING_URL;
+  const hasToken = !!sessionStorage.getItem('gex_token');
+
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = val;
+  };
+
+  setText('acctEmail', email);
+  setText('acctPlan', plan);
+  setText('acctStatus', status);
+  setText('acctMemberId', memberId);
+  setText('acctCurrentTab', activeTabLabel());
+  setText('acctTokenState', hasToken ? 'Active' : 'Missing');
+  setText('acctLocalTime', new Date().toLocaleString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}));
+  setText('billPlan', plan);
+  setText('billExpiry', expires);
+  setText('billCard', card);
+
+  const billBtn = document.getElementById('billManageBtn');
+  if(billBtn) billBtn.href = manageUrl;
+
+  const emailInput = document.getElementById('acctSetEmail');
+  if(emailInput && email !== '-' && !emailInput.value) emailInput.value = email;
+}
+
+async function openAccountCenter(panel='dashboard'){
+  closeAccountDropdown();
+  switchAccountPanel(panel);
+  applyPrefControls();
+  populateAccountCenter();
+  const modal = document.getElementById('acctModal');
+  if(modal) modal.classList.add('vis');
+  await loadAccountProfile();
+  populateAccountCenter();
+}
+
+function closeAccountCenter(){
+  const modal = document.getElementById('acctModal');
+  if(modal) modal.classList.remove('vis');
+}
+
+function openDiscordLink(){
+  window.open(DISCORD_INVITE_URL, '_blank', 'noopener');
+}
+
+function goToHeatmap(){ closeAccountCenter(); document.querySelectorAll('.tabs .tab')[1]?.click(); }
+function goToOdte(){ closeAccountCenter(); document.querySelectorAll('.tabs .tab')[2]?.click(); }
+function goToChart(){ closeAccountCenter(); document.querySelectorAll('.tabs .tab')[3]?.click(); }
+
+async function saveAccountPassword(){
+  const msg = document.getElementById('acctPassMsg');
+  if(msg){ msg.className='acct-msg'; msg.textContent=''; }
+
+  const email = (document.getElementById('acctSetEmail')?.value || '').trim();
+  const license = (document.getElementById('acctSetLicense')?.value || '');
+  const p1 = (document.getElementById('acctSetPass')?.value || '');
+  const p2 = (document.getElementById('acctSetPass2')?.value || '');
+
+  if(!email || !license || !p1 || !p2){
+    if(msg){ msg.className='acct-msg err'; msg.textContent='Fill email, license key, and password fields.'; }
+    return;
+  }
+  if(p1.length < 8){
+    if(msg){ msg.className='acct-msg err'; msg.textContent='Password must be at least 8 characters.'; }
+    return;
+  }
+  if(p1 !== p2){
+    if(msg){ msg.className='acct-msg err'; msg.textContent='Passwords do not match.'; }
+    return;
+  }
+
+  try{
+    const res = await fetch('/api/member/set-password', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email,
+        license_key: license,
+        new_password: p1,
+        confirm_password: p2
+      })
+    });
+    const data = await res.json();
+    if(res.ok && data && data.ok){
+      if(data.token) sessionStorage.setItem('gex_token', data.token);
+      if(data.tier) sessionStorage.setItem('gex_tier', data.tier);
+      sessionStorage.setItem('gex_user', data.user || email);
+      if(msg){ msg.className='acct-msg ok'; msg.textContent='Password updated. Use this password for next login.'; }
+      updateAccountButtonLabel();
+      return;
+    }
+    if(msg){ msg.className='acct-msg err'; msg.textContent = (data && data.error) ? data.error : 'Unable to update password.'; }
+  }catch(_e){
+    if(msg){ msg.className='acct-msg err'; msg.textContent='Connection error. Try again.'; }
+  }
+}
+
+async function signOutUser(){
+  closeAccountDropdown();
+  closeAccountCenter();
+  try{
+    await fetch('/api/logout', {method:'POST'});
+  }catch(_e){}
+  sessionStorage.removeItem('gex_auth');
+  sessionStorage.removeItem('gex_tier');
+  sessionStorage.removeItem('gex_user');
+  sessionStorage.removeItem('gex_token');
+  window.location.reload();
 }
 
 // ═══ COLOR — Legend-matched diverging scale ═══
@@ -1412,9 +1809,17 @@ function startServerFetch() {
 updateMarketSession();
 setInterval(updateMarketSession, 60000);
 if (window.location.protocol !== 'file:') {
+  const prefs = loadAccountPrefs();
+  const stratWrap = document.getElementById('stratWrap');
+  if(stratWrap && prefs.showStrategy === false) stratWrap.style.display = 'none';
   // Only auto-fetch if already authenticated (session restored)
   if(sessionStorage.getItem('gex_auth')==='1'){
-  startServerFetch(); fetchLiveData();
+  if(prefs.autoRefresh === false){
+    fetchFromServer();
+  } else {
+    startServerFetch();
+  }
+  fetchLiveData();
   // Start on live tab — hide heatmap legend
   const lb=document.getElementById('legendBar');
   if(lb)lb.style.display='none';
@@ -1693,8 +2098,18 @@ function handleSymKey(e) {
 
 // Close dropdown when clicking outside
 document.addEventListener('click', e => {
-  if (!e.target.closest('#symDropdown') && e.target.id !== 'liveSymInput') {
-    document.getElementById('symDropdown').style.display = 'none';
+  const symDd = document.getElementById('symDropdown');
+  if (symDd && !e.target.closest('#symDropdown') && e.target.id !== 'liveSymInput') {
+    symDd.style.display = 'none';
+  }
+  if(!e.target.closest('.acct-menu')) closeAccountDropdown();
+  if(e.target.id === 'acctModal') closeAccountCenter();
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    closeAccountDropdown();
+    closeAccountCenter();
   }
 });
 
