@@ -270,6 +270,10 @@ if not ADMIN_USER or not ADMIN_PASS:
 WHOP_API_KEY      = os.environ.get("WHOP_API_KEY", "")        # Bearer token from Whop dashboard
 WHOP_WEBHOOK_SECRET = os.environ.get("WHOP_WEBHOOK_SECRET", "")  # Webhook signing secret
 WHOP_PRODUCT_ID   = os.environ.get("WHOP_PRODUCT_ID", "")     # Your product/pass ID
+WHOP_MANAGE_URL   = os.environ.get(
+    "WHOP_MANAGE_URL",
+    "https://whop.com/strikegex/strikegex-pro-access/",
+)
 
 # ─── Member store: {email: {whop_user_id, membership_id, tier, valid, expires_at}} ───
 MEMBERS_FILE = os.path.join(os.path.dirname(__file__), "whop_members.json")
@@ -404,6 +408,14 @@ def _session_from_request():
             del auth_sessions[token]
             return None
         return sess
+
+
+def _token_from_request():
+    token = request.headers.get("X-Auth-Token", "").strip()
+    authz = request.headers.get("Authorization", "").strip()
+    if not token and authz.startswith("Bearer "):
+        token = authz[7:].strip()
+    return token
 
 
 def require_auth(admin=False):
@@ -561,6 +573,64 @@ def api_member_set_password():
         "expires_in": ttl,
         "message": "Password created successfully.",
     })
+
+
+@app.route("/api/member/profile", methods=["GET"])
+@require_auth()
+def api_member_profile():
+    sess = _session_from_request() or {}
+    user = str(sess.get("user", "") or "").strip().lower()
+    tier = str(sess.get("tier", "free") or "free")
+    is_admin = bool(sess.get("is_admin"))
+
+    if is_admin:
+        return jsonify({
+            "ok": True,
+            "email": user or (ADMIN_USER or "admin"),
+            "tier": tier,
+            "membership_id": "",
+            "valid": True,
+            "expires_at": None,
+            "billing_provider": "whop",
+            "manage_billing_url": WHOP_MANAGE_URL,
+            "plan_label": "Admin Access",
+            "payment_method": {"brand": None, "last4": None},
+        })
+
+    with members_lock:
+        member = members_db.get(user, {}) if user else {}
+
+    expires_at = member.get("expires_at")
+    product_name = str(member.get("product_name", "") or "").strip()
+    tier_name = str(member.get("tier", tier) or tier)
+    plan_label = product_name or ("Pro Access" if tier_name == "approved" else tier_name.title())
+
+    return jsonify({
+        "ok": True,
+        "email": user,
+        "tier": tier_name,
+        "membership_id": member.get("membership_id", ""),
+        "valid": bool(member.get("valid", False)),
+        "expires_at": expires_at,
+        "billing_provider": "whop",
+        "manage_billing_url": WHOP_MANAGE_URL,
+        "plan_label": plan_label,
+        "payment_method": {
+            "brand": member.get("card_brand"),
+            "last4": member.get("card_last4"),
+        },
+    })
+
+
+@app.route("/api/logout", methods=["POST"])
+@require_auth()
+def api_logout():
+    token = _token_from_request()
+    if token:
+        with auth_lock:
+            if token in auth_sessions:
+                del auth_sessions[token]
+    return jsonify({"ok": True})
 
 
 @app.route("/api/whop/webhook", methods=["POST"])
